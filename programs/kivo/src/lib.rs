@@ -40,6 +40,13 @@ pub mod kivo {
     }
 }
 
+// #[derive(Accounts)]
+// pub struct ProcessDeposit<'info> {
+//     pub user_account: Account<'info, User>,
+//     pub vault_account: Account<'info, TokenAccount>,
+//     pub system_program: Program<'info, System>,
+// }
+
 #[derive(Accounts)]
 pub struct InitializeUser<'info> {
     #[account(
@@ -53,6 +60,31 @@ pub struct InitializeUser<'info> {
     pub payer: Signer<'info>,                // This should also be the public key of the client side user
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
+}
+
+#[account]
+#[derive(Default)]
+pub struct User {
+    pub pubkey: Pubkey, // This is the public key of the User account created by the Program
+    pub owner: Pubkey,  // This is the public key of the client-side user
+    pub name: String,
+    pub total_deposits: u64,
+    pub total_withdraws: u64,
+    pub available_deposits: u64,
+}
+
+impl User {
+    pub fn increment_deposits(&mut self, amount: u64) {
+        self.total_deposits = self.total_deposits.saturating_add(amount);
+    }
+
+    pub fn increment_withdrawals(&mut self, amount: u64) {
+        self.total_withdraws = self.total_withdraws.saturating_add(amount);
+    }
+
+    pub fn decrement_deposits(&mut self, amount: u64) {
+        self.total_deposits = self.total_deposits.saturating_sub(amount);
+    }
 }
 
 #[derive(Accounts)]
@@ -81,17 +113,6 @@ impl<'info> InitializeVault<'info> {
         };
         CpiContext::new(self.token_program.to_account_info(), accounts)
     }
-}
-
-#[account]
-#[derive(Default)]
-pub struct User {
-    pub pubkey: Pubkey, // This is the public key of the User account created by the Program
-    pub owner: Pubkey,  // This is the public key of the client-side user
-    pub name: String,
-    pub total_deposits: u64,
-    pub total_withdraws: u64,
-    pub available_deposits: u64,
 }
 
 #[error_code]
