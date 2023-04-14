@@ -9,9 +9,9 @@ anchor.setProvider(anchor.AnchorProvider.env());
 
 const program = anchor.workspace.Kivo as Program<Kivo>;
 
-// Creates a User with the provided name as their username with the provided Keypair's public key as the account "owner"
-// Does not yet check for duplicates... 
-// May not need to check for duplicates if PDA mapping user <-> address is implemented.
+// Creates a User with the provided name as their username with the provided Keypair's public key as the account's "owner"
+// The actual account is controlled by a PDA derived from the user's name.
+// This enforces uniqueness because the PDA generation will fail if the user's name is the same as a previously created user, the PDA will have already been created.
 export async function initialize_user(name : string, client: anchor.web3.Keypair) {
     let [userPDA, _] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("user"), Buffer.from(name)], program.programId);
 

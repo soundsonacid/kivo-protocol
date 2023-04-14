@@ -14,11 +14,9 @@ pub mod kivo {
 
     pub fn initialize_user(ctx: Context<InitializeUser>, name: String) -> Result<()> {
         // Get mutable references to both the user account pubkey and the owner (client-side user) pubkey
-        // let (user_account, _) = Pubkey::find_program_address(&[b"user", name.as_bytes()], ctx.program_id);
         let user_account = &mut ctx.accounts.user_account;
         let owner = &mut ctx.accounts.owner;
 
-        // Add check if username is unique
         if name.chars().count() > 16 {            // The maximum length of a username is 16 characters
             return Err(ErrorCode::NameTooLong.into())
         }
@@ -34,7 +32,7 @@ pub mod kivo {
 
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         // Add check for if deposit is 0
-        // Add check for if user is bankrupt
+        // Add check for if user is bankrupt or in liquidation
         // Add USD calculation via oracle
         let user_account = &mut ctx.accounts.user_account;
         user_account.increment_deposits(amount)?; 
@@ -46,8 +44,8 @@ pub mod kivo {
 #[account]
 #[derive(Default)]
 pub struct User {
-    pub pubkey: Pubkey,         // This is the public key of the User account created by the Program
-    pub owner: Pubkey,          // This is the public key of the client-side user
+    pub pubkey: Pubkey,         // This should be a PDA
+    pub owner: Pubkey,          // This should be the public key of the client
     pub name: String,
     pub total_deposits: u64,
     pub total_withdraws: u64,
@@ -65,9 +63,9 @@ pub struct InitializeUser<'info> {
         bump,
     )]
     pub user_account: Account<'info, User>,  // This should be a PDA
-    pub owner: Signer<'info>,                // This should be the public key of the client side user
+    pub owner: Signer<'info>,                // This should be the public key of the client 
     #[account(mut)]
-    pub payer: Signer<'info>,                // This should also be the public key of the client side user
+    pub payer: Signer<'info>,                // This should also be the public key of the client
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
