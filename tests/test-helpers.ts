@@ -12,25 +12,26 @@ const program = anchor.workspace.Kivo as Program<Kivo>;
 // Creates a User with the provided name as their username with the provided Keypair's public key as the account "owner"
 // Does not yet check for duplicates... 
 // May not need to check for duplicates if PDA mapping user <-> address is implemented.
-export async function initialize_user(name : string, userAccount: anchor.web3.Keypair) {
+export async function initialize_user(name : string, client: anchor.web3.Keypair) {
     let [userPDA, _] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("user"), Buffer.from(name)], program.programId);
 
     await program.methods
           .initializeUser(name)
           .accounts({
-            owner: userAccount.publicKey,
+            owner: client.publicKey,
             userAccount: userPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
-          .signers([userAccount])
+          .signers([client])
           .rpc();
 
     const user = await program.account.user.fetch(userPDA);
 
     assert.equal(user.pubkey.toBase58(), userPDA.toBase58());
-    console.log(`userPDA: ${userPDA.toBase58()}`)
-    console.log(`userAccount: ${userAccount.publicKey.toBase58()}`)
-    return user;
+    console.log(`PDA: ${userPDA.toBase58()}`)
+    console.log(`Client: ${client.publicKey.toBase58()}`)
+
+    return { user, userPDA }
 }
 
 // Creates a Token Account at the provided Keypair from the provided mint and transfers the authority to the provided PublicKey.

@@ -15,8 +15,8 @@ describe("kivo", () => {
   it("Is initialized!", async () => {
     // Create a test User
     const name = "fixthis"
-    const userAccount = anchor.web3.Keypair.generate();
-    let user = await initialize_user(name, userAccount);
+    const client = anchor.web3.Keypair.generate();
+    let  { user, userPDA } = await initialize_user(name, client);
     // assert.equal(user.owner.toBase58(), program.provider.publicKey.toBase58());
     // assert.equal(user.name, name);  
 
@@ -58,7 +58,7 @@ describe("kivo", () => {
           })
           .rpc()
 
-    user = await program.account.user.fetch(userAccount.publicKey);
+    user = await program.account.user.fetch(userPDA);
 
     assert.equal(user.totalDeposits.toNumber(), amount.toNumber());
   });
