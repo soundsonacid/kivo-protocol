@@ -34,25 +34,3 @@ export async function initialize_user(name : string, client: anchor.web3.Keypair
     return { user, userPDA }
 }
 
-// Creates a Token Account at the provided Keypair from the provided mint and transfers the authority to the provided PublicKey.
-// export async function initialize_vault(mint: string, authority: PublicKey, vaultAccount: anchor.web3.Keypair) {
-//     // const vaultAccount = anchor.web3.Keypair.generate();
-
-//     await program.methods
-//           .initializeVault(authority)
-//           .accounts({
-//             vault: vaultAccount.publicKey,
-//             mint: mint,
-//             tokenProgram: TOKEN_PROGRAM_ID,
-//             systemProgram: anchor.web3.SystemProgram.programId,
-//           })
-//           .signers([vaultAccount])
-//           .rpc();
-
-//     const vault = await getAccount(program.provider.connection, vaultAccount.publicKey);
-
-//     assert.equal(vault.address.toBase58(), vaultAccount.publicKey.toBase58());
-//     assert.equal(vault.mint, mint);
-
-//     return vault;
-// }

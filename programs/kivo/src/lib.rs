@@ -30,20 +30,7 @@ pub mod kivo {
         Ok(())
     }
 
-    // pub fn initialize_vault(ctx: Context<InitializeVault>, authority: Pubkey) -> Result<()> {
-    //     // Transfer authority of the vault account to our vault authority PDA, provided in fn signature.
-    //     token::set_authority(
-    //         ctx.accounts.get_vault_cpi_context(),
-    //         AuthorityType::AccountOwner,
-    //         Some(authority),
-    //     )?;
-        
-    //     Ok(())
-    // }
 
-    // pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-    //     handle_deposit(ctx, amount)
-    // }
 
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         // Add check for if deposit is 0
@@ -102,43 +89,12 @@ impl User {
     }
 }
 
-
 #[derive(Accounts)]
-#[instruction(amount: u64)]
 pub struct Deposit<'info> {
     #[account(mut)]
     pub user_account: Account<'info, User>,
-    // pub vault: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
 }
-
-// #[derive(Accounts)]
-// pub struct InitializeVault<'info> {
-//     #[account(
-//         init,
-//         payer = payer,
-//         token::mint = mint,
-//         token::authority = payer,
-//     )]
-//     pub vault: Account<'info, TokenAccount>, // This is the public key of our new Token Account vault
-//     #[account(mut)]
-//     pub payer: Signer<'info>,                // This should be a PDA
-//     pub mint: Account<'info, Mint>,          // Mint address of Token Account to be created
-//     pub rent: Sysvar<'info, Rent>,
-//     pub token_program: Program<'info, Token>,
-//     pub system_program: Program<'info, System>,
-// }
-
-// // Creates a new CpiContext with our SetAuthority ix to change the Token Account authority to our PDA
-// impl<'info> InitializeVault<'info> { 
-//     fn get_vault_cpi_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
-//         let accounts = SetAuthority {
-//             account_or_mint: self.vault.to_account_info(), // account, not mint
-//             current_authority: self.payer.to_account_info(),
-//         };
-//         CpiContext::new(self.token_program.to_account_info(), accounts)
-//     }
-// }
 
 #[error_code]
 pub enum ErrorCode {
