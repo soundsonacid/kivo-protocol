@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{
-    self, Mint, TokenAccount, Token, spl_token::instruction::AuthorityType, SetAuthority,
-};
+use anchor_spl::token::{ self, Token, TokenAccount, Mint };
 
 declare_id!("8N3JeLHZP1uWVjZ6hwdC79MjTQWQ3gfmAQh4qTwc6GeF");
 
@@ -13,7 +11,7 @@ pub mod kivo {
     use super::*;
 
     pub fn initialize_user(ctx: Context<InitializeUser>, name: String) -> Result<()> {
-        // Get mutable references to both the user account pubkey and the owner (client-side user) pubkey
+        // Get mutable references to both the user account PDA and the owner (client-side user) pubkey
         let user_account = &mut ctx.accounts.user_account;
         let owner = &mut ctx.accounts.owner;
 
@@ -28,15 +26,24 @@ pub mod kivo {
         Ok(())
     }
 
-
-
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        // Add check for if deposit is 0
-        // Add check for if user is bankrupt or in liquidation
+        // Add check for if amount is 0
+        // Add check for if user is bankrupt
         // Add USD calculation via oracle
         let user_account = &mut ctx.accounts.user_account;
         user_account.increment_deposits(amount)?; 
         user_account.exit(&crate::id())?;   // Persist account data mutation
+
+        Ok(())
+    }
+
+    pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64) -> Result<()> {
+        // Add check for if amount is greater than available deposits 
+        let user_account = &mut ctx.accounts.user_account;
+        user_account.increment_withdrawals(amount)?;
+        user_account.decrement_deposits(amount)?;
+        user_account.exit(&crate::id())?;
+
         Ok(())
     }
 }
@@ -78,17 +85,28 @@ impl User {
         Ok(())
     }
 
-    pub fn increment_withdrawals(&mut self, amount: u64) {
+    pub fn increment_withdrawals(&mut self, amount: u64) -> Result <()> {
         self.total_withdraws = self.total_withdraws.saturating_add(amount);
+
+        Ok(())
     }
 
-    pub fn decrement_deposits(&mut self, amount: u64) {
-        self.total_deposits = self.total_deposits.saturating_sub(amount);
+    pub fn decrement_deposits(&mut self, amount: u64) -> Result<()> {
+        self.available_deposits = self.available_deposits.saturating_sub(amount);
+
+        Ok(())
     }
 }
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
+    #[account(mut)]
+    pub user_account: Account<'info, User>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct Withdrawal<'info> {
     #[account(mut)]
     pub user_account: Account<'info, User>,
     pub token_program: Program<'info, Token>,

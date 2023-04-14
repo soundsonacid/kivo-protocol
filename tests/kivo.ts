@@ -37,5 +37,18 @@ describe("kivo", () => {
     user = await program.account.user.fetch(userPDA);   // Refresh our user account
 
     assert.equal(user.totalDeposits.toNumber(), amount.toNumber());
+
+    await program.methods
+          .handleWithdrawal(amount)
+          .accounts({
+            userAccount: user.pubkey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .rpc()
+
+      user = await program.account.user.fetch(userPDA);   // Refresh our user account
+
+      assert.equal(user.availableDeposits.toNumber(), 0);
+
   });
 });
