@@ -18,23 +18,23 @@ describe("kivo", () => {
     // The userPDA is seeded with the user's name -> enforces uniqueness
     const name = Math.random().toString(36).slice(2); 
     const client = anchor.web3.Keypair.generate();
-    let  { user, userPDA } = await initialize_user(name, client);
+    let user = await initialize_user(name, client);
 
     assert.equal(user.owner.toBase58(), client.publicKey.toBase58());
     assert.equal(user.name, name);  
 
-    let amount = new BN(5.00);      // BN representing the amount we are "depositing"
+    let amount = new BN(1.00);      // BN representing the amount we are "depositing"
 
     // "Deposit" into a user account
     await program.methods
           .handleDeposit(amount)
           .accounts({
-            userAccount: user.pubkey,
+            userAccount: user.pubkey,   // This is the same as userPDA.
             tokenProgram: TOKEN_PROGRAM_ID,
           })
           .rpc()
 
-    user = await program.account.user.fetch(userPDA);   // Refresh our user account
+    user = await program.account.user.fetch(user.pubkey);   // Refresh our user account
 
     assert.equal(user.totalDeposits.toNumber(), amount.toNumber());
 
@@ -46,7 +46,7 @@ describe("kivo", () => {
           })
           .rpc()
 
-      user = await program.account.user.fetch(userPDA);   // Refresh our user account
+      user = await program.account.user.fetch(user.pubkey);   // Refresh our user account
 
       assert.equal(user.availableDeposits.toNumber(), 0);
 

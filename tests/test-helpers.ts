@@ -2,8 +2,6 @@ import * as anchor from "@coral-xyz/anchor"
 import { Program } from "@coral-xyz/anchor"
 import { Kivo } from "../target/types/kivo"
 import * as assert from "assert";
-import { PublicKey } from "@solana/web3.js";
-import { getAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -13,8 +11,9 @@ const program = anchor.workspace.Kivo as Program<Kivo>;
 // The actual account is controlled by a PDA derived from the user's name.
 // This enforces uniqueness because the PDA generation will fail if the user's name is the same as a previously created user as the PDA will have already been created.
 export async function initialize_user(name : string, client: anchor.web3.Keypair) {
-    let [userPDA, _] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("user"), Buffer.from(name)], program.programId);
-
+  const seeds = [Buffer.from("user"), client.publicKey.toBuffer()];
+  const [userPDA, _] = anchor.web3.PublicKey.findProgramAddressSync(seeds, program.programId);
+  
     await program.methods
           .initializeUser(name)
           .accounts({
@@ -31,6 +30,6 @@ export async function initialize_user(name : string, client: anchor.web3.Keypair
     console.log(`PDA: ${userPDA.toBase58()}`)
     console.log(`Client: ${client.publicKey.toBase58()}`)
 
-    return { user, userPDA }
+    return user
 }
 

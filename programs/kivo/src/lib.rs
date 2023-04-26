@@ -11,6 +11,7 @@ pub mod kivo {
     use super::*;
 
     pub fn initialize_user(ctx: Context<InitializeUser>, name: String) -> Result<()> {
+        msg!("Initializing user");
         // Get mutable references to both the user account PDA and the owner (client-side user) pubkey
         let user_account = &mut ctx.accounts.user_account;
         let owner = &mut ctx.accounts.owner;
@@ -19,14 +20,15 @@ pub mod kivo {
             return Err(ErrorCode::NameTooLong.into())
         }
 
-        user_account.name = name;
+        user_account.name = name; 
         user_account.owner = owner.key();         // This should be the public key of the client-side user
-        user_account.pubkey = user_account.key(); // This should be the public key of the User account
+        user_account.pubkey = user_account.key(); // This should be our User account PDA
 
         Ok(())
     }
 
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        msg!("Handling deposit");
         // Add check for if amount is 0
         // Add check for if user is bankrupt
         // Add USD calculation via oracle
@@ -38,10 +40,11 @@ pub mod kivo {
     }
 
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64) -> Result<()> {
+        msg!("Handling withdrawal");
         // Add check for if amount is greater than available deposits 
         let user_account = &mut ctx.accounts.user_account;
-        user_account.increment_withdrawals(amount)?;
-        user_account.decrement_deposits(amount)?;
+        user_account.increment_total_withdrawals(amount)?;
+        user_account.decrement_available_deposits(amount)?;
         user_account.exit(&crate::id())?;
 
         Ok(())
@@ -66,7 +69,7 @@ pub struct InitializeUser<'info> {
         init,
         payer = payer,
         space = 8 + 32 + 32 + 20 + 8 + 8 + 8, // disc + pk + pk + str + u64 + u64 + u64
-        seeds = [b"user", name.as_bytes()], 
+        seeds = [b"user", owner.to_account_info().key.as_ref()], 
         bump,
     )]
     pub user_account: Account<'info, User>,  // This should be a PDA
@@ -85,13 +88,13 @@ impl User {
         Ok(())
     }
 
-    pub fn increment_withdrawals(&mut self, amount: u64) -> Result <()> {
+    pub fn increment_total_withdrawals(&mut self, amount: u64) -> Result <()> {
         self.total_withdraws = self.total_withdraws.saturating_add(amount);
 
         Ok(())
     }
 
-    pub fn decrement_deposits(&mut self, amount: u64) -> Result<()> {
+    pub fn decrement_available_deposits(&mut self, amount: u64) -> Result<()> {
         self.available_deposits = self.available_deposits.saturating_sub(amount);
 
         Ok(())
@@ -109,6 +112,9 @@ pub struct Deposit<'info> {
 pub struct Withdrawal<'info> {
     #[account(mut)]
     pub user_account: Account<'info, User>,
+    // Add user_vault.mint == mint constraint
+    // pub user_vault: Account<'info, TokenAccount>,
+    // pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
 }
 
