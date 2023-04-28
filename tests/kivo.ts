@@ -48,7 +48,7 @@ describe("kivo", () => {
 
       user = await program.account.user.fetch(user.pubkey);   // Refresh our user account
 
-      assert.equal(user.availableDeposits.toNumber(), 0);
+      assert.equal(user.totalWithdraws.toNumber(), 0);
 
   });
 });

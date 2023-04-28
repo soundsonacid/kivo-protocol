@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{ self, Token, TokenAccount, Mint };
+use anchor_spl::token::*;
+// use anchor_lang::solana_program::system_instruction;
 
 declare_id!("8N3JeLHZP1uWVjZ6hwdC79MjTQWQ3gfmAQh4qTwc6GeF");
 
@@ -20,6 +21,12 @@ pub mod kivo {
             return Err(ErrorCode::NameTooLong.into())
         }
 
+        // set_authority(
+        //     ctx.accounts.get_vault_cpi_context(),
+        //     AuthorityType::AccountOwner,
+        //     Some(user_account),
+        // )?;
+
         user_account.name = name; 
         user_account.owner = owner.key();         // This should be the public key of the client-side user
         user_account.pubkey = user_account.key(); // This should be our User account PDA
@@ -30,11 +37,22 @@ pub mod kivo {
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         msg!("Handling deposit");
         // Add check for if amount is 0
-        // Add check for if user is bankrupt
+        // Add check for if user is bankrupt / in liquidation
         // Add USD calculation via oracle
-        let user_account = &mut ctx.accounts.user_account;
-        user_account.increment_deposits(amount)?; 
-        user_account.exit(&crate::id())?;   // Persist account data mutation
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.depositor_token_account.to_account_info(),
+            to: ctx.accounts.pda_token_account.to_account_info(),
+            authority: ctx.accounts.depositor.to_account_info().clone(),
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        transfer(cpi_ctx, amount)?;
+        
+        // user_account.increment_deposits(amount)?; 
+        // user_account.exit(&crate::id())?;   // Persist account data mutation
 
         Ok(())
     }
@@ -44,7 +62,6 @@ pub mod kivo {
         // Add check for if amount is greater than available deposits 
         let user_account = &mut ctx.accounts.user_account;
         user_account.increment_total_withdrawals(amount)?;
-        user_account.decrement_available_deposits(amount)?;
         user_account.exit(&crate::id())?;
 
         Ok(())
@@ -59,7 +76,6 @@ pub struct User {
     pub name: String,
     pub total_deposits: u64,
     pub total_withdraws: u64,
-    pub available_deposits: u64,
 }
 
 #[derive(Accounts)]
@@ -68,7 +84,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 32 + 20 + 8 + 8 + 8, // disc + pk + pk + str + u64 + u64 + u64
+        space = 8 + 32 + 32 + 20 + 8 + 8, // disc + pk + pk + str + u64 + u64
         seeds = [b"user", owner.to_account_info().key.as_ref()], 
         bump,
     )]
@@ -83,7 +99,6 @@ pub struct InitializeUser<'info> {
 impl User {
     pub fn increment_deposits(&mut self, amount: u64) -> Result<()> {       // Implement error check or remove Ok(()) result
         self.total_deposits = self.total_deposits.saturating_add(amount);
-        self.available_deposits = self.available_deposits.saturating_add(amount);
 
         Ok(())
     }
@@ -93,18 +108,20 @@ impl User {
 
         Ok(())
     }
-
-    pub fn decrement_available_deposits(&mut self, amount: u64) -> Result<()> {
-        self.available_deposits = self.available_deposits.saturating_sub(amount);
-
-        Ok(())
-    }
 }
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub depositor: UncheckedAccount<'info>,
     #[account(mut)]
-    pub user_account: Account<'info, User>,
+    pub depositor_token_account: Account<'info, TokenAccount>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub user_account: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub pda_token_account: Account<'info, TokenAccount>,
+    pub payer: Signer<'info>,
+    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
 
@@ -124,3 +141,12 @@ pub enum ErrorCode {
     NameTooLong,
 }
 
+// impl<'info> InitializeUser<'info> { 
+//     fn get_vault_cpi_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
+//         let accounts = SetAuthority {
+//             account_or_mint: self.vault.to_account_info(), // account, not mint
+//             current_authority: self.payer.to_account_info(),
+//         };
+//         CpiContext::new(self.token_program.to_account_info(), accounts)
+//     }
+// }
