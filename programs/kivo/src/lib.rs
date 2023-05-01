@@ -21,12 +21,6 @@ pub mod kivo {
             return Err(ErrorCode::NameTooLong.into())
         }
 
-        // set_authority(
-        //     ctx.accounts.get_vault_cpi_context(),
-        //     AuthorityType::AccountOwner,
-        //     Some(user_account),
-        // )?;
-
         user_account.name = name; 
         user_account.owner = owner.key();         // This should be the public key of the client-side user
         user_account.pubkey = user_account.key(); // This should be our User account PDA
@@ -50,7 +44,7 @@ pub mod kivo {
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
         transfer(cpi_ctx, amount)?;
-        
+
         // user_account.increment_deposits(amount)?; 
         // user_account.exit(&crate::id())?;   // Persist account data mutation
 
@@ -60,9 +54,40 @@ pub mod kivo {
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64) -> Result<()> {
         msg!("Handling withdrawal");
         // Add check for if amount is greater than available deposits 
-        let user_account = &mut ctx.accounts.user_account;
-        user_account.increment_total_withdrawals(amount)?;
-        user_account.exit(&crate::id())?;
+        // let user_account = &mut ctx.accounts.user_account;
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.pda_token_account.to_account_info(),
+            to: ctx.accounts.withdrawer_token_account.to_account_info(),
+            authority: ctx.accounts.user_account.to_account_info().clone(),
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+
+        transfer(cpi_context, amount)?;
+
+        // user_account.increment_total_withdrawals(amount)?;
+        // user_account.exit(&crate::id())?;
+
+        Ok(())
+    }
+
+    pub fn handle_transfer(ctx: Context<Send>, amount: u64) -> Result<()> {
+        msg!("Making transfer");
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.sender_token_account.to_account_info(),
+            to: ctx.accounts.receiver_token_account.to_account_info(),
+            authority: ctx.accounts.sender_user_account.to_account_info().clone(),
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+
+        transfer(cpi_context, amount)?;
 
         Ok(())
     }
@@ -120,6 +145,7 @@ pub struct Deposit<'info> {
     pub user_account: UncheckedAccount<'info>,
     #[account(mut)]
     pub pda_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -127,11 +153,31 @@ pub struct Deposit<'info> {
 
 #[derive(Accounts)]
 pub struct Withdrawal<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub withdrawer: UncheckedAccount<'info>,
     #[account(mut)]
-    pub user_account: Account<'info, User>,
-    // Add user_vault.mint == mint constraint
-    // pub user_vault: Account<'info, TokenAccount>,
-    // pub mint: Account<'info, Mint>,
+    pub withdrawer_token_account: Account<'info, TokenAccount>,
+     /// CHECK: This is not dangerous because we don't read or write from this account
+    pub user_account: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub pda_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct Send<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub sender_user_account: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub sender_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub receiver_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
 
@@ -140,13 +186,3 @@ pub enum ErrorCode {
     #[msg("Username must be 16 characters or less!")]
     NameTooLong,
 }
-
-// impl<'info> InitializeUser<'info> { 
-//     fn get_vault_cpi_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
-//         let accounts = SetAuthority {
-//             account_or_mint: self.vault.to_account_info(), // account, not mint
-//             current_authority: self.payer.to_account_info(),
-//         };
-//         CpiContext::new(self.token_program.to_account_info(), accounts)
-//     }
-// }
