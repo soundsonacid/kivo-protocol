@@ -51,10 +51,15 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64) -> Result<()> {
+    pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
         msg!("Handling withdrawal");
-        // Add check for if amount is greater than available deposits 
-        // let user_account = &mut ctx.accounts.user_account;
+
+        let seeds = &[
+            b"user",
+            ctx.accounts.withdrawer.key.as_ref(),
+            &[bump]
+        ];
+        let signer_seeds = &[&seeds[..]];
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.pda_token_account.to_account_info(),
@@ -64,7 +69,7 @@ pub mod kivo {
 
         let cpi_program = ctx.accounts.token_program.to_account_info().clone();
 
-        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         transfer(cpi_context, amount)?;
 
@@ -89,6 +94,17 @@ pub mod kivo {
 
         transfer(cpi_context, amount)?;
 
+        Ok(())
+    }
+
+    pub fn edit_username(ctx: Context<EditUsername>, username: String) -> Result<()> {
+        msg!("Changing username!");
+
+        let user_account = &mut ctx.accounts.user_account;
+
+        user_account.name = username;
+        user_account.exit(&crate::id())?;
+        
         Ok(())
     }
 }
@@ -179,6 +195,13 @@ pub struct Send<'info> {
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct EditUsername<'info> {
+    #[account(mut)]
+    pub user_account: Account<'info, User>,
+    pub system_program: Program<'info, System>
 }
 
 #[error_code]
