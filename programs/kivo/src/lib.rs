@@ -1,5 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
+use switchboard_v2::*;
+
+use std::convert::TryInto;
 
 declare_id!("8N3JeLHZP1uWVjZ6hwdC79MjTQWQ3gfmAQh4qTwc6GeF");
 
@@ -14,7 +17,7 @@ pub mod kivo {
         let owner = &mut ctx.accounts.owner;
 
         if name.chars().count() > 16 {            // The maximum length of a username is 16 characters
-            return Err(ErrorCode::NameTooLong.into())
+            return Err(KivoErrorCode::NameTooLong.into())
         }
 
         user_account.name = name; 
@@ -25,7 +28,7 @@ pub mod kivo {
     }
 
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        msg!("Handling deposit");
+        msg!("Depositing");
         // Add check for if amount is 0
         // Add check for if user is bankrupt / in liquidation
         // Add USD calculation via oracle
@@ -48,7 +51,7 @@ pub mod kivo {
     }
 
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
-        msg!("Handling withdrawal");
+        msg!("Withdrawing");
 
         let seeds = &[
             b"user",
@@ -76,11 +79,11 @@ pub mod kivo {
     }
 
     pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8) -> Result<()> {
-        msg!("Making transfer");
+        msg!("Executing transaction");
 
         let seeds = &[
             b"user",
-            ctx.accounts.sender_user_account.key.as_ref(),
+            ctx.accounts.sender.key.as_ref(),
             &[bump]
         ];
         let signer_seeds = &[&seeds[..]];
@@ -101,7 +104,7 @@ pub mod kivo {
     }
 
     pub fn handle_create_transaction_account(ctx: Context<CreateTransactionAccount>, token: u16, amount: u64, time_stamp: u64) -> Result<()> {
-        msg!("Creating request!");
+        msg!("Creating transaction account");
 
         let user_transaction_account = &mut ctx.accounts.user_transaction_account;
         let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
@@ -135,7 +138,7 @@ pub mod kivo {
     }
 
     pub fn handle_edit_username(ctx: Context<EditUsername>, username: String) -> Result<()> {
-        msg!("Changing username!");
+        msg!("Editing username");
 
         let user_account = &mut ctx.accounts.user_account;
 
@@ -277,6 +280,8 @@ pub struct CreateTransactionAccount<'info> {
 #[derive(Accounts)]
 pub struct ExecuteTransaction<'info> {
     /// CHECK: This is not dangerous because we don't read or write from this account
+    pub sender: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
     pub sender_user_account: UncheckedAccount<'info>,
     #[account(mut)]
     pub sender_token_account: Account<'info, TokenAccount>,
@@ -296,7 +301,7 @@ pub struct EditUsername<'info> {
 }
 
 #[error_code]
-pub enum ErrorCode {
+pub enum KivoErrorCode {
     #[msg("Username must be 16 characters or less!")]
     NameTooLong,
 }

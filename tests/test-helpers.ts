@@ -12,10 +12,10 @@ const program = anchor.workspace.Kivo as Program<Kivo>;
 // This enforces uniqueness because the PDA generation will fail if the user's name is the same as a previously created user as the PDA will have already been created.
 export async function initialize_user(name : string, client: anchor.web3.Keypair) {
   const seeds = [Buffer.from("user"), client.publicKey.toBuffer()];
-  const [userPDA, _] = anchor.web3.PublicKey.findProgramAddressSync(seeds, program.programId);
+  const [userPDA, bump] = anchor.web3.PublicKey.findProgramAddressSync(seeds, program.programId);
   
     await program.methods
-          .initializeUser(name)
+          .handleInitializeUser(name)
           .accounts({
             owner: client.publicKey,
             userAccount: userPDA,
@@ -30,6 +30,6 @@ export async function initialize_user(name : string, client: anchor.web3.Keypair
     console.log(`PDA: ${userPDA.toBase58()}`)
     console.log(`Client: ${client.publicKey.toBase58()}`)
 
-    return user
+    return { user, bump }
 }
 
