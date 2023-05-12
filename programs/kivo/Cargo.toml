@@ -19,3 +19,6 @@ default = []
 anchor-lang = "0.26.0"
 anchor-spl = "0.26.0"
 switchboard-v2 = "0.1.23"
+jupiter-cpi = "4.0.3"
+spl-token-swap = { version = "3.0.0", features = [ "no-entrypoint" ]}
+

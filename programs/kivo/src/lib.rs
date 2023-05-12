@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
-use switchboard_v2::*;
-
-use std::convert::TryInto;
+use jupiter_cpi;
 
 declare_id!("8N3JeLHZP1uWVjZ6hwdC79MjTQWQ3gfmAQh4qTwc6GeF");
 
@@ -92,6 +90,39 @@ pub mod kivo {
             from: ctx.accounts.sender_token_account.to_account_info(),
             to: ctx.accounts.receiver_token_account.to_account_info(),
             authority: ctx.accounts.sender_user_account.to_account_info().clone(),
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+
+        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+        transfer(cpi_context, amount)?;
+
+        Ok(())
+    }
+
+    pub fn handle_execute_swap_transaction(ctx: Context<ExecuteSwapTransaction>, amount: u64, bump: u8) -> Result<()> {
+        msg!("Executing swap transaction");
+
+        let seeds = &[
+            b"user",
+            ctx.accounts.sender.key.as_ref(),
+            &[bump]
+        ];
+
+        let signer_seeds = &[&seeds[..]];
+
+        let swap_cpi_context = ctx.accounts.get_swap_cpi_context(signer_seeds);
+
+        jupiter_cpi::cpi::token_swap(swap_cpi_context)?;
+
+        msg!("Swap complete");
+        msg!("Executing transaction");
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.sender_destination_token_account.to_account_info(),
+            to: ctx.accounts.receiver_token_account.to_account_info(),
+            authority: ctx.accounts.sender_user_account.to_account_info(),
         };
 
         let cpi_program = ctx.accounts.token_program.to_account_info().clone();
@@ -292,6 +323,63 @@ pub struct ExecuteTransaction<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
+
+#[derive(Accounts)]
+pub struct ExecuteSwapTransaction<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub sender: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub sender_user_account: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub sender_source_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub sender_destination_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub receiver_token_account: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub swap_account: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub swap_authority: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub swap_source: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub swap_destination: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub pool_mint: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub pool_fee: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_swap_program: UncheckedAccount<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub jupiter_program: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+}
+
+impl<'info> ExecuteSwapTransaction<'info> {
+    fn get_swap_cpi_context<'a>(&self, signer_seeds: &'a [&'a [&'a [u8]]]) 
+        -> CpiContext<'a, 'a, 'a, 'info, jupiter_cpi::cpi::accounts::TokenSwap<'info>> {
+
+        let accounts = jupiter_cpi::cpi::accounts::TokenSwap {
+            token_swap_program: self.token_swap_program.to_account_info(),
+            token_program: self.token_program.to_account_info().clone(),
+            swap: self.swap_account.to_account_info(),
+            authority: self.swap_authority.to_account_info(),
+            user_transfer_authority: self.sender_user_account.to_account_info(),
+            source: self.sender_source_token_account.to_account_info(),
+            swap_source: self.swap_source.to_account_info(),
+            swap_destination: self.swap_destination.to_account_info(),
+            destination: self.sender_destination_token_account.to_account_info(),
+            pool_mint: self.pool_mint.to_account_info(),
+            pool_fee: self.pool_fee.to_account_info(),
+        };
+
+        CpiContext::new_with_signer(self.jupiter_program.to_account_info(), accounts, signer_seeds)
+    }
+}
+
 
 #[derive(Accounts)]
 pub struct EditUsername<'info> {
