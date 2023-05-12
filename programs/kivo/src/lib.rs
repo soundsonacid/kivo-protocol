@@ -8,19 +8,25 @@ declare_id!("8N3JeLHZP1uWVjZ6hwdC79MjTQWQ3gfmAQh4qTwc6GeF");
 pub mod kivo {
     use super::*;
 
-    pub fn handle_initialize_user(ctx: Context<InitializeUser>, name: String) -> Result<()> {
-        msg!("Initializing user");
-        // Get mutable references to both the user account PDA and the owner (client-side user) pubkey
-        let user_account = &mut ctx.accounts.user_account;
-        let owner = &mut ctx.accounts.owner;
+    pub fn handle_initialize_user(ctx: Context<InitializeUser>, name: String, account_type: u8) -> Result<()> {
+        msg!("Initalizing user!");
 
-        if name.chars().count() > 16 {            // The maximum length of a username is 16 characters
-            return Err(KivoErrorCode::NameTooLong.into())
+        if name.chars().count() > 16 {
+            return Err(KivoErrorCode::NameTooLong.into());
         }
 
-        user_account.name = name; 
-        user_account.owner = owner.key();         // This should be the public key of the client-side user
-        user_account.pubkey = user_account.key(); // This should be our User account PDA
+        let user_account = &mut ctx.accounts.user_account;
+        let username_account = &mut ctx.accounts.username_account;
+
+        username_account.set_owner(user_account.key());
+        username_account.set_username(name.clone());
+
+        user_account.set_owner(ctx.accounts.payer.key());
+        user_account.set_username(name);
+        user_account.set_account_type(account_type);
+
+        username_account.exit(&crate::id())?;
+        user_account.exit(&crate::id())?;
 
         Ok(())
     }
@@ -142,23 +148,23 @@ pub mod kivo {
         let user_account = &mut ctx.accounts.user_account;
         let receiver_account = &mut ctx.accounts.receiver_account;
 
-        user_transaction_account.sender_pda = user_account.pubkey;
-        user_transaction_account.token = token;
-        user_transaction_account.amount = amount;
-        user_transaction_account.time_stamp = time_stamp;
-        user_transaction_account.receiver_transaction_pda = receiver_transaction_account.key();
-        user_transaction_account.status = false;
+        user_transaction_account.set_sender_account(user_account.key());
+        user_transaction_account.set_token(token);
+        user_transaction_account.set_amount(amount);
+        user_transaction_account.set_time_stamp(time_stamp);
+        user_transaction_account.set_receiver_transaction_account(receiver_transaction_account.key());
+        user_transaction_account.set_status(false);
 
-        user_account.payments_sent = user_account.payments_sent.saturating_add(1);
+        user_account.increment_payments_sent();
 
-        receiver_transaction_account.sender_pda = user_account.pubkey;
-        receiver_transaction_account.token = token;
-        receiver_transaction_account.amount = amount;
-        receiver_transaction_account.time_stamp = time_stamp;
-        receiver_transaction_account.receiver_transaction_pda = user_transaction_account.key();
-        receiver_transaction_account.status = false;
+        receiver_transaction_account.set_sender_account(user_transaction_account.sender_account);
+        receiver_transaction_account.set_token(token);
+        receiver_transaction_account.set_amount(amount);
+        receiver_transaction_account.set_time_stamp(time_stamp);
+        receiver_transaction_account.set_receiver_transaction_account(user_transaction_account.key());
+        receiver_transaction_account.set_status(false);
 
-        receiver_account.payments_received = receiver_account.payments_received.saturating_add(1);
+        receiver_account.increment_payments_received();
 
         user_account.exit(&crate::id())?;
         user_transaction_account.exit(&crate::id())?;
@@ -171,10 +177,18 @@ pub mod kivo {
     pub fn handle_edit_username(ctx: Context<EditUsername>, username: String) -> Result<()> {
         msg!("Editing username");
 
+        let new_username_account = &mut ctx.accounts.new_username_account;
         let user_account = &mut ctx.accounts.user_account;
+        
+        ctx.accounts.old_username_account.close(user_account.to_account_info())?;
 
-        user_account.name = username;
+        new_username_account.set_owner(user_account.key());
+        new_username_account.set_username(username.clone());
+
+        user_account.set_username(username);
+
         user_account.exit(&crate::id())?;
+        new_username_account.exit(&crate::id())?;
         
         Ok(())
     }
@@ -185,37 +199,94 @@ pub mod kivo {
 #[account]
 #[derive(Default)]
 pub struct User {
-    pub pubkey: Pubkey,         // This should be a PDA
-    pub owner: Pubkey,          // This should be the public key of the client
-    pub name: String,
-    pub total_deposits: u64,
-    pub total_withdraws: u64,
-    pub payments_sent: u32,
-    pub payments_received: u32,
+    pub owner: Pubkey, // OWNER PUBLIC KEY 32
+    pub username: String, // USERNAME 20
+    pub account_type: u8, // ACCOUNT TYPE 1
+    pub total_deposits: u64, // DEPOSITS 8
+    pub total_withdraws: u64, // WITHDRAWS 8
+    pub payments_sent: u32, // SENT 4
+    pub payments_received: u32 // RECEIVED 4
 }
 
 #[account]
-#[derive(Default)]
 pub struct Transaction {
-    pub sender_pda: Pubkey, // PDA 32
+    pub sender_account: Pubkey, // PDA 32
     pub token: u16, // TOKEN TYPE 4
     pub amount: u64, // AMOUNT 8
     pub time_stamp: u64, // TIME STAMP 8
-    pub receiver_transaction_pda: Pubkey, // PDA 32
+    pub receiver_transaction_account: Pubkey, // PDA 32
     pub status: bool // STATUS 1
 }
 
-impl User {
-    pub fn increment_total_deposits(&mut self, amount: u64) -> Result<()> {       // Implement error check or remove Ok(()) result
-        self.total_deposits = self.total_deposits.saturating_add(amount);
+#[account]
+pub struct Username {
+    pub user_account: Pubkey, // 32
+    pub username: String // 20
+}
 
-        Ok(())
+impl User {
+    pub(crate) fn set_owner(&mut self, owner: Pubkey) {
+        self.owner = owner;
+    }
+    
+    pub(crate) fn set_username(&mut self, username: String) {
+        self.username = username;
     }
 
-    pub fn increment_total_withdrawals(&mut self, amount: u64) -> Result <()> {
-        self.total_withdraws = self.total_withdraws.saturating_add(amount);
+    pub(crate) fn set_account_type(&mut self, account_type: u8) {
+        self.account_type = account_type;
+    }
 
-        Ok(())
+    pub(crate) fn increment_payments_sent(&mut self) {
+        self.payments_sent = self.payments_sent.saturating_add(1);
+    }
+
+    pub(crate) fn increment_payments_received(&mut self) {
+        self.payments_received = self.payments_received.saturating_add(1);
+    }
+
+    // pub(crate) fn increment_total_deposits(&mut self, amount: u64) {  
+    //     self.total_deposits = self.total_deposits.saturating_add(amount);
+    // }
+
+    // pub(crate) fn increment_total_withdrawals(&mut self, amount: u64)  {
+    //     self.total_withdraws = self.total_withdraws.saturating_add(amount);
+    // }
+}
+
+impl Transaction {
+    pub(crate) fn set_sender_account(&mut self, sender_account: Pubkey) {
+        self.sender_account = sender_account;
+    }
+    
+    pub(crate) fn set_token(&mut self, token: u16) {
+        self.token = token;
+    }
+
+    pub(crate) fn set_amount(&mut self, amount: u64) {
+        self.amount = amount;
+    }
+
+    pub(crate) fn set_time_stamp(&mut self, time_stamp: u64) {
+        self.time_stamp = time_stamp;
+    }
+
+    pub(crate) fn set_receiver_transaction_account(&mut self, receiver_transaction_account: Pubkey) {
+        self.receiver_transaction_account = receiver_transaction_account;
+    }
+
+    pub(crate) fn set_status(&mut self, status: bool) {
+        self.status = status;
+    }
+}
+
+impl Username {
+    pub(crate) fn set_owner(&mut self, user_account: Pubkey) {
+        self.user_account = user_account;
+    }
+    
+    pub(crate) fn set_username(&mut self, username: String) {
+        self.username = username;
     }
 }
 
@@ -228,12 +299,21 @@ impl User {
 // 6. EditUsername
 
 #[derive(Accounts)]
+#[instruction(name: String)]
 pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 32 + 20 + 8 + 8, // disc + pk + pk + str + u64 + u64
-        seeds = [b"user", owner.to_account_info().key.as_ref()], 
+        space = 8 + 32 + 20,
+        seeds = [b"username", name.as_bytes()],
+        bump
+    )]
+    pub username_account: Account<'info, Username>,
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + 32 + 20 + 1 + 8 + 8 + 4 + 4,
+        seeds = [b"user", payer.key.as_ref()], 
         bump,
     )]
     pub user_account: Account<'info, User>,  // This should be a PDA
@@ -242,7 +322,18 @@ pub struct InitializeUser<'info> {
     pub payer: Signer<'info>,                // This should also be the public key of the client
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
 }
+
+// impl<'info> InitializeUser<'info> { 
+//     fn get_vault_cpi_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
+//         let accounts = SetAuthority {
+//             account_or_mint: self.vault.to_account_info(), // account, not mint
+//             current_authority: self.payer.to_account_info(),
+//         };
+//         CpiContext::new(self.token_program.to_account_info(), accounts)
+//     }
+// }
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -380,11 +471,23 @@ impl<'info> ExecuteSwapTransaction<'info> {
     }
 }
 
-
 #[derive(Accounts)]
+#[instruction(new_name: String)]
 pub struct EditUsername<'info> {
     #[account(mut)]
+    pub old_username_account: Account<'info, Username>,
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + 32 + 20,
+        seeds = [b"username", new_name.as_bytes()],
+        bump
+    )]
+    pub new_username_account: Account<'info, Username>,
+    #[account(mut)]
     pub user_account: Account<'info, User>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
     pub system_program: Program<'info, System>
 }
 
