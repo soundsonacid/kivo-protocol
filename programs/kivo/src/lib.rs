@@ -8,7 +8,7 @@ use crate::instructions::transaction::*;
 pub mod state;
 pub mod instructions;
 
-declare_id!("8N3JeLHZP1uWVjZ6hwdC79MjTQWQ3gfmAQh4qTwc6GeF");
+declare_id!("HyA8SiVhkkYoidUuFkmVXWDgRtiiwQTy465GwH5m6XSw");
 
 #[program]
 pub mod kivo {
@@ -145,7 +145,6 @@ pub mod kivo {
     }
 
     pub fn handle_create_transaction_account(ctx: Context<CreateTransactionAccount>, 
-                                            token: u16, 
                                             amount: u64, 
                                             time_stamp: u64) -> Result<()> {
         msg!("Creating transaction account");
@@ -154,9 +153,10 @@ pub mod kivo {
         let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
         let user_account = &mut ctx.accounts.user_account;
         let receiver_account = &mut ctx.accounts.receiver_account;
-
+        let token = &mut ctx.accounts.token;
+        
         user_transaction_account.set_sender_account(user_account.key());
-        user_transaction_account.set_token(token);
+        user_transaction_account.set_token(token.key());
         user_transaction_account.set_amount(amount);
         user_transaction_account.set_time_stamp(time_stamp);
         user_transaction_account.set_receiver_transaction_account(receiver_transaction_account.key());
@@ -165,7 +165,7 @@ pub mod kivo {
         user_account.increment_payments_sent();
 
         receiver_transaction_account.set_sender_account(user_transaction_account.sender_account);
-        receiver_transaction_account.set_token(token);
+        receiver_transaction_account.set_token(token.key());
         receiver_transaction_account.set_amount(amount);
         receiver_transaction_account.set_time_stamp(time_stamp);
         receiver_transaction_account.set_receiver_transaction_account(user_transaction_account.key());

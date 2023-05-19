@@ -26,46 +26,46 @@ pub struct InitializeUser<'info> {
     )]
     pub user_account: Account<'info, User>,  // This should be a PDA
     // User Associated Token Accounts
-    pub wsol_mint: Account<'info, Mint>,
+    pub wsol_mint: Box<Account<'info, Mint>>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = wsol_mint,
         associated_token::authority = user_account,
     )]
-    pub wsol_vault: Account<'info, TokenAccount>,
-    pub usdc_mint: Account<'info, Mint>,
+    pub wsol_vault: Box<Account<'info, TokenAccount>>,
+    pub usdc_mint: Box<Account<'info, Mint>>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = usdc_mint,
         associated_token::authority = user_account,
     )]
-    pub usdc_vault: Account<'info, TokenAccount>,
-    pub usdt_mint: Account<'info, Mint>,
+    pub usdc_vault: Box<Account<'info, TokenAccount>>,
+    pub usdt_mint: Box<Account<'info, Mint>>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = usdt_mint,
         associated_token::authority = user_account,
     )]
-    pub usdt_vault: Account<'info, TokenAccount>,
-    pub dai_mint: Account<'info, Mint>,
+    pub usdt_vault: Box<Account<'info, TokenAccount>>,
+    pub dai_mint: Box<Account<'info, Mint>>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = dai_mint,
         associated_token::authority = user_account,
     )]
-    pub dai_vault: Account<'info, TokenAccount>,
-    pub bonk_mint: Account<'info, Mint>,
+    pub dai_vault: Box<Account<'info, TokenAccount>>,
+    pub bonk_mint: Box<Account<'info, Mint>>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = bonk_mint,
         associated_token::authority = user_account,
     )]
-    pub bonk_vault: Account<'info, TokenAccount>,
+    pub bonk_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub payer: Signer<'info>,                // This should also be the public key of the client
     pub owner: Signer<'info>,                // This should be the public key of the client 

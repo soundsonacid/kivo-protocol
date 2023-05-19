@@ -9,7 +9,7 @@ pub struct CreateTransactionAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 4 + 8 + 8 + 32 + 1, // pk + u16 + u64 + u64 + pk + bool
+        space = 8 + 32 + 32 + 8 + 8 + 32 + 1, // pk + pk + u64 + u64 + pk + bool
         seeds = [b"transaction",
                  user_account.to_account_info().key.as_ref(),
                  user_account.payments_sent.to_le_bytes().as_ref()],
@@ -30,6 +30,7 @@ pub struct CreateTransactionAccount<'info> {
         bump
     )]
     pub receiver_transaction_account: Account<'info, Transaction>,
+    pub token: Account<'info, Mint>,
     #[account(mut)]
     pub payer: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
