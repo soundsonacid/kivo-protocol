@@ -16,7 +16,7 @@ pub struct InitializeUser<'info> {
         seeds = [b"username", name.as_bytes()],
         bump
     )]
-    pub username_account: Account<'info, Username>,
+    pub username_account: Box<Account<'info, Username>>,
     #[account(
         init,
         payer = payer,
@@ -24,7 +24,7 @@ pub struct InitializeUser<'info> {
         seeds = [b"user", payer.key.as_ref()], 
         bump,
     )]
-    pub user_account: Account<'info, User>,  // This should be a PDA
+    pub user_account: Box<Account<'info, User>>,  // This should be a PDA
     // User Associated Token Accounts
     pub wsol_mint: Box<Account<'info, Mint>>,
     #[account(
@@ -68,7 +68,8 @@ pub struct InitializeUser<'info> {
     pub bonk_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub payer: Signer<'info>,                // This should also be the public key of the client
-    pub owner: Signer<'info>,                // This should be the public key of the client 
+    /// CHECK: 
+    pub owner: UncheckedAccount<'info>,      // This should be the public key of the client 
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,

@@ -26,9 +26,10 @@ pub mod kivo {
 
         username_account.set_username(name.clone());
 
+        user_account.set_owner(ctx.accounts.owner.clone().key());
         user_account.set_username(name);
         user_account.set_account_type(account_type);
-
+        
         username_account.exit(&crate::id())?;
         user_account.exit(&crate::id())?;
 

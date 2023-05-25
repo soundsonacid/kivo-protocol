@@ -13,9 +13,9 @@ pub struct User {
 }
 
 impl User {
-    // pub(crate) fn set_owner(&mut self, owner: Pubkey) {
-    //     self.owner = owner;
-    // }
+    pub(crate) fn set_owner(&mut self, owner: Pubkey) {
+        self.owner = owner;
+    }
     
     pub(crate) fn set_username(&mut self, username: String) {
         self.username = username;
