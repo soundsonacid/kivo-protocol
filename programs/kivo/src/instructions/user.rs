@@ -4,6 +4,7 @@ use anchor_spl::associated_token::*;
 
 use crate::state::user::Username;
 use crate::state::user::User;
+use crate::state::user::Friend;
 
 #[derive(Accounts)]
 #[instruction(name: String)]
@@ -20,7 +21,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 20 + 1 + 8 + 8 + 4 + 4,
+        space = 8 + 32 + 20 + 1 + 8 + 8 + 4 + 4 + 4,
         seeds = [b"user", payer.key.as_ref()], 
         bump,
     )]
@@ -125,4 +126,24 @@ pub struct EditUsername<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>
+}
+
+#[derive(Accounts)]
+pub struct AddFriend<'info> {
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + 32 + 32 + 4,
+        seeds = [b"friend",
+                 user_account.to_account_info().key.as_ref(),
+                 user_account.num_friends.to_le_bytes().as_ref()],        
+        bump
+    )]
+    pub new_friend: Account<'info, Friend>,
+    #[account(mut)]
+    pub user_account: Account<'info, User>,
+    pub friend_account: Account<'info, User>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }

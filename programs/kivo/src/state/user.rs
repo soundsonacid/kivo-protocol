@@ -9,7 +9,8 @@ pub struct User {
     pub total_deposits: u64, // DEPOSITS 8
     pub total_withdraws: u64, // WITHDRAWS 8
     pub payments_sent: u32, // SENT 4
-    pub payments_received: u32 // RECEIVED 4
+    pub payments_received: u32, // RECEIVED 4
+    pub num_friends: u32 
 }
 
 impl User {
@@ -31,6 +32,10 @@ impl User {
 
     pub(crate) fn increment_payments_received(&mut self) {
         self.payments_received = self.payments_received.saturating_add(1);
+    }
+
+    pub(crate) fn increment_friends(&mut self) {
+        self.num_friends = self.num_friends.saturating_add(1);
     }
 
     // pub(crate) fn increment_total_deposits(&mut self, amount: u64) {  
@@ -55,5 +60,26 @@ impl Username {
     
     pub(crate) fn set_username(&mut self, username: String) {
         self.username = username;
+    }
+}
+
+#[account]
+pub struct Friend {
+    pub user_account: Pubkey,
+    pub friend_account: Pubkey,
+    pub friend_number: u32,
+}
+
+impl Friend {
+    pub(crate) fn set_user_account(&mut self, user_account: Pubkey) {
+        self.user_account = user_account;
+    }
+
+    pub(crate) fn set_friend_account(&mut self, friend_account: Pubkey) {
+        self.friend_account = friend_account;
+    }
+
+    pub(crate) fn set_friend_number(&mut self, friend_number: u32) {
+        self.friend_number = friend_number;
     }
 }

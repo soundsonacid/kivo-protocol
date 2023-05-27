@@ -200,6 +200,22 @@ pub mod kivo {
         
         Ok(())
     }
+
+    pub fn handle_add_friend(ctx: Context<AddFriend>) -> Result<()> {
+        msg!("Adding friend");
+
+        let user_account = &mut ctx.accounts.user_account;
+        let friend_account = &mut ctx.accounts.friend_account;
+        let friend = &mut ctx.accounts.new_friend;
+
+        friend.set_user_account(user_account.key());
+        friend.set_friend_account(friend_account.key());
+        friend.set_friend_number(user_account.num_friends);
+
+        user_account.increment_friends();
+        user_account.exit(&crate::id())?;
+        Ok(())
+    }
 }
 
 
