@@ -1,10 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
-use jupiter_cpi;
+// use jupiter_cpi;
+use clockwork_sdk::state::ThreadResponse;
 
 use crate::instructions::user::*;
 use crate::instructions::transaction::*;
 use crate::instructions::contract::*;
+use crate::state::contract::*;
 
 pub mod state;
 pub mod instructions;
@@ -215,6 +217,72 @@ pub mod kivo {
 
         user_account.increment_friends();
         user_account.exit(&crate::id())?;
+        Ok(())
+    }
+
+    pub fn handle_create_payment(ctx: Context<CreatePayment>, amount: u64) -> Result<()> {
+        let authority = &ctx.accounts.authority;
+        let authority_token_account = &mut ctx.accounts.authority_token_account;
+        let mint = &ctx.accounts.mint;
+        let payment = &mut ctx.accounts.payment;
+        let receipient = &ctx.accounts.receipient;
+        let token_program = &ctx.accounts.token_program;
+
+        payment.new(
+            amount,
+            authority.key(),
+            mint.key(),
+            receipient.key()
+        )?;
+
+        approve(
+            CpiContext::new(
+                token_program.to_account_info(),
+                Approve {
+                    authority: authority.to_account_info(),
+                    to: authority_token_account.to_account_info(),
+                    delegate: payment.to_account_info(),
+                }),
+            u64::MAX
+        )?;
+
+        Ok(())
+    }
+
+    pub fn handle_disburse_payment(ctx: Context<DisbursePayment>) -> Result<ThreadResponse> {
+        let authority_token_account = &mut ctx.accounts.authority_token_account;
+        let payment = &mut ctx.accounts.payment;
+        let receipient_token_account = &ctx.accounts.receipient;
+        let token_program = &ctx.accounts.token_program;
+
+        let bump = *ctx.bumps.get("payment").unwrap();
+        transfer(
+            CpiContext::new_with_signer(
+                token_program.to_account_info(),
+                Transfer {
+                    from: authority_token_account.to_account_info(),
+                    to: receipient_token_account.to_account_info(),
+                    authority: payment.to_account_info(),
+                },
+                &[&[
+                    b"payment",
+                    payment.authority.as_ref(),
+                    payment.mint.as_ref(),
+                    payment.receipient.as_ref(),
+                    &[bump]]
+                ]),
+            payment.amount,
+        )?;
+
+        Ok(ThreadResponse::default())
+    }
+
+    pub fn handle_update_payment(ctx: Context<UpdatePayment>, amount: Option<u64>) -> Result<()> {
+        let payment = &mut ctx.accounts.payment;
+        if let Some(amount) = amount {
+            payment.amount = amount;
+        }
+
         Ok(())
     }
 }

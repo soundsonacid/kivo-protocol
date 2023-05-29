@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, solana_program::{system_program, sysvar}};
-use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, TokenAccount, Transfer}};
+use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, TokenAccount}};
 use std::mem::size_of;
-use clockwork_sdk::{state::{Thread, ThreadAccount, ThreadResponse}};
+use clockwork_sdk::{state::{Thread, ThreadAccount}};
 use crate::state::contract::*;
 
 #[derive(Accounts)]
@@ -79,4 +79,23 @@ pub struct DisbursePayment<'info> {
     pub token_program: Program<'info, token::Token>,
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
+}
+
+#[derive(Accounts)]
+#[instruction(amount: Option<u64>)]
+pub struct UpdatePayment<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [
+            b"payment",
+            payment.authority.key().as_ref(),
+            payment.mint.key().as_ref(),
+            payment.receipient.key().as_ref(),
+        ],
+        bump,
+        has_one = authority,
+    )]
+    pub payment: Account<'info, Payment>,
 }
