@@ -4,6 +4,7 @@ use jupiter_cpi;
 
 use crate::instructions::user::*;
 use crate::instructions::transaction::*;
+use crate::instructions::contract::*;
 
 pub mod state;
 pub mod instructions;
@@ -112,38 +113,38 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_execute_swap_transaction(ctx: Context<ExecuteSwapTransaction>, amount: u64, bump: u8) -> Result<()> {
-        msg!("Executing swap transaction");
+    // pub fn handle_execute_swap_transaction(ctx: Context<ExecuteSwapTransaction>, amount: u64, bump: u8) -> Result<()> {
+    //     msg!("Executing swap transaction");
 
-        let seeds = &[
-            b"user",
-            ctx.accounts.sender.key.as_ref(),
-            &[bump]
-        ];
+    //     let seeds = &[
+    //         b"user",
+    //         ctx.accounts.sender.key.as_ref(),
+    //         &[bump]
+    //     ];
 
-        let signer_seeds = &[&seeds[..]];
+    //     let signer_seeds = &[&seeds[..]];
 
-        let swap_cpi_context = ctx.accounts.get_swap_cpi_context(signer_seeds);
+    //     let swap_cpi_context = ctx.accounts.get_swap_cpi_context(signer_seeds);
 
-        jupiter_cpi::cpi::token_swap(swap_cpi_context)?;
+    //     jupiter_cpi::cpi::token_swap(swap_cpi_context)?;
 
-        msg!("Swap complete");
-        msg!("Executing transaction");
+    //     msg!("Swap complete");
+    //     msg!("Executing transaction");
 
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.sender_destination_token_account.to_account_info(),
-            to: ctx.accounts.receiver_token_account.to_account_info(),
-            authority: ctx.accounts.sender_user_account.to_account_info(),
-        };
+    //     let cpi_accounts = Transfer {
+    //         from: ctx.accounts.sender_destination_token_account.to_account_info(),
+    //         to: ctx.accounts.receiver_token_account.to_account_info(),
+    //         authority: ctx.accounts.sender_user_account.to_account_info(),
+    //     };
 
-        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+    //     let cpi_program = ctx.accounts.token_program.to_account_info().clone();
 
-        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+    //     let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        transfer(cpi_context, amount)?;
+    //     transfer(cpi_context, amount)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub fn handle_create_transaction_account(ctx: Context<CreateTransactionAccount>, 
                                             amount: u64, 
