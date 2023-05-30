@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 use anchor_spl::associated_token::*;
+use std::mem::size_of;
 
 use crate::state::user::Username;
 use crate::state::user::User;
@@ -13,7 +14,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 20,
+        space = 8 + size_of::<Username>(),
         seeds = [b"username", name.as_bytes()],
         bump
     )]
@@ -21,7 +22,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 20 + 1 + 8 + 8 + 4 + 4 + 4,
+        space = 8 + size_of::<User>(),
         seeds = [b"user", payer.key.as_ref()], 
         bump,
     )]

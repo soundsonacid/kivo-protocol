@@ -13,13 +13,14 @@ pub struct Payment {
 }
 
 impl Payment {
-    pub fn pubkey(authority: Pubkey, mint: Pubkey, receipient: Pubkey) -> Pubkey {
+    pub fn pubkey(authority: Pubkey, mint: Pubkey, receipient: Pubkey, nonce: u32) -> Pubkey {
         Pubkey::find_program_address(
             &[
                 b"payment",
                 authority.as_ref(),
                 mint.as_ref(),
                 receipient.as_ref(),
+                nonce.to_le_bytes().as_ref(),
             ],
             &crate::ID,
         )

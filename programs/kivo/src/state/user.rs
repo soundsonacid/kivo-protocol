@@ -10,7 +10,8 @@ pub struct User {
     pub total_withdraws: u64, // WITHDRAWS 8
     pub payments_sent: u32, // SENT 4
     pub payments_received: u32, // RECEIVED 4
-    pub num_friends: u32 
+    pub num_friends: u32,
+    pub num_contracts: u32,
 }
 
 impl User {
@@ -36,6 +37,10 @@ impl User {
 
     pub(crate) fn increment_friends(&mut self) {
         self.num_friends = self.num_friends.saturating_add(1);
+    }
+
+    pub(crate) fn increment_contracts(&mut self) {
+        self.num_contracts = self.num_contracts.saturating_add(1);
     }
 
     // pub(crate) fn increment_total_deposits(&mut self, amount: u64) {  

@@ -3,36 +3,52 @@ use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, TokenAcc
 use std::mem::size_of;
 use clockwork_sdk::{state::{Thread, ThreadAccount}};
 use crate::state::contract::*;
+use crate::state::user::*;
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
 pub struct CreatePayment<'info> {
     #[account(
         init,
-        payer = authority,
+        payer = payer,
         seeds = [
             b"payment",
-            authority.key().as_ref(),
+            user_account.key().as_ref(),
             mint.key().as_ref(),
             receipient.key().as_ref(),
+            user_account.num_contracts.to_le_bytes().as_ref(),
         ],
         bump,
         space = 8 + size_of::<Payment>(),
     )]
     pub payment: Account<'info, Payment>,
-    #[account(mut, associated_token::authority = authority, associated_token::mint = mint)]
-    pub authority_token_account: Account<'info, TokenAccount>,
+
+    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
+    pub user_token_account: Account<'info, TokenAccount>,
+
     pub mint: Account<'info, Mint>,
+
     /// CHECK: validated by payment account seeds
     pub receipient: UncheckedAccount<'info>,
+
     #[account(address = sysvar::rent::ID)]
     pub rent: Sysvar<'info, Rent>,
+
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub user_account: Account<'info, User>,
+
+    /// CHECK: validated by signer seeds
+    pub sender: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, token::Token>,
+
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 }

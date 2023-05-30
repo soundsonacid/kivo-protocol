@@ -220,9 +220,9 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_create_payment(ctx: Context<CreatePayment>, amount: u64) -> Result<()> {
-        let authority = &ctx.accounts.authority;
-        let authority_token_account = &mut ctx.accounts.authority_token_account;
+    pub fn handle_create_payment(ctx: Context<CreatePayment>, amount: u64, bump: u8) -> Result<()> {
+        let user_account = &mut ctx.accounts.user_account;
+        let user_token_account = &mut ctx.accounts.user_token_account;
         let mint = &ctx.accounts.mint;
         let payment = &mut ctx.accounts.payment;
         let receipient = &ctx.accounts.receipient;
@@ -230,21 +230,29 @@ pub mod kivo {
 
         payment.new(
             amount,
-            authority.key(),
+            user_account.key(),
             mint.key(),
-            receipient.key()
+            receipient.key(),
         )?;
 
         approve(
-            CpiContext::new(
+            CpiContext::new_with_signer(
                 token_program.to_account_info(),
                 Approve {
-                    authority: authority.to_account_info(),
-                    to: authority_token_account.to_account_info(),
+                    authority: user_account.to_account_info(),
+                    to: user_token_account.to_account_info(),
                     delegate: payment.to_account_info(),
-                }),
+                }, 
+                &[&[
+                    b"user",
+                    ctx.accounts.sender.key.as_ref(),
+                    &[bump]]
+                ]),
             u64::MAX
         )?;
+
+        user_account.increment_contracts();
+        user_account.exit(&crate::id())?;
 
         Ok(())
     }
@@ -256,6 +264,7 @@ pub mod kivo {
         let token_program = &ctx.accounts.token_program;
 
         let bump = *ctx.bumps.get("payment").unwrap();
+
         transfer(
             CpiContext::new_with_signer(
                 token_program.to_account_info(),
