@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Transaction {
     pub sender_account: Pubkey, // PDA 32
-    pub token: Pubkey, // MINT 32
+    pub mint: Pubkey, // MINT 32
     pub amount: u64, // AMOUNT 8
     pub time_stamp: u64, // TIME STAMP 8
     pub receiver_transaction_account: Pubkey, // PDA 32
@@ -16,7 +16,7 @@ impl Transaction {
     }
     
     pub(crate) fn set_token(&mut self, token: Pubkey) {
-        self.token = token;
+        self.mint = token;
     }
 
     pub(crate) fn set_amount(&mut self, amount: u64) {

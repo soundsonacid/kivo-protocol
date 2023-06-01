@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::{system_program};
 use anchor_spl::token::*;
 use anchor_spl::associated_token::*;
 use std::mem::size_of;
@@ -10,7 +11,6 @@ use crate::state::user::Friend;
 #[derive(Accounts)]
 #[instruction(name: String)]
 pub struct InitializeUser<'info> {
-    // User Accounts
     #[account(
         init,
         payer = payer,
@@ -19,6 +19,7 @@ pub struct InitializeUser<'info> {
         bump
     )]
     pub username_account: Box<Account<'info, Username>>,
+
     #[account(
         init,
         payer = payer,
@@ -26,9 +27,11 @@ pub struct InitializeUser<'info> {
         seeds = [b"user", payer.key.as_ref()], 
         bump,
     )]
-    pub user_account: Box<Account<'info, User>>,  // This should be a PDA
-    // User Associated Token Accounts
+    pub user_account: Box<Account<'info, User>>,  
+
+    #[account()]
     pub wsol_mint: Box<Account<'info, Mint>>,
+
     #[account(
         init,
         payer = payer,
@@ -36,7 +39,10 @@ pub struct InitializeUser<'info> {
         associated_token::authority = user_account,
     )]
     pub wsol_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account()]
     pub usdc_mint: Box<Account<'info, Mint>>,
+
     #[account(
         init,
         payer = payer,
@@ -44,7 +50,10 @@ pub struct InitializeUser<'info> {
         associated_token::authority = user_account,
     )]
     pub usdc_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account()]
     pub usdt_mint: Box<Account<'info, Mint>>,
+
     #[account(
         init,
         payer = payer,
@@ -52,7 +61,10 @@ pub struct InitializeUser<'info> {
         associated_token::authority = user_account,
     )]
     pub usdt_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account()]
     pub dai_mint: Box<Account<'info, Mint>>,
+
     #[account(
         init,
         payer = payer,
@@ -60,7 +72,10 @@ pub struct InitializeUser<'info> {
         associated_token::authority = user_account,
     )]
     pub dai_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account()]
     pub bonk_mint: Box<Account<'info, Mint>>,
+
     #[account(
         init,
         payer = payer,
@@ -68,64 +83,124 @@ pub struct InitializeUser<'info> {
         associated_token::authority = user_account,
     )]
     pub bonk_vault: Box<Account<'info, TokenAccount>>,
+
     #[account(mut)]
-    pub payer: Signer<'info>,                // This should also be the public key of the client
+    pub payer: Signer<'info>,                
+
     /// CHECK: 
-    pub owner: UncheckedAccount<'info>,      // This should be the public key of the client 
+    pub owner: UncheckedAccount<'info>,      
+
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
+
+    #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    /// CHECK: This is not dangerous because we don't read or write from this account
+    /// CHECK: validated by cpi context
     pub depositor: UncheckedAccount<'info>,
-    #[account(mut)]
+
+    #[account(mut, associated_token::authority = depositor, associated_token::mint = mint)]
     pub depositor_token_account: Account<'info, TokenAccount>,
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    pub user_account: UncheckedAccount<'info>,
-    #[account(mut)]
+
+    #[account(
+        mut,
+        seeds = [
+            b"user",
+            payer.key().as_ref()
+        ],
+        bump
+    )]
+    pub user_account: Account<'info, User>,
+
+    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
     pub pda_token_account: Account<'info, TokenAccount>,
+
+    #[account()]
+    pub mint: Account<'info, Mint>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct Withdrawal<'info> {
-    /// CHECK: This is not dangerous because we don't read or write from this account
+    /// CHECK: Validated by signer seeds
     pub withdrawer: UncheckedAccount<'info>,
-    #[account(mut)]
+
+    #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
     pub withdrawer_token_account: Account<'info, TokenAccount>,
-     /// CHECK: This is not dangerous because we don't read or write from this account
-    pub user_account: UncheckedAccount<'info>,
-    #[account(mut)]
+
+    #[account(
+        mut,
+        seeds = [
+            b"user",
+            payer.key().as_ref(),
+        ],
+        bump
+    )]
+    pub user_account: Account<'info, User>,
+
+    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
     pub pda_token_account: Account<'info, TokenAccount>,
+
+    #[account()]
+    pub mint: Account<'info, Mint>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
+
+    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 #[instruction(new_name: String)]
 pub struct EditUsername<'info> {
-    #[account(mut)]
-    pub old_username_account: Account<'info, Username>,
     #[account(
         init,
-        payer = signer,
-        space = 8 + 32 + 20,
+        payer = payer,
+        space = 8 + size_of::<Username>(),
         seeds = [b"username", new_name.as_bytes()],
-        bump
+        bump,
+        has_one = user_account,
     )]
     pub new_username_account: Account<'info, Username>,
-    #[account(mut)]
+
+    #[account(
+        mut,
+        has_one = user_account,
+    )]
+    pub old_username_account: Account<'info, Username>,
+
+    #[account(
+        mut, 
+        seeds = [
+            b"user",
+            payer.key().as_ref(),
+        ],
+        bump
+    )]
     pub user_account: Account<'info, User>,
+
     #[account(mut)]
-    pub signer: Signer<'info>,
+    pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>
 }
 
@@ -134,17 +209,31 @@ pub struct AddFriend<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 32 + 4,
-        seeds = [b"friend",
-                 user_account.to_account_info().key.as_ref(),
-                 user_account.num_friends.to_le_bytes().as_ref()],        
+        space = 8 + size_of::<Friend>(),
+        seeds = [
+            b"friend",
+            user_account.to_account_info().key.as_ref(),
+            user_account.num_friends.to_le_bytes().as_ref()
+        ],        
         bump
     )]
     pub new_friend: Account<'info, Friend>,
-    #[account(mut)]
+
+    #[account(
+        mut,
+        seeds = [
+            b"user",
+            payer.key().as_ref(),
+        ],
+        bump
+    )]
     pub user_account: Account<'info, User>,
+
     pub friend_account: Account<'info, User>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 }

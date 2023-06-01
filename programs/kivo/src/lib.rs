@@ -65,12 +65,19 @@ pub mod kivo {
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
         msg!("Withdrawing");
 
+        // let mint = &ctx.accounts.mint;
+
         let seeds = &[
             b"user",
             ctx.accounts.withdrawer.key.as_ref(),
             &[bump]
         ];
         let signer_seeds = &[&seeds[..]];
+
+        // if ctx.accounts.mint.to_account_info().key == &wrapped_sol_mint {
+        //     msg!("Unwrapping");
+        //     // Unwrap
+        // }
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.pda_token_account.to_account_info(),
@@ -157,10 +164,10 @@ pub mod kivo {
         let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
         let user_account = &mut ctx.accounts.user_account;
         let receiver_account = &mut ctx.accounts.receiver_account;
-        let token = &mut ctx.accounts.token;
+        let mint = &mut ctx.accounts.mint;
         
         user_transaction_account.set_sender_account(user_account.key());
-        user_transaction_account.set_token(token.key());
+        user_transaction_account.set_token(mint.key());
         user_transaction_account.set_amount(amount);
         user_transaction_account.set_time_stamp(time_stamp);
         user_transaction_account.set_receiver_transaction_account(receiver_transaction_account.key());
@@ -169,7 +176,7 @@ pub mod kivo {
         user_account.increment_payments_sent();
 
         receiver_transaction_account.set_sender_account(user_transaction_account.sender_account);
-        receiver_transaction_account.set_token(token.key());
+        receiver_transaction_account.set_token(mint.key());
         receiver_transaction_account.set_amount(amount);
         receiver_transaction_account.set_time_stamp(time_stamp);
         receiver_transaction_account.set_receiver_transaction_account(user_transaction_account.key());
@@ -258,7 +265,7 @@ pub mod kivo {
     }
 
     pub fn handle_disburse_payment(ctx: Context<DisbursePayment>) -> Result<ThreadResponse> {
-        let authority_token_account = &mut ctx.accounts.authority_token_account;
+        let user_token_account = &mut ctx.accounts.user_token_account;
         let payment = &mut ctx.accounts.payment;
         let receipient_token_account = &ctx.accounts.receipient;
         let token_program = &ctx.accounts.token_program;
@@ -269,7 +276,7 @@ pub mod kivo {
             CpiContext::new_with_signer(
                 token_program.to_account_info(),
                 Transfer {
-                    from: authority_token_account.to_account_info(),
+                    from: user_token_account.to_account_info(),
                     to: receipient_token_account.to_account_info(),
                     authority: payment.to_account_info(),
                 },
