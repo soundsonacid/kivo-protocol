@@ -75,22 +75,25 @@ impl UsernameAccount for Account<'_, Username> {
 
 #[account]
 pub struct Friend {
-    pub user_account: Pubkey,
     pub friend_account: Pubkey,
+    pub friend_username: [u8; 16],
+    pub friend_account_type: u8
 }
 
 impl Size for Friend {
-    const SIZE: usize = 64;
+    const SIZE: usize = 49;
 }
 
 impl FriendAccount for Account<'_, Friend> {
     fn new(
         &mut self,
-        user_account: Pubkey,
         friend_account: Pubkey,
+        friend_username: [u8; 16],
+        friend_account_type: u8
     ) -> Result<()> {
-        self.user_account = user_account;
         self.friend_account = friend_account;
+        self.friend_username = friend_username;
+        self.friend_account_type = friend_account_type;
         Ok(())
     }
 }

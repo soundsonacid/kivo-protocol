@@ -271,8 +271,9 @@ pub mod kivo {
         let friend = &mut ctx.accounts.new_friend;
 
         friend.new(
-            user_account.key(),
             friend_account.key(),
+            friend_account.username.clone(),
+            friend_account.account_type.clone(),
         )?;
 
         user_account.increment_friends();

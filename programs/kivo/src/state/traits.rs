@@ -56,8 +56,9 @@ pub trait UsernameAccount {
 pub trait FriendAccount {
     fn new(
         &mut self,
-        user_account: Pubkey,
         friend_account: Pubkey,
+        friend_username: [u8; 16],
+        friend_account_type: u8
     ) -> Result<()>;
 }
 
