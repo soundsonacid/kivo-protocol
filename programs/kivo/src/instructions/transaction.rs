@@ -11,7 +11,7 @@ pub struct CreateTransactionAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Transaction::SIZE, // pk + pk + u64 + u64 + pk + bool
+        space = 8 + Transaction::SIZE,
         seeds = [
             b"transaction",
             requester.to_account_info().key.as_ref(),
@@ -23,7 +23,7 @@ pub struct CreateTransactionAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Transaction::SIZE, // pk + u16 + u64 + u64 + pk + bool
+        space = 8 + Transaction::SIZE,
         seeds = [
             b"transaction",
             fulfiller.to_account_info().key.as_ref(),
@@ -77,9 +77,11 @@ pub struct ExecuteTransaction<'info> {
         init,
         payer = payer,
         space = 8 + Transaction::SIZE,
-        seeds = [b"transaction",
-                 sender_user_account.to_account_info().key.as_ref(),
-                 sender_user_account.transactions.to_le_bytes().as_ref()],
+        seeds = [
+            b"transaction",
+            sender_user_account.to_account_info().key.as_ref(),
+            sender_user_account.transactions.to_le_bytes().as_ref()
+        ],
         bump
     )]
     pub sender_transaction_account: Box<Account<'info, Transaction>>,
@@ -94,9 +96,11 @@ pub struct ExecuteTransaction<'info> {
         init,
         payer = payer,
         space = 8 + Transaction::SIZE,
-        seeds = [b"transaction",
-                 receiver_user_account.to_account_info().key.as_ref(),
-                 receiver_user_account.transactions.to_le_bytes().as_ref()],
+        seeds = [
+            b"transaction",
+            receiver_user_account.to_account_info().key.as_ref(),
+            receiver_user_account.transactions.to_le_bytes().as_ref()
+        ],
         bump
     )]
     pub receiver_transaction_account: Box<Account<'info, Transaction>>,

@@ -17,29 +17,6 @@ pub struct User {
     pub num_contracts: u32,
 }
 
-impl User {
-    pub(crate) fn set_username(&mut self, username: [u8; 16]) {
-        self.username = username;
-    }
-
-    pub(crate) fn increment_transactions(&mut self) {
-        self.transactions = self.transactions.saturating_add(1);
-    }
-
-    pub(crate) fn increment_friends(&mut self) {
-        self.num_friends = self.num_friends.saturating_add(1);
-    }
-
-    pub(crate) fn increment_contracts(&mut self) {
-        self.num_contracts = self.num_contracts.saturating_add(1);
-    }
-
-    // pub fn get_user_signer_seeds<'a>(&'a self, pubkey: &'a Pubkey, bump: &'a [u8]) -> [&'a [u8]; 3] {
-    //     [b"user", pubkey.as_ref(), bump]
-    // }
-    
-}
-
 impl Size for User {
     const SIZE: usize = 79;
 }
@@ -55,6 +32,22 @@ impl UserAccount for Account<'_, User> {
         self.username = username;
         self.account_type = account_type;
         Ok(())
+    }
+
+    fn set_username(&mut self, username: [u8; 16]) {
+        self.username = username;
+    }
+
+    fn increment_transactions(&mut self) {
+        self.transactions = self.transactions.saturating_add(1);
+    }
+
+    fn increment_friends(&mut self) {
+        self.num_friends = self.num_friends.saturating_add(1);
+    }
+
+    fn increment_contracts(&mut self) {
+        self.num_contracts = self.num_contracts.saturating_add(1);
     }
 }
 

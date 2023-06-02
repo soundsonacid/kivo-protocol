@@ -17,6 +17,15 @@ pub trait TransactionAccount {
         receiver_transaction_account: Pubkey,
         status: bool
     ) -> Result<()>;
+
+    fn fulfill(
+        &mut self,
+        fulfiller: Pubkey,
+        fulfiller_username: [u8; 16],
+        requester: Pubkey,
+        requester_username: [u8; 16],
+        status: bool
+    ) -> Result<()>;
 }
 
 pub trait UserAccount {
@@ -26,6 +35,14 @@ pub trait UserAccount {
         username: [u8; 16],
         account_type: u8,
     ) -> Result<()>;
+
+    fn set_username(&mut self, username: [u8; 16]);
+
+    fn increment_transactions(&mut self);
+
+    fn increment_friends(&mut self);
+
+    fn increment_contracts(&mut self);
 }
 
 pub trait UsernameAccount {

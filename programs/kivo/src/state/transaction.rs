@@ -14,24 +14,6 @@ pub struct Transaction {
     pub status: bool // STATUS 1
 }
 
-impl Transaction {
-    pub fn fulfill(
-        &mut self,
-        fulfiller: Pubkey,
-        fulfiller_username: [u8; 16],
-        requester: Pubkey,
-        requester_username: [u8; 16],
-        status: bool
-    ) -> Result<()> {
-        self.sender_account = fulfiller;
-        self.sender_username = fulfiller_username;
-        self.receiver_account = requester;
-        self.receiver_username = requester_username;
-        self.status = status;
-        Ok(())
-    }
-}
-
 impl Size for Transaction {
     const SIZE: usize = 177;
 }
@@ -57,6 +39,22 @@ impl TransactionAccount for Account<'_, Transaction> {
         self.receiver_account = receiver_account;
         self.receiver_username = receiver_username;
         self.receiver_transaction_account = receiver_transaction_account;
+        self.status = status;
+        Ok(())
+    }
+
+    fn fulfill(
+        &mut self,
+        fulfiller: Pubkey,
+        fulfiller_username: [u8; 16],
+        requester: Pubkey,
+        requester_username: [u8; 16],
+        status: bool
+    ) -> Result<()> {
+        self.sender_account = fulfiller;
+        self.sender_username = fulfiller_username;
+        self.receiver_account = requester;
+        self.receiver_username = requester_username;
         self.status = status;
         Ok(())
     }
