@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use static_assertions::const_assert_eq;
 use crate::state::traits::{ Size, TransactionAccount };
 
 #[account]
@@ -15,7 +16,7 @@ pub struct Transaction {
 }
 
 impl Size for Transaction {
-    const SIZE: usize = 177;
+    const SIZE: usize = 185;
 }
 
 impl TransactionAccount for Account<'_, Transaction> {
@@ -59,3 +60,5 @@ impl TransactionAccount for Account<'_, Transaction> {
         Ok(())
     }
 }
+
+// const_assert_eq!(Transaction::SIZE, std::mem::size_of::<Transaction>() + 8);

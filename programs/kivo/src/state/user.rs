@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-// use static_assertions::const_assert_eq;
-// use std::mem::size_of;
+use static_assertions::const_assert_eq;
 use crate::state::traits::{ Size, UserAccount, UsernameAccount, FriendAccount };
 
 
@@ -18,7 +17,7 @@ pub struct User {
 }
 
 impl Size for User {
-    const SIZE: usize = 79;
+    const SIZE: usize = 89;
 }
 
 impl UserAccount for Account<'_, User> {
@@ -64,7 +63,7 @@ pub struct Username {
 }
 
 impl Size for Username {
-    const SIZE: usize = 48;
+    const SIZE: usize = 56;
 }
 
 impl UsernameAccount for Account<'_, Username> {
@@ -87,7 +86,7 @@ pub struct Friend {
 }
 
 impl Size for Friend {
-    const SIZE: usize = 49;
+    const SIZE: usize = 57;
 }
 
 impl FriendAccount for Account<'_, Friend> {
@@ -105,6 +104,6 @@ impl FriendAccount for Account<'_, Friend> {
 }
 
 
-// const_assert_eq!(User::SIZE, size_of::<User>() + 8);
-// const_assert_eq!(Username::SIZE, size_of::<Username>() + 8);
-// const_assert_eq!(Friend::SIZE, size_of::<Friend>() + 8);
+// const_assert_eq!(User::SIZE, std::mem::size_of::<User>() + 8);
+const_assert_eq!(Username::SIZE, std::mem::size_of::<Username>() + 8);
+const_assert_eq!(Friend::SIZE, std::mem::size_of::<Friend>() + 8);
