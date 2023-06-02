@@ -1404,6 +1404,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang 0.27.0",
  "anchor-spl",
+ "bytemuck",
  "clockwork-sdk",
  "jupiter-cpi",
  "spl-token-swap",

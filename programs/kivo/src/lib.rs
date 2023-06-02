@@ -67,6 +67,10 @@ pub mod kivo {
         ];
         let signer_seeds = &[&seeds[..]];
 
+        // let user = &ctx.accounts.user_account;
+
+        // let signer_seeds = user.get_user_signer_seeds(&user.key(), bump);
+
         let cpi_accounts = Transfer {
             from: ctx.accounts.pda_token_account.to_account_info(),
             to: ctx.accounts.withdrawer_token_account.to_account_info(),
@@ -82,8 +86,14 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8) -> Result<()> {
+    pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_stamp: u64) -> Result<()> {
         msg!("Executing transaction");
+
+        let user_transaction_account = &mut ctx.accounts.sender_transaction_account;
+        let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
+        let user_account = &mut ctx.accounts.sender_user_account;
+        let receiver_account = &mut ctx.accounts.receiver_user_account;
+        let mint = &ctx.accounts.mint;
 
         let seeds = &[
             b"user",
@@ -95,7 +105,7 @@ pub mod kivo {
         let cpi_accounts = Transfer {
             from: ctx.accounts.sender_token_account.to_account_info(),
             to: ctx.accounts.receiver_token_account.to_account_info(),
-            authority: ctx.accounts.sender_user_account.to_account_info().clone(),
+            authority: user_account.to_account_info().clone(),
         };
 
         let cpi_program = ctx.accounts.token_program.to_account_info().clone();
@@ -103,6 +113,34 @@ pub mod kivo {
         let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         transfer(cpi_context, amount)?;
+
+        user_transaction_account.new(
+            user_account.key(),
+            user_account.username.clone(),
+            mint.key(),
+            amount,
+            time_stamp,
+            receiver_account.key(),
+            receiver_account.username.clone(),
+            receiver_transaction_account.key(),
+            true,
+        )?;
+
+        user_account.increment_transactions();
+
+        receiver_transaction_account.new(
+            user_account.key(),
+            user_account.username.clone(),
+            mint.key(),
+            amount,
+            time_stamp,
+            receiver_account.key(),
+            receiver_account.username.clone(),
+            user_transaction_account.key(),
+            true,
+        )?;
+
+        receiver_account.increment_transactions();
 
         Ok(())
     }
@@ -119,26 +157,32 @@ pub mod kivo {
         let mint = &mut ctx.accounts.mint;
 
         user_transaction_account.new(
-            user_account.key(), 
+            user_account.key(),
+            user_account.username.clone(),
             mint.key(), 
             amount, 
             time_stamp, 
+            receiver_account.key(),
+            receiver_account.username.clone(),
             receiver_transaction_account.key(), 
             false, 
         )?;
 
-        user_account.increment_payments_sent();
+        user_account.increment_transactions();
 
         receiver_transaction_account.new(
-            user_transaction_account.key(), 
-            mint.key(), 
-            amount, 
-            time_stamp, 
-            user_transaction_account.key(), 
-            false, 
+            user_account.key(),
+            user_account.username.clone(),
+            mint.key(),
+            amount,
+            time_stamp,
+            receiver_account.key(),
+            receiver_account.username.clone(),
+            user_transaction_account.key(),
+            false,
         )?;
 
-        receiver_account.increment_payments_received();
+        receiver_account.increment_transactions();
 
         user_account.exit(&crate::id())?;
         user_transaction_account.exit(&crate::id())?;

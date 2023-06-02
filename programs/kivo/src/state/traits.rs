@@ -8,9 +8,12 @@ pub trait TransactionAccount {
     fn new(
         &mut self,
         sender_account: Pubkey,
+        sender_username: [u8; 16],
         mint: Pubkey,
         amount: u64,
         time_stamp: u64,
+        receiver_account: Pubkey,
+        receiver_username: [u8; 16],
         receiver_transaction_account: Pubkey,
         status: bool
     ) -> Result<()>;

@@ -15,7 +15,7 @@ pub struct CreateTransactionAccount<'info> {
         seeds = [
             b"transaction",
             user_account.to_account_info().key.as_ref(),
-            user_account.payments_sent.to_le_bytes().as_ref()],
+            user_account.transactions.to_le_bytes().as_ref()],
         bump
     )]
     pub user_transaction_account: Account<'info, Transaction>,
@@ -27,7 +27,7 @@ pub struct CreateTransactionAccount<'info> {
         seeds = [
             b"transaction",
             receiver_account.to_account_info().key.as_ref(),
-            receiver_account.payments_received.to_le_bytes().as_ref()],
+            receiver_account.transactions.to_le_bytes().as_ref()],
         bump
     )]
     pub receiver_transaction_account: Account<'info, Transaction>,
@@ -71,19 +71,41 @@ pub struct ExecuteTransaction<'info> {
         ],
         bump
     )]
-    pub sender_user_account: Account<'info, User>,
+    pub sender_user_account: Box<Account<'info, User>>,
+
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + Transaction::SIZE,
+        seeds = [b"transaction",
+                 sender_user_account.to_account_info().key.as_ref(),
+                 sender_user_account.transactions.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sender_transaction_account: Box<Account<'info, Transaction>>,
 
     #[account(mut, associated_token::authority = sender_user_account, associated_token::mint = mint)]
-    pub sender_token_account: Account<'info, TokenAccount>,
+    pub sender_token_account: Box<Account<'info, TokenAccount>>,
 
     #[account()]
     pub receiver_user_account: Account<'info, User>,
 
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + Transaction::SIZE,
+        seeds = [b"transaction",
+                 receiver_user_account.to_account_info().key.as_ref(),
+                 receiver_user_account.transactions.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub receiver_transaction_account: Box<Account<'info, Transaction>>,
+
     #[account(mut, associated_token::authority = receiver_user_account, associated_token::mint = mint)]
-    pub receiver_token_account: Account<'info, TokenAccount>,
+    pub receiver_token_account: Box<Account<'info, TokenAccount>>,
 
     #[account()]
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

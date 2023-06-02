@@ -22,3 +22,4 @@ jupiter-cpi = "4.0.3"
 spl-token-swap = { version = "3.0.0", features = [ "no-entrypoint" ]}
 clockwork-sdk = "2.0.17"
 static_assertions = "1.1.0"
+bytemuck = { version = "1.4.0" }

@@ -12,8 +12,7 @@ pub struct User {
     pub account_type: u8, 
     pub total_deposits: u64, 
     pub total_withdraws: u64, 
-    pub payments_sent: u32,
-    pub payments_received: u32, 
+    pub transactions: u64,
     pub num_friends: u32,
     pub num_contracts: u32,
 }
@@ -23,12 +22,8 @@ impl User {
         self.username = username;
     }
 
-    pub(crate) fn increment_payments_sent(&mut self) {
-        self.payments_sent = self.payments_sent.saturating_add(1);
-    }
-
-    pub(crate) fn increment_payments_received(&mut self) {
-        self.payments_received = self.payments_received.saturating_add(1);
+    pub(crate) fn increment_transactions(&mut self) {
+        self.transactions = self.transactions.saturating_add(1);
     }
 
     pub(crate) fn increment_friends(&mut self) {
@@ -38,6 +33,11 @@ impl User {
     pub(crate) fn increment_contracts(&mut self) {
         self.num_contracts = self.num_contracts.saturating_add(1);
     }
+
+    // pub fn get_user_signer_seeds<'a>(&'a self, pubkey: &'a Pubkey, bump: &'a [u8]) -> [&'a [u8]; 3] {
+    //     [b"user", pubkey.as_ref(), bump]
+    // }
+    
 }
 
 impl Size for User {
