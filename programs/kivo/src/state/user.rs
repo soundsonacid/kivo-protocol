@@ -49,11 +49,12 @@ impl UserAccount for Account<'_, User> {
     fn increment_contracts(&mut self) {
         self.num_contracts = self.num_contracts.saturating_add(1);
     }
+}
 
-    fn get_user_signer_seeds<'a>(&'a self, pubkey: &'a Pubkey, bump: &'a u8) -> [&'a [u8]; 3] {
+impl User {
+    pub fn get_user_signer_seeds<'a>(pubkey: &'a Pubkey, bump: &'a u8) -> [&'a [u8]; 3] {
         [b"user".as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
     }
-    
 }
 
 #[account]

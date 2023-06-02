@@ -6,6 +6,7 @@ use crate::instructions::user::*;
 use crate::instructions::transaction::*;
 use crate::instructions::contract::*;
 use crate::state::traits::*;
+use crate::state::user::*;
 
 pub mod state;
 pub mod instructions;
@@ -60,9 +61,7 @@ pub mod kivo {
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
         msg!("Withdrawing");
 
-        let user = &ctx.accounts.user_account;
-
-        let signature_seeds = user.get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
         let cpi_accounts = Transfer {
@@ -89,7 +88,7 @@ pub mod kivo {
         let receiver = &mut ctx.accounts.receiver_user_account;
         let mint = &ctx.accounts.mint;
 
-        let signature_seeds = sender.get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
         let cpi_accounts = Transfer {
@@ -190,7 +189,7 @@ pub mod kivo {
         let requester = &ctx.accounts.requester;
         let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
 
-        let signature_seeds = fulfiller.get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
         let cpi_accounts = Transfer {

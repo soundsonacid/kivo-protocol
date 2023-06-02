@@ -43,8 +43,6 @@ pub trait UserAccount {
     fn increment_friends(&mut self);
 
     fn increment_contracts(&mut self);
-
-    fn get_user_signer_seeds<'a>(&'a self, pubkey: &'a Pubkey, bump: &'a u8) -> [&'a [u8]; 3];
 }
 
 
