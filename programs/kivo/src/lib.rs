@@ -19,22 +19,22 @@ pub mod kivo {
     pub fn handle_initialize_user(ctx: Context<InitializeUser>, name: [u8; 16], account_type: u8) -> Result<()> {
         msg!("Initalizing user!");
     
-        let user_account = &mut ctx.accounts.user_account;
-        let username_account = &mut ctx.accounts.username_account;
+        let user = &mut ctx.accounts.user_account;
+        let username = &mut ctx.accounts.username_account;
     
-        username_account.new(
-            user_account.key(),
+        username.new(
+            user.key(),
             name,
         )?;
     
-        user_account.new(
+        user.new(
             ctx.accounts.owner.clone().key(),
             name,
             account_type,
         )?;
         
-        username_account.exit(&crate::id())?;
-        user_account.exit(&crate::id())?;
+        username.exit(&crate::id())?;
+        user.exit(&crate::id())?;
     
         Ok(())
     }
@@ -60,16 +60,10 @@ pub mod kivo {
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
         msg!("Withdrawing");
 
-        let seeds = &[
-            b"user",
-            ctx.accounts.withdrawer.key.as_ref(),
-            &[bump]
-        ];
-        let signer_seeds = &[&seeds[..]];
+        let user = &ctx.accounts.user_account;
 
-        // let user = &ctx.accounts.user_account;
-
-        // let signer_seeds = user.get_user_signer_seeds(&user.key(), bump);
+        let signature_seeds = user.get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signer_seeds = &[&signature_seeds[..]];
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.pda_token_account.to_account_info(),
@@ -89,23 +83,19 @@ pub mod kivo {
     pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_stamp: u64) -> Result<()> {
         msg!("Executing transaction");
 
-        let user_transaction_account = &mut ctx.accounts.sender_transaction_account;
+        let sender_transaction_account = &mut ctx.accounts.sender_transaction_account;
         let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
-        let user_account = &mut ctx.accounts.sender_user_account;
-        let receiver_account = &mut ctx.accounts.receiver_user_account;
+        let sender = &mut ctx.accounts.sender_user_account;
+        let receiver = &mut ctx.accounts.receiver_user_account;
         let mint = &ctx.accounts.mint;
 
-        let seeds = &[
-            b"user",
-            ctx.accounts.sender.key.as_ref(),
-            &[bump]
-        ];
-        let signer_seeds = &[&seeds[..]];
+        let signature_seeds = sender.get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signer_seeds = &[&signature_seeds[..]];
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.sender_token_account.to_account_info(),
             to: ctx.accounts.receiver_token_account.to_account_info(),
-            authority: user_account.to_account_info().clone(),
+            authority: sender.to_account_info().clone(),
         };
 
         let cpi_program = ctx.accounts.token_program.to_account_info().clone();
@@ -114,33 +104,33 @@ pub mod kivo {
 
         transfer(cpi_context, amount)?;
 
-        user_transaction_account.new(
-            user_account.key(),
-            user_account.username.clone(),
+        sender_transaction_account.new(
+            sender.key(),
+            sender.username.clone(),
             mint.key(),
             amount,
             time_stamp,
-            receiver_account.key(),
-            receiver_account.username.clone(),
+            receiver.key(),
+            receiver.username.clone(),
             receiver_transaction_account.key(),
             true,
         )?;
 
-        user_account.increment_transactions();
+        sender.increment_transactions();
 
         receiver_transaction_account.new(
-            user_account.key(),
-            user_account.username.clone(),
+            sender.key(),
+            sender.username.clone(),
             mint.key(),
             amount,
             time_stamp,
-            receiver_account.key(),
-            receiver_account.username.clone(),
-            user_transaction_account.key(),
+            receiver.key(),
+            receiver.username.clone(),
+            sender_transaction_account.key(),
             true,
         )?;
 
-        receiver_account.increment_transactions();
+        receiver.increment_transactions();
 
         Ok(())
     }
@@ -200,13 +190,8 @@ pub mod kivo {
         let requester = &ctx.accounts.requester;
         let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
 
-        let seeds = &[
-            b"user",
-            ctx.accounts.payer.key.as_ref(),
-            &[bump]
-        ];
-        
-        let signer_seeds = &[&seeds[..]];
+        let signature_seeds = fulfiller.get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signer_seeds = &[&signature_seeds[..]];
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.fulfiller_token_account.to_account_info(),
@@ -245,20 +230,20 @@ pub mod kivo {
     pub fn handle_edit_username(ctx: Context<EditUsername>, username: [u8; 16]) -> Result<()> {
         msg!("Editing username");
     
-        let new_username_account = &mut ctx.accounts.new_username_account;
-        let user_account = &mut ctx.accounts.user_account;
+        let new_username = &mut ctx.accounts.new_username_account;
+        let user = &mut ctx.accounts.user_account;
         
-        ctx.accounts.old_username_account.close(user_account.to_account_info())?;
+        ctx.accounts.old_username_account.close(user.to_account_info())?;
     
-        new_username_account.new(
-            user_account.key(),
+        new_username.new(
+            user.key(),
             username,
         )?;
     
-        user_account.set_username(username);
+        user.set_username(username);
     
-        user_account.exit(&crate::id())?;
-        new_username_account.exit(&crate::id())?;
+        user.exit(&crate::id())?;
+        new_username.exit(&crate::id())?;
         
         Ok(())
     }
@@ -266,23 +251,26 @@ pub mod kivo {
     pub fn handle_add_friend(ctx: Context<AddFriend>) -> Result<()> {
         msg!("Adding friend");
 
-        let user_account = &mut ctx.accounts.user_account;
-        let friend_account = &mut ctx.accounts.friend_account;
-        let friend = &mut ctx.accounts.new_friend;
+        let user = &mut ctx.accounts.user_account;
+        let friend = &mut ctx.accounts.friend_account;
+        let friend_account = &mut ctx.accounts.new_friend;
 
-        friend.new(
-            friend_account.key(),
-            friend_account.username.clone(),
-            friend_account.account_type.clone(),
+        friend_account.new(
+            friend.key(),
+            friend.username.clone(),
+            friend.account_type.clone(),
         )?;
 
-        user_account.increment_friends();
-        user_account.exit(&crate::id())?;
+        user.increment_friends();
+        user.exit(&crate::id())?;
+
         Ok(())
     }
 
     pub fn handle_create_payment(ctx: Context<CreatePayment>, amount: u64, bump: u8) -> Result<()> {
-        let user_account = &mut ctx.accounts.user_account;
+        msg!("Creating payment");
+
+        let user = &mut ctx.accounts.user_account;
         let user_token_account = &mut ctx.accounts.user_token_account;
         let mint = &ctx.accounts.mint;
         let payment = &mut ctx.accounts.payment;
@@ -291,7 +279,7 @@ pub mod kivo {
 
         payment.new(
             amount,
-            user_account.key(),
+            user.key(),
             mint.key(),
             receipient.key(),
         )?;
@@ -300,7 +288,7 @@ pub mod kivo {
             CpiContext::new_with_signer(
                 token_program.to_account_info(),
                 Approve {
-                    authority: user_account.to_account_info(),
+                    authority: user.to_account_info(),
                     to: user_token_account.to_account_info(),
                     delegate: payment.to_account_info(),
                 }, 
@@ -312,13 +300,15 @@ pub mod kivo {
             u64::MAX
         )?;
 
-        user_account.increment_contracts();
-        user_account.exit(&crate::id())?;
+        user.increment_contracts();
+        user.exit(&crate::id())?;
 
         Ok(())
     }
 
     pub fn handle_disburse_payment(ctx: Context<DisbursePayment>) -> Result<ThreadResponse> {
+        msg!("Disbursing payment");
+
         let user_token_account = &mut ctx.accounts.user_token_account;
         let payment = &mut ctx.accounts.payment;
         let receipient_token_account = &ctx.accounts.receipient;
@@ -348,6 +338,8 @@ pub mod kivo {
     }
 
     pub fn handle_update_payment(ctx: Context<UpdatePayment>, amount: Option<u64>) -> Result<()> {
+        msg!("Updating payment");
+
         let payment = &mut ctx.accounts.payment;
         if let Some(amount) = amount {
             payment.amount = amount;
