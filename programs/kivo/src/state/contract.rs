@@ -1,6 +1,7 @@
 use {
     anchor_lang::{prelude::*, AnchorDeserialize},
     std::convert::TryFrom,
+    crate::state::traits::{ Size, PaymentAccount }
 };
 
 #[account]
@@ -35,14 +36,8 @@ impl TryFrom<Vec<u8>> for Payment {
     }
 }
 
-pub trait PaymentAccount {
-    fn new(
-        &mut self,
-        amount: u64,
-        authority: Pubkey,
-        mint: Pubkey,
-        receipient: Pubkey,
-    ) -> Result<()>;
+impl Size for Payment {
+    const SIZE: usize = 104;
 }
 
 impl PaymentAccount for Account<'_, Payment> {

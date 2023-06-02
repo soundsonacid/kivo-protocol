@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use crate::state::traits::{ Size, TransactionAccount };
 
 #[account]
 pub struct Transaction {
@@ -16,16 +17,8 @@ impl Transaction {
     }
 }
 
-pub trait TransactionAccount {
-    fn new(
-        &mut self,
-        sender_account: Pubkey,
-        mint: Pubkey,
-        amount: u64,
-        time_stamp: u64,
-        receiver_transaction_account: Pubkey,
-        status: bool
-    ) -> Result<()>;
+impl Size for Transaction {
+    const SIZE: usize = 113;
 }
 
 impl TransactionAccount for Account<'_, Transaction> {

@@ -1,17 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{system_program, sysvar};
 use anchor_spl::token::*;
-use std::mem::size_of;
 
 use crate::state::transaction::Transaction;
 use crate::state::user::User;
+use crate::state::traits::Size;
 
 #[derive(Accounts)]
 pub struct CreateTransactionAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + size_of::<Transaction>(), // pk + pk + u64 + u64 + pk + bool
+        space = 8 + Transaction::SIZE, // pk + pk + u64 + u64 + pk + bool
         seeds = [
             b"transaction",
             user_account.to_account_info().key.as_ref(),
@@ -23,7 +23,7 @@ pub struct CreateTransactionAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + size_of::<Transaction>(), // pk + u16 + u64 + u64 + pk + bool
+        space = 8 + Transaction::SIZE, // pk + u16 + u64 + u64 + pk + bool
         seeds = [
             b"transaction",
             receiver_account.to_account_info().key.as_ref(),

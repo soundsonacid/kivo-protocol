@@ -1,21 +1,25 @@
 use anchor_lang::prelude::*;
+// use static_assertions::const_assert_eq;
+// use std::mem::size_of;
+use crate::state::traits::{ Size, UserAccount, UsernameAccount, FriendAccount };
+
 
 #[account]
 #[derive(Default)]
 pub struct User {
-    pub owner: Pubkey, // OWNER PUBLIC KEY 32
-    pub username: String, // USERNAME 20
-    pub account_type: u8, // ACCOUNT TYPE 1
-    pub total_deposits: u64, // DEPOSITS 8
-    pub total_withdraws: u64, // WITHDRAWS 8
-    pub payments_sent: u32, // SENT 4
-    pub payments_received: u32, // RECEIVED 4
+    pub owner: Pubkey,
+    pub username: [u8; 16], 
+    pub account_type: u8, 
+    pub total_deposits: u64, 
+    pub total_withdraws: u64, 
+    pub payments_sent: u32,
+    pub payments_received: u32, 
     pub num_friends: u32,
     pub num_contracts: u32,
 }
 
 impl User {
-    pub(crate) fn set_username(&mut self, username: String) {
+    pub(crate) fn set_username(&mut self, username: [u8; 16]) {
         self.username = username;
     }
 
@@ -34,30 +38,17 @@ impl User {
     pub(crate) fn increment_contracts(&mut self) {
         self.num_contracts = self.num_contracts.saturating_add(1);
     }
-
-    // pub(crate) fn increment_total_deposits(&mut self, amount: u64) {  
-    //     self.total_deposits = self.total_deposits.saturating_add(amount);
-    // }
-
-    // pub(crate) fn increment_total_withdrawals(&mut self, amount: u64)  {
-    //     self.total_withdraws = self.total_withdraws.saturating_add(amount);
-    // }
 }
 
-pub trait UserAccount {
-    fn new(
-        &mut self,
-        owner: Pubkey,
-        username: String,
-        account_type: u8,
-    ) -> Result<()>;
+impl Size for User {
+    const SIZE: usize = 79;
 }
 
 impl UserAccount for Account<'_, User> {
     fn new(
         &mut self,
         owner: Pubkey,
-        username: String,
+        username: [u8; 16],
         account_type: u8,
     ) -> Result<()> {
         self.owner = owner;
@@ -69,23 +60,19 @@ impl UserAccount for Account<'_, User> {
 
 #[account]
 pub struct Username {
-    pub user_account: Pubkey, // 32
-    pub username: String // 20
+    pub user_account: Pubkey,
+    pub username: [u8; 16]
 }
 
-pub trait UsernameAccount {
-    fn new(
-        &mut self,
-        user_account: Pubkey,
-        username: String,
-    ) -> Result<()>;
+impl Size for Username {
+    const SIZE: usize = 48;
 }
 
 impl UsernameAccount for Account<'_, Username> {
     fn new(
         &mut self,
         user_account: Pubkey,
-        username: String,
+        username: [u8; 16],
     ) -> Result<()> {
         self.user_account = user_account;
         self.username = username;
@@ -97,15 +84,10 @@ impl UsernameAccount for Account<'_, Username> {
 pub struct Friend {
     pub user_account: Pubkey,
     pub friend_account: Pubkey,
-    pub friend_number: u32,
 }
 
-pub trait FriendAccount {
-    fn new(
-        &mut self,
-        user_account: Pubkey,
-        friend_account: Pubkey,
-    ) -> Result<()>;
+impl Size for Friend {
+    const SIZE: usize = 64;
 }
 
 impl FriendAccount for Account<'_, Friend> {
@@ -119,3 +101,8 @@ impl FriendAccount for Account<'_, Friend> {
         Ok(())
     }
 }
+
+
+// const_assert_eq!(User::SIZE, size_of::<User>() + 8);
+// const_assert_eq!(Username::SIZE, size_of::<Username>() + 8);
+// const_assert_eq!(Friend::SIZE, size_of::<Friend>() + 8);

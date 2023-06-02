@@ -1,9 +1,10 @@
 use anchor_lang::{prelude::*, solana_program::{system_program, sysvar}};
 use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, TokenAccount}};
-use std::mem::size_of;
 use clockwork_sdk::{state::{Thread, ThreadAccount}};
+
 use crate::state::contract::*;
 use crate::state::user::*;
+use crate::state::traits::Size;
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
@@ -19,7 +20,7 @@ pub struct CreatePayment<'info> {
             user_account.num_contracts.to_le_bytes().as_ref(),
         ],
         bump,
-        space = 8 + size_of::<Payment>(),
+        space = 8 + Payment::SIZE,
     )]
     pub payment: Account<'info, Payment>,
 

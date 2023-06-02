@@ -1,14 +1,11 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
-// use jupiter_cpi;
 use clockwork_sdk::state::ThreadResponse;
 
 use crate::instructions::user::*;
 use crate::instructions::transaction::*;
 use crate::instructions::contract::*;
-use crate::state::contract::*;
-use crate::state::user::*;
-use crate::state::transaction::*;
+use crate::state::traits::*;
 
 pub mod state;
 pub mod instructions;
@@ -19,38 +16,32 @@ declare_id!("HyA8SiVhkkYoidUuFkmVXWDgRtiiwQTy465GwH5m6XSw");
 pub mod kivo {
     use super::*;
 
-    pub fn handle_initialize_user(ctx: Context<InitializeUser>, name: String, account_type: u8) -> Result<()> {
+    pub fn handle_initialize_user(ctx: Context<InitializeUser>, name: [u8; 16], account_type: u8) -> Result<()> {
         msg!("Initalizing user!");
-
-        if name.chars().count() > 16 {
-            return Err(KivoErrorCode::NameTooLong.into());
-        }
-
+    
         let user_account = &mut ctx.accounts.user_account;
         let username_account = &mut ctx.accounts.username_account;
-
+    
         username_account.new(
             user_account.key(),
-            name.clone(),
+            name,
         )?;
-
+    
         user_account.new(
             ctx.accounts.owner.clone().key(),
-            name.clone(),
+            name,
             account_type,
         )?;
         
         username_account.exit(&crate::id())?;
         user_account.exit(&crate::id())?;
-
+    
         Ok(())
     }
 
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         msg!("Depositing");
-        // Add check for if amount is 0
-        // Add check for if user is bankrupt / in liquidation
-        // Add USD calculation via oracle
+
         let cpi_accounts = Transfer {
             from: ctx.accounts.depositor_token_account.to_account_info(),
             to: ctx.accounts.pda_token_account.to_account_info(),
@@ -63,16 +54,11 @@ pub mod kivo {
 
         transfer(cpi_ctx, amount)?;
 
-        // user_account.increment_deposits(amount)?; 
-        // user_account.exit(&crate::id())?;   // Persist account data mutation
-
         Ok(())
     }
 
     pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
         msg!("Withdrawing");
-
-        // let mint = &ctx.accounts.mint;
 
         let seeds = &[
             b"user",
@@ -80,11 +66,6 @@ pub mod kivo {
             &[bump]
         ];
         let signer_seeds = &[&seeds[..]];
-
-        // if ctx.accounts.mint.to_account_info().key == &wrapped_sol_mint {
-        //     msg!("Unwrapping");
-        //     // Unwrap
-        // }
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.pda_token_account.to_account_info(),
@@ -97,9 +78,6 @@ pub mod kivo {
         let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         transfer(cpi_context, amount)?;
-
-        // user_account.increment_total_withdrawals(amount)?;
-        // user_account.exit(&crate::id())?;
 
         Ok(())
     }
@@ -128,39 +106,6 @@ pub mod kivo {
 
         Ok(())
     }
-
-    // pub fn handle_execute_swap_transaction(ctx: Context<ExecuteSwapTransaction>, amount: u64, bump: u8) -> Result<()> {
-    //     msg!("Executing swap transaction");
-
-    //     let seeds = &[
-    //         b"user",
-    //         ctx.accounts.sender.key.as_ref(),
-    //         &[bump]
-    //     ];
-
-    //     let signer_seeds = &[&seeds[..]];
-
-    //     let swap_cpi_context = ctx.accounts.get_swap_cpi_context(signer_seeds);
-
-    //     jupiter_cpi::cpi::token_swap(swap_cpi_context)?;
-
-    //     msg!("Swap complete");
-    //     msg!("Executing transaction");
-
-    //     let cpi_accounts = Transfer {
-    //         from: ctx.accounts.sender_destination_token_account.to_account_info(),
-    //         to: ctx.accounts.receiver_token_account.to_account_info(),
-    //         authority: ctx.accounts.sender_user_account.to_account_info(),
-    //     };
-
-    //     let cpi_program = ctx.accounts.token_program.to_account_info().clone();
-
-    //     let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-
-    //     transfer(cpi_context, amount)?;
-
-    //     Ok(())
-    // }
 
     pub fn handle_create_transaction_account(ctx: Context<CreateTransactionAccount>, 
                                             amount: u64, 
@@ -200,24 +145,24 @@ pub mod kivo {
         receiver_account.exit(&crate::id())?;
         receiver_transaction_account.exit(&crate::id())?;
 
-            Ok(())
+        Ok(())
     }
 
-    pub fn handle_edit_username(ctx: Context<EditUsername>, username: String) -> Result<()> {
+    pub fn handle_edit_username(ctx: Context<EditUsername>, username: [u8; 16]) -> Result<()> {
         msg!("Editing username");
-
+    
         let new_username_account = &mut ctx.accounts.new_username_account;
         let user_account = &mut ctx.accounts.user_account;
         
         ctx.accounts.old_username_account.close(user_account.to_account_info())?;
-
+    
         new_username_account.new(
             user_account.key(),
-            username.clone(),
+            username,
         )?;
-
+    
         user_account.set_username(username);
-
+    
         user_account.exit(&crate::id())?;
         new_username_account.exit(&crate::id())?;
         
@@ -315,11 +260,4 @@ pub mod kivo {
 
         Ok(())
     }
-}
-
-
-#[error_code]
-pub enum KivoErrorCode {
-    #[msg("Username must be 16 characters or less!")]
-    NameTooLong,
 }
