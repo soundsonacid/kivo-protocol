@@ -150,45 +150,95 @@ pub mod kivo {
                                             time_stamp: u64) -> Result<()> {
         msg!("Creating transaction account");
 
-        let user_transaction_account = &mut ctx.accounts.user_transaction_account;
-        let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
-        let user_account = &mut ctx.accounts.user_account;
-        let receiver_account = &mut ctx.accounts.receiver_account;
+        let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
+        let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
+        let requester = &mut ctx.accounts.requester;
+        let fulfiller = &mut ctx.accounts.fulfiller;
         let mint = &mut ctx.accounts.mint;
 
-        user_transaction_account.new(
-            user_account.key(),
-            user_account.username.clone(),
+        requester_transaction_account.new(
+            requester.key(),
+            requester.username.clone(),
             mint.key(), 
             amount, 
             time_stamp, 
-            receiver_account.key(),
-            receiver_account.username.clone(),
-            receiver_transaction_account.key(), 
+            fulfiller.key(),
+            fulfiller.username.clone(),
+            fulfiller_transaction_account.key(), 
             false, 
         )?;
 
-        user_account.increment_transactions();
+        requester.increment_transactions();
 
-        receiver_transaction_account.new(
-            user_account.key(),
-            user_account.username.clone(),
+        fulfiller_transaction_account.new(
+            requester.key(),
+            requester.username.clone(),
             mint.key(),
             amount,
             time_stamp,
-            receiver_account.key(),
-            receiver_account.username.clone(),
-            user_transaction_account.key(),
+            fulfiller.key(),
+            fulfiller.username.clone(),
+            fulfiller_transaction_account.key(),
             false,
         )?;
 
-        receiver_account.increment_transactions();
+        fulfiller.increment_transactions();
 
-        user_account.exit(&crate::id())?;
-        user_transaction_account.exit(&crate::id())?;
-        receiver_account.exit(&crate::id())?;
-        receiver_transaction_account.exit(&crate::id())?;
+        requester.exit(&crate::id())?;
+        requester_transaction_account.exit(&crate::id())?;
+        fulfiller.exit(&crate::id())?;
+        fulfiller_transaction_account.exit(&crate::id())?;
 
+        Ok(())
+    }
+
+    pub fn fulfill_transaction(ctx: Context<FulfillTransaction>, amount: u64, bump: u8) -> Result<()> {
+        msg!("Fulfilling transaction!");
+
+        let fulfiller = &ctx.accounts.fulfiller;
+        let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
+        let requester = &ctx.accounts.requester;
+        let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
+
+        let seeds = &[
+            b"user",
+            ctx.accounts.payer.key.as_ref(),
+            &[bump]
+        ];
+        
+        let signer_seeds = &[&seeds[..]];
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.fulfiller_token_account.to_account_info(),
+            to: ctx.accounts.requester_token_account.to_account_info(),
+            authority: fulfiller.to_account_info()
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+
+        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+        transfer(cpi_context, amount)?;
+
+        fulfiller_transaction_account.fulfill(
+            fulfiller.key(),
+            fulfiller.username.clone(),
+            requester.key(),
+            requester.username.clone(),
+            true
+        )?;
+
+        requester_transaction_account.fulfill(
+            fulfiller.key(),
+            fulfiller.username.clone(),
+            requester.key(),
+            requester.username.clone(),
+            true
+        )?;
+
+        fulfiller_transaction_account.exit(&crate::id())?;
+        requester_transaction_account.exit(&crate::id())?;
+        
         Ok(())
     }
 

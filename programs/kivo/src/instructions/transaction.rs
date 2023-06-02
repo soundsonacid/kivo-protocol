@@ -14,11 +14,11 @@ pub struct CreateTransactionAccount<'info> {
         space = 8 + Transaction::SIZE, // pk + pk + u64 + u64 + pk + bool
         seeds = [
             b"transaction",
-            user_account.to_account_info().key.as_ref(),
-            user_account.transactions.to_le_bytes().as_ref()],
+            requester.to_account_info().key.as_ref(),
+            requester.transactions.to_le_bytes().as_ref()],
         bump
     )]
-    pub user_transaction_account: Account<'info, Transaction>,
+    pub requester_transaction_account: Account<'info, Transaction>,
 
     #[account(
         init,
@@ -26,11 +26,11 @@ pub struct CreateTransactionAccount<'info> {
         space = 8 + Transaction::SIZE, // pk + u16 + u64 + u64 + pk + bool
         seeds = [
             b"transaction",
-            receiver_account.to_account_info().key.as_ref(),
-            receiver_account.transactions.to_le_bytes().as_ref()],
+            fulfiller.to_account_info().key.as_ref(),
+            fulfiller.transactions.to_le_bytes().as_ref()],
         bump
     )]
-    pub receiver_transaction_account: Account<'info, Transaction>,
+    pub fulfiller_transaction_account: Account<'info, Transaction>,
 
     #[account(
         mut,
@@ -40,10 +40,10 @@ pub struct CreateTransactionAccount<'info> {
         ],
         bump
     )]
-    pub user_account: Account<'info, User>,
+    pub requester: Account<'info, User>,
 
     #[account(mut)]
-    pub receiver_account: Account<'info, User>,
+    pub fulfiller: Account<'info, User>,
 
     #[account()]
     pub mint: Account<'info, Mint>,
@@ -116,3 +116,43 @@ pub struct ExecuteTransaction<'info> {
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
+
+#[derive(Accounts)]
+pub struct FulfillTransaction<'info> {
+    #[account(
+        seeds = [
+            b"user",
+            payer.key().as_ref(),
+        ],
+        bump
+    )]
+    pub fulfiller: Box<Account<'info, User>>,
+    
+    #[account(mut)]
+    pub fulfiller_transaction_account: Box<Account<'info, Transaction>>,
+
+    #[account(mut, associated_token::authority = fulfiller, associated_token::mint = mint)]
+    pub fulfiller_token_account: Box<Account<'info, TokenAccount>>,
+
+    #[account()]
+    pub requester: Box<Account<'info, User>>,
+
+    #[account(mut)]
+    pub requester_transaction_account: Box<Account<'info, Transaction>>,
+
+    #[account(mut, associated_token::authority = requester, associated_token::mint = mint)]
+    pub requester_token_account: Box<Account<'info, TokenAccount>>,
+
+    #[account()]
+    pub mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+
+    #[account(address = anchor_spl::token::ID)]
+    pub token_program: Program<'info, Token>
+}
+

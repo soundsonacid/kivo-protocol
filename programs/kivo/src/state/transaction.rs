@@ -15,8 +15,20 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn set_status(&mut self, status: bool) {
+    pub fn fulfill(
+        &mut self,
+        fulfiller: Pubkey,
+        fulfiller_username: [u8; 16],
+        requester: Pubkey,
+        requester_username: [u8; 16],
+        status: bool
+    ) -> Result<()> {
+        self.sender_account = fulfiller;
+        self.sender_username = fulfiller_username;
+        self.receiver_account = requester;
+        self.receiver_username = requester_username;
         self.status = status;
+        Ok(())
     }
 }
 
