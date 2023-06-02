@@ -7,6 +7,8 @@ use crate::instructions::user::*;
 use crate::instructions::transaction::*;
 use crate::instructions::contract::*;
 use crate::state::contract::*;
+use crate::state::user::*;
+use crate::state::transaction::*;
 
 pub mod state;
 pub mod instructions;
@@ -27,11 +29,16 @@ pub mod kivo {
         let user_account = &mut ctx.accounts.user_account;
         let username_account = &mut ctx.accounts.username_account;
 
-        username_account.set_username(name.clone());
+        username_account.new(
+            user_account.key(),
+            name.clone(),
+        )?;
 
-        user_account.set_owner(ctx.accounts.owner.clone().key());
-        user_account.set_username(name);
-        user_account.set_account_type(account_type);
+        user_account.new(
+            ctx.accounts.owner.clone().key(),
+            name.clone(),
+            account_type,
+        )?;
         
         username_account.exit(&crate::id())?;
         user_account.exit(&crate::id())?;
@@ -165,22 +172,26 @@ pub mod kivo {
         let user_account = &mut ctx.accounts.user_account;
         let receiver_account = &mut ctx.accounts.receiver_account;
         let mint = &mut ctx.accounts.mint;
-        
-        user_transaction_account.set_sender_account(user_account.key());
-        user_transaction_account.set_token(mint.key());
-        user_transaction_account.set_amount(amount);
-        user_transaction_account.set_time_stamp(time_stamp);
-        user_transaction_account.set_receiver_transaction_account(receiver_transaction_account.key());
-        user_transaction_account.set_status(false);
+
+        user_transaction_account.new(
+            user_account.key(), 
+            mint.key(), 
+            amount, 
+            time_stamp, 
+            receiver_transaction_account.key(), 
+            false, 
+        )?;
 
         user_account.increment_payments_sent();
 
-        receiver_transaction_account.set_sender_account(user_transaction_account.sender_account);
-        receiver_transaction_account.set_token(mint.key());
-        receiver_transaction_account.set_amount(amount);
-        receiver_transaction_account.set_time_stamp(time_stamp);
-        receiver_transaction_account.set_receiver_transaction_account(user_transaction_account.key());
-        receiver_transaction_account.set_status(false);
+        receiver_transaction_account.new(
+            user_transaction_account.key(), 
+            mint.key(), 
+            amount, 
+            time_stamp, 
+            user_transaction_account.key(), 
+            false, 
+        )?;
 
         receiver_account.increment_payments_received();
 
@@ -189,7 +200,7 @@ pub mod kivo {
         receiver_account.exit(&crate::id())?;
         receiver_transaction_account.exit(&crate::id())?;
 
-        Ok(())
+            Ok(())
     }
 
     pub fn handle_edit_username(ctx: Context<EditUsername>, username: String) -> Result<()> {
@@ -200,8 +211,10 @@ pub mod kivo {
         
         ctx.accounts.old_username_account.close(user_account.to_account_info())?;
 
-        new_username_account.set_owner(user_account.key());
-        new_username_account.set_username(username.clone());
+        new_username_account.new(
+            user_account.key(),
+            username.clone(),
+        )?;
 
         user_account.set_username(username);
 
@@ -218,9 +231,10 @@ pub mod kivo {
         let friend_account = &mut ctx.accounts.friend_account;
         let friend = &mut ctx.accounts.new_friend;
 
-        friend.set_user_account(user_account.key());
-        friend.set_friend_account(friend_account.key());
-        friend.set_friend_number(user_account.num_friends);
+        friend.new(
+            user_account.key(),
+            friend_account.key(),
+        )?;
 
         user_account.increment_friends();
         user_account.exit(&crate::id())?;

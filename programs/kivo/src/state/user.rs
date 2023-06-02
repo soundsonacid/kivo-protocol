@@ -15,16 +15,8 @@ pub struct User {
 }
 
 impl User {
-    pub(crate) fn set_owner(&mut self, owner: Pubkey) {
-        self.owner = owner;
-    }
-    
     pub(crate) fn set_username(&mut self, username: String) {
         self.username = username;
-    }
-
-    pub(crate) fn set_account_type(&mut self, account_type: u8) {
-        self.account_type = account_type;
     }
 
     pub(crate) fn increment_payments_sent(&mut self) {
@@ -52,19 +44,52 @@ impl User {
     // }
 }
 
+pub trait UserAccount {
+    fn new(
+        &mut self,
+        owner: Pubkey,
+        username: String,
+        account_type: u8,
+    ) -> Result<()>;
+}
+
+impl UserAccount for Account<'_, User> {
+    fn new(
+        &mut self,
+        owner: Pubkey,
+        username: String,
+        account_type: u8,
+    ) -> Result<()> {
+        self.owner = owner;
+        self.username = username;
+        self.account_type = account_type;
+        Ok(())
+    }
+}
+
 #[account]
 pub struct Username {
     pub user_account: Pubkey, // 32
     pub username: String // 20
 }
 
-impl Username {
-    pub(crate) fn set_owner(&mut self, user_account: Pubkey) {
+pub trait UsernameAccount {
+    fn new(
+        &mut self,
+        user_account: Pubkey,
+        username: String,
+    ) -> Result<()>;
+}
+
+impl UsernameAccount for Account<'_, Username> {
+    fn new(
+        &mut self,
+        user_account: Pubkey,
+        username: String,
+    ) -> Result<()> {
         self.user_account = user_account;
-    }
-    
-    pub(crate) fn set_username(&mut self, username: String) {
         self.username = username;
+        Ok(())
     }
 }
 
@@ -75,16 +100,22 @@ pub struct Friend {
     pub friend_number: u32,
 }
 
-impl Friend {
-    pub(crate) fn set_user_account(&mut self, user_account: Pubkey) {
+pub trait FriendAccount {
+    fn new(
+        &mut self,
+        user_account: Pubkey,
+        friend_account: Pubkey,
+    ) -> Result<()>;
+}
+
+impl FriendAccount for Account<'_, Friend> {
+    fn new(
+        &mut self,
+        user_account: Pubkey,
+        friend_account: Pubkey,
+    ) -> Result<()> {
         self.user_account = user_account;
-    }
-
-    pub(crate) fn set_friend_account(&mut self, friend_account: Pubkey) {
         self.friend_account = friend_account;
-    }
-
-    pub(crate) fn set_friend_number(&mut self, friend_number: u32) {
-        self.friend_number = friend_number;
+        Ok(())
     }
 }

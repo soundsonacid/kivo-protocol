@@ -11,27 +11,39 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub(crate) fn set_sender_account(&mut self, sender_account: Pubkey) {
-        self.sender_account = sender_account;
-    }
-    
-    pub(crate) fn set_token(&mut self, token: Pubkey) {
-        self.mint = token;
-    }
-
-    pub(crate) fn set_amount(&mut self, amount: u64) {
-        self.amount = amount;
-    }
-
-    pub(crate) fn set_time_stamp(&mut self, time_stamp: u64) {
-        self.time_stamp = time_stamp;
-    }
-
-    pub(crate) fn set_receiver_transaction_account(&mut self, receiver_transaction_account: Pubkey) {
-        self.receiver_transaction_account = receiver_transaction_account;
-    }
-
-    pub(crate) fn set_status(&mut self, status: bool) {
+    pub fn set_status(&mut self, status: bool) {
         self.status = status;
+    }
+}
+
+pub trait TransactionAccount {
+    fn new(
+        &mut self,
+        sender_account: Pubkey,
+        mint: Pubkey,
+        amount: u64,
+        time_stamp: u64,
+        receiver_transaction_account: Pubkey,
+        status: bool
+    ) -> Result<()>;
+}
+
+impl TransactionAccount for Account<'_, Transaction> {
+    fn new(
+        &mut self,
+        sender_account: Pubkey,
+        mint: Pubkey,
+        amount: u64,
+        time_stamp: u64,
+        receiver_transaction_account: Pubkey,
+        status: bool,
+    ) -> Result<()> {
+        self.sender_account = sender_account;
+        self.mint = mint;
+        self.amount = amount;
+        self.time_stamp = time_stamp;
+        self.receiver_transaction_account = receiver_transaction_account;
+        self.status = status;
+        Ok(())
     }
 }
