@@ -7,7 +7,7 @@ use crate::state::user::User;
 use crate::state::traits::Size;
 
 #[derive(Accounts)]
-pub struct CreateTransactionAccount<'info> {
+pub struct CreateRequest<'info> {
     #[account(
         init,
         payer = payer,
@@ -122,7 +122,7 @@ pub struct ExecuteTransaction<'info> {
 }
 
 #[derive(Accounts)]
-pub struct FulfillTransaction<'info> {
+pub struct FulfillRequest<'info> {
     #[account(
         seeds = [
             b"user",

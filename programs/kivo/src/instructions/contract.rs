@@ -1,6 +1,6 @@
-use anchor_lang::{prelude::*, solana_program::{system_program, sysvar}};
-use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, TokenAccount}};
-use clockwork_sdk::{state::{Thread, ThreadAccount}};
+use anchor_lang::{ prelude::*, solana_program::{ system_program, sysvar } };
+use anchor_spl::{ associated_token::AssociatedToken, token::{ self, Mint, TokenAccount } };
+use clockwork_sdk::state::{ Thread, ThreadAccount };
 
 use crate::state::contract::*;
 use crate::state::user::*;

@@ -1,8 +1,7 @@
-use {
-    anchor_lang::{prelude::*, AnchorDeserialize},
-    std::convert::TryFrom,
-    crate::state::traits::{ Size, PaymentAccount }
-};
+use anchor_lang::{ prelude::*, AnchorDeserialize };
+use std::convert::TryFrom;
+
+use crate::state::traits::Size;
 
 #[account]
 #[derive(Debug)]
@@ -40,8 +39,8 @@ impl Size for Payment {
     const SIZE: usize = 104;
 }
 
-impl PaymentAccount for Account<'_, Payment> {
-    fn new(
+impl Payment {
+    pub fn new(
         &mut self,
         amount: u64,
         authority: Pubkey,

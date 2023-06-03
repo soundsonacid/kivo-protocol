@@ -1,26 +1,26 @@
 use anchor_lang::prelude::*;
-use static_assertions::const_assert_eq;
-use crate::state::traits::{ Size, TransactionAccount };
+// use static_assertions::const_assert_eq;
+use crate::state::traits::Size;
 
 #[account]
 pub struct Transaction {
-    pub sender_account: Pubkey, // PDA 32
+    pub sender_account: Pubkey, 
     pub sender_username: [u8; 16],
-    pub mint: Pubkey, // MINT 32
-    pub amount: u64, // AMOUNT 8
-    pub time_stamp: u64, // TIME STAMP 8
+    pub mint: Pubkey,
+    pub amount: u64,
+    pub time_stamp: u64,
     pub receiver_account: Pubkey,
     pub receiver_username: [u8; 16],
-    pub receiver_transaction_account: Pubkey, // PDA 32
-    pub status: bool // STATUS 1
+    pub receiver_transaction_account: Pubkey,
+    pub status: bool 
 }
 
 impl Size for Transaction {
     const SIZE: usize = 185;
 }
 
-impl TransactionAccount for Account<'_, Transaction> {
-    fn new(
+impl Transaction {
+    pub fn new(
         &mut self,
         sender_account: Pubkey,
         sender_username: [u8; 16],
@@ -44,7 +44,7 @@ impl TransactionAccount for Account<'_, Transaction> {
         Ok(())
     }
 
-    fn fulfill(
+    pub fn fulfill(
         &mut self,
         fulfiller: Pubkey,
         fulfiller_username: [u8; 16],

@@ -5,7 +5,7 @@ use clockwork_sdk::state::ThreadResponse;
 use crate::instructions::user::*;
 use crate::instructions::transaction::*;
 use crate::instructions::contract::*;
-use crate::state::traits::*;
+
 use crate::state::user::*;
 
 pub mod state;
@@ -134,7 +134,7 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_create_transaction_account(ctx: Context<CreateTransactionAccount>, 
+    pub fn handle_create_request(ctx: Context<CreateRequest>, 
                                             amount: u64, 
                                             time_stamp: u64) -> Result<()> {
         msg!("Creating transaction account");
@@ -159,6 +159,8 @@ pub mod kivo {
 
         requester.increment_transactions();
 
+        let fulfiller_transaction_account_key = fulfiller_transaction_account.key();
+
         fulfiller_transaction_account.new(
             requester.key(),
             requester.username.clone(),
@@ -167,7 +169,7 @@ pub mod kivo {
             time_stamp,
             fulfiller.key(),
             fulfiller.username.clone(),
-            fulfiller_transaction_account.key(),
+            fulfiller_transaction_account_key,
             false,
         )?;
 
@@ -181,7 +183,7 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn fulfill_transaction(ctx: Context<FulfillTransaction>, amount: u64, bump: u8) -> Result<()> {
+    pub fn handle_fulfill_request(ctx: Context<FulfillRequest>, amount: u64, bump: u8) -> Result<()> {
         msg!("Fulfilling transaction!");
 
         let fulfiller = &ctx.accounts.fulfiller;

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use static_assertions::const_assert_eq;
-use crate::state::traits::{ Size, UserAccount, UsernameAccount, FriendAccount };
+use crate::state::traits::Size;
 
 
 #[account]
@@ -20,8 +20,8 @@ impl Size for User {
     const SIZE: usize = 89;
 }
 
-impl UserAccount for Account<'_, User> {
-    fn new(
+impl User {
+    pub fn new(
         &mut self,
         owner: Pubkey,
         username: [u8; 16],
@@ -33,19 +33,19 @@ impl UserAccount for Account<'_, User> {
         Ok(())
     }
 
-    fn set_username(&mut self, username: [u8; 16]) {
+    pub fn set_username(&mut self, username: [u8; 16]) {
         self.username = username;
     }
 
-    fn increment_transactions(&mut self) {
+    pub fn increment_transactions(&mut self) {
         self.transactions = self.transactions.saturating_add(1);
     }
 
-    fn increment_friends(&mut self) {
+    pub fn increment_friends(&mut self) {
         self.num_friends = self.num_friends.saturating_add(1);
     }
 
-    fn increment_contracts(&mut self) {
+    pub fn increment_contracts(&mut self) {
         self.num_contracts = self.num_contracts.saturating_add(1);
     }
 }
@@ -66,8 +66,8 @@ impl Size for Username {
     const SIZE: usize = 56;
 }
 
-impl UsernameAccount for Account<'_, Username> {
-    fn new(
+impl Username {
+    pub fn new(
         &mut self,
         user_account: Pubkey,
         username: [u8; 16],
@@ -89,8 +89,8 @@ impl Size for Friend {
     const SIZE: usize = 57;
 }
 
-impl FriendAccount for Account<'_, Friend> {
-    fn new(
+impl Friend {
+    pub fn new(
         &mut self,
         friend_account: Pubkey,
         friend_username: [u8; 16],
