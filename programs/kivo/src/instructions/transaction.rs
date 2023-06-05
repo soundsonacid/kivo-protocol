@@ -6,6 +6,9 @@ use crate::state::transaction::Transaction;
 use crate::state::user::User;
 use crate::state::traits::Size;
 
+pub const TRANSACTION: &[u8] = b"transaction";
+pub const USER: &[u8] = b"user";
+
 #[derive(Accounts)]
 pub struct CreateRequest<'info> {
     #[account(
@@ -13,7 +16,7 @@ pub struct CreateRequest<'info> {
         payer = payer,
         space = 8 + Transaction::SIZE,
         seeds = [
-            b"transaction",
+            TRANSACTION,
             requester.to_account_info().key.as_ref(),
             requester.transactions.to_le_bytes().as_ref()],
         bump
@@ -25,7 +28,7 @@ pub struct CreateRequest<'info> {
         payer = payer,
         space = 8 + Transaction::SIZE,
         seeds = [
-            b"transaction",
+            TRANSACTION,
             fulfiller.to_account_info().key.as_ref(),
             fulfiller.transactions.to_le_bytes().as_ref()],
         bump
@@ -35,7 +38,7 @@ pub struct CreateRequest<'info> {
     #[account(
         mut,
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump
@@ -66,7 +69,7 @@ pub struct ExecuteTransaction<'info> {
     #[account(
         mut,
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump
@@ -78,7 +81,7 @@ pub struct ExecuteTransaction<'info> {
         payer = payer,
         space = 8 + Transaction::SIZE,
         seeds = [
-            b"transaction",
+            TRANSACTION,
             sender_user_account.to_account_info().key.as_ref(),
             sender_user_account.transactions.to_le_bytes().as_ref()
         ],
@@ -97,7 +100,7 @@ pub struct ExecuteTransaction<'info> {
         payer = payer,
         space = 8 + Transaction::SIZE,
         seeds = [
-            b"transaction",
+            TRANSACTION,
             receiver_user_account.to_account_info().key.as_ref(),
             receiver_user_account.transactions.to_le_bytes().as_ref()
         ],
@@ -125,7 +128,7 @@ pub struct ExecuteTransaction<'info> {
 pub struct FulfillRequest<'info> {
     #[account(
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump

@@ -8,6 +8,10 @@ use crate::state::user::User;
 use crate::state::user::Friend;
 use crate::state::traits::Size;
 
+pub const USER: &[u8] = b"user";
+pub const USERNAME: &[u8] = b"username";
+pub const FRIEND: &[u8] = b"friend";
+
 #[derive(Accounts)]
 #[instruction(name: String)]
 pub struct InitializeUser<'info> {
@@ -15,7 +19,10 @@ pub struct InitializeUser<'info> {
         init,
         payer = payer,
         space = 8 + Username::SIZE,
-        seeds = [b"username", name.as_bytes()],
+        seeds = [
+            USERNAME, 
+            name.as_bytes()
+        ],
         bump
     )]
     pub username_account: Box<Account<'info, Username>>,
@@ -24,7 +31,10 @@ pub struct InitializeUser<'info> {
         init,
         payer = payer,
         space = 8 + User::SIZE,
-        seeds = [b"user", payer.key.as_ref()], 
+        seeds = [
+            USER,
+            payer.key.as_ref()
+        ], 
         bump,
     )]
     pub user_account: Box<Account<'info, User>>,  
@@ -111,7 +121,7 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref()
         ],
         bump
@@ -145,7 +155,7 @@ pub struct Withdrawal<'info> {
     #[account(
         mut,
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump
@@ -175,7 +185,10 @@ pub struct EditUsername<'info> {
         init,
         payer = payer,
         space = 8 + Username::SIZE,
-        seeds = [b"username", new_name.as_bytes()],
+        seeds = [
+            USERNAME, 
+            new_name.as_bytes()
+        ],
         bump,
         has_one = user_account,
     )]
@@ -190,7 +203,7 @@ pub struct EditUsername<'info> {
     #[account(
         mut, 
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump
@@ -211,7 +224,7 @@ pub struct AddFriend<'info> {
         payer = payer,
         space = 8 + Friend::SIZE,
         seeds = [
-            b"friend",
+            FRIEND,
             user_account.to_account_info().key.as_ref(),
             user_account.num_friends.to_le_bytes().as_ref()
         ],        
@@ -222,7 +235,7 @@ pub struct AddFriend<'info> {
     #[account(
         mut,
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump

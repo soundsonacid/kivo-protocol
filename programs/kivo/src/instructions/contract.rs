@@ -6,6 +6,8 @@ use crate::state::contract::*;
 use crate::state::user::*;
 use crate::state::traits::Size;
 
+pub const PAYMENT: &[u8] = b"payment";
+
 #[derive(Accounts)]
 #[instruction(amount: u64)]
 pub struct CreatePayment<'info> {
@@ -13,7 +15,7 @@ pub struct CreatePayment<'info> {
         init,
         payer = payer,
         seeds = [
-            b"payment",
+            PAYMENT,
             user_account.key().as_ref(),
             mint.key().as_ref(),
             receipient.key().as_ref(),
@@ -73,7 +75,7 @@ pub struct DisbursePayment<'info> {
     #[account(
         mut,
         seeds = [
-            b"payment",
+            PAYMENT,
             payment.authority.as_ref(),
             payment.mint.as_ref(),
             payment.receipient.as_ref(),
@@ -115,7 +117,7 @@ pub struct UpdatePayment<'info> {
     #[account(
         mut,
         seeds = [
-            b"payment",
+            PAYMENT,
             payment.authority.key().as_ref(),
             payment.mint.key().as_ref(),
             payment.receipient.key().as_ref(),

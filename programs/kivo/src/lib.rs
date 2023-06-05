@@ -17,7 +17,9 @@ declare_id!("HyA8SiVhkkYoidUuFkmVXWDgRtiiwQTy465GwH5m6XSw");
 pub mod kivo {
     use super::*;
 
-    pub fn handle_initialize_user(ctx: Context<InitializeUser>, name: [u8; 16], account_type: u8) -> Result<()> {
+    pub fn handle_initialize_user(ctx: Context<InitializeUser>, 
+                                            name: [u8; 16], 
+                                            account_type: u8) -> Result<()> {
         msg!("Initalizing user!");
     
         let user = &mut ctx.accounts.user_account;
@@ -43,43 +45,48 @@ pub mod kivo {
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         msg!("Depositing");
 
-        let cpi_accounts = Transfer {
+        let deposit_accounts = Transfer {
             from: ctx.accounts.depositor_token_account.to_account_info(),
             to: ctx.accounts.pda_token_account.to_account_info(),
             authority: ctx.accounts.depositor.to_account_info().clone(),
         };
 
-        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+        let token_program = ctx.accounts.token_program.to_account_info().clone();
 
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let deposit_cpi_context = CpiContext::new(token_program, deposit_accounts);
 
-        transfer(cpi_ctx, amount)?;
+        transfer(deposit_cpi_context, amount)?;
 
         Ok(())
     }
 
-    pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
+    pub fn handle_withdrawal(ctx: Context<Withdrawal>, 
+                                        amount: u64, 
+                                        bump: u8) -> Result<()> {
         msg!("Withdrawing");
 
         let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
-        let cpi_accounts = Transfer {
+        let withdraw_accounts = Transfer {
             from: ctx.accounts.pda_token_account.to_account_info(),
             to: ctx.accounts.withdrawer_token_account.to_account_info(),
             authority: ctx.accounts.user_account.to_account_info().clone(),
         };
 
-        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+        let token_program = ctx.accounts.token_program.to_account_info().clone();
 
-        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        let withdraw_cpi_context = CpiContext::new_with_signer(token_program, withdraw_accounts, signer_seeds);
 
-        transfer(cpi_context, amount)?;
+        transfer(withdraw_cpi_context, amount)?;
 
         Ok(())
     }
 
-    pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_stamp: u64) -> Result<()> {
+    pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, 
+                                                amount: u64, 
+                                                bump: u8, 
+                                                time_stamp: u64) -> Result<()> {
         msg!("Executing transaction");
 
         let sender_transaction_account = &mut ctx.accounts.sender_transaction_account;
@@ -91,17 +98,17 @@ pub mod kivo {
         let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
-        let cpi_accounts = Transfer {
+        let transaction_accounts = Transfer {
             from: ctx.accounts.sender_token_account.to_account_info(),
             to: ctx.accounts.receiver_token_account.to_account_info(),
             authority: sender.to_account_info().clone(),
         };
 
-        let cpi_program = ctx.accounts.token_program.to_account_info().clone();
+        let token_program = ctx.accounts.token_program.to_account_info().clone();
 
-        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        let transaction_cpi_context = CpiContext::new_with_signer(token_program, transaction_accounts, signer_seeds);
 
-        transfer(cpi_context, amount)?;
+        transfer(transaction_cpi_context, amount)?;
 
         sender_transaction_account.new(
             sender.key(),
@@ -114,8 +121,6 @@ pub mod kivo {
             receiver_transaction_account.key(),
             true,
         )?;
-
-        sender.increment_transactions();
 
         receiver_transaction_account.new(
             sender.key(),
@@ -130,6 +135,10 @@ pub mod kivo {
         )?;
 
         receiver.increment_transactions();
+        sender.increment_transactions();
+
+        receiver.exit(&crate::id())?;
+        sender.exit(&crate::id())?;
 
         Ok(())
     }
@@ -143,7 +152,7 @@ pub mod kivo {
         let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
         let requester = &mut ctx.accounts.requester;
         let fulfiller = &mut ctx.accounts.fulfiller;
-        let mint = &mut ctx.accounts.mint;
+        let mint = &ctx.accounts.mint;
 
         requester_transaction_account.new(
             requester.key(),
@@ -156,8 +165,6 @@ pub mod kivo {
             fulfiller_transaction_account.key(), 
             false, 
         )?;
-
-        requester.increment_transactions();
 
         let fulfiller_transaction_account_key = fulfiller_transaction_account.key();
 
@@ -173,6 +180,7 @@ pub mod kivo {
             false,
         )?;
 
+        requester.increment_transactions();
         fulfiller.increment_transactions();
 
         requester.exit(&crate::id())?;
@@ -183,7 +191,9 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_fulfill_request(ctx: Context<FulfillRequest>, amount: u64, bump: u8) -> Result<()> {
+    pub fn handle_fulfill_request(ctx: Context<FulfillRequest>, 
+                                            amount: u64, 
+                                            bump: u8) -> Result<()> {
         msg!("Fulfilling transaction!");
 
         let fulfiller = &ctx.accounts.fulfiller;
@@ -194,17 +204,17 @@ pub mod kivo {
         let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
-        let cpi_accounts = Transfer {
+        let request_accounts = Transfer {
             from: ctx.accounts.fulfiller_token_account.to_account_info(),
             to: ctx.accounts.requester_token_account.to_account_info(),
             authority: fulfiller.to_account_info()
         };
 
-        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let token_program = ctx.accounts.token_program.to_account_info();
 
-        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        let request_cpi_context = CpiContext::new_with_signer(token_program, request_accounts, signer_seeds);
 
-        transfer(cpi_context, amount)?;
+        transfer(request_cpi_context, amount)?;
 
         fulfiller_transaction_account.fulfill(
             fulfiller.key(),
@@ -253,7 +263,7 @@ pub mod kivo {
         msg!("Adding friend");
 
         let user = &mut ctx.accounts.user_account;
-        let friend = &mut ctx.accounts.friend_account;
+        let friend = &ctx.accounts.friend_account;
         let friend_account = &mut ctx.accounts.new_friend;
 
         friend_account.new(
@@ -268,7 +278,9 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_create_payment(ctx: Context<CreatePayment>, amount: u64, bump: u8) -> Result<()> {
+    pub fn handle_create_payment(ctx: Context<CreatePayment>, 
+                                            amount: u64, 
+                                            bump: u8) -> Result<()> {
         msg!("Creating payment");
 
         let user = &mut ctx.accounts.user_account;
@@ -285,21 +297,19 @@ pub mod kivo {
             receipient.key(),
         )?;
 
-        approve(
-            CpiContext::new_with_signer(
-                token_program.to_account_info(),
-                Approve {
-                    authority: user.to_account_info(),
-                    to: user_token_account.to_account_info(),
-                    delegate: payment.to_account_info(),
-                }, 
-                &[&[
-                    b"user",
-                    ctx.accounts.sender.key.as_ref(),
-                    &[bump]]
-                ]),
-            u64::MAX
-        )?;
+        let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let signer_seeds = &[&signature_seeds[..]];
+
+        let delegate_accounts = Approve {
+            authority: user.to_account_info(),
+            to: user_token_account.to_account_info(),
+            delegate: payment.to_account_info(),
+        };
+
+        let delegate_cpi_context = CpiContext::new_with_signer(token_program.to_account_info(), delegate_accounts, signer_seeds);
+
+
+        approve(delegate_cpi_context, u64::MAX)?;
 
         user.increment_contracts();
         user.exit(&crate::id())?;
@@ -342,9 +352,12 @@ pub mod kivo {
         msg!("Updating payment");
 
         let payment = &mut ctx.accounts.payment;
+
         if let Some(amount) = amount {
             payment.amount = amount;
         }
+
+        payment.exit(&crate::id())?;
 
         Ok(())
     }

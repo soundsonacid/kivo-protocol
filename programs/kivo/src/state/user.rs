@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use static_assertions::const_assert_eq;
 use crate::state::traits::Size;
 
+pub const USER: &[u8] = b"user";
 
 #[account]
 #[derive(Default)]
@@ -48,11 +49,12 @@ impl User {
     pub fn increment_contracts(&mut self) {
         self.num_contracts = self.num_contracts.saturating_add(1);
     }
-}
 
-impl User {
-    pub fn get_user_signer_seeds<'a>(pubkey: &'a Pubkey, bump: &'a u8) -> [&'a [u8]; 3] {
-        [b"user".as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
+    pub fn get_user_signer_seeds<'a>(
+        pubkey: &'a Pubkey, 
+        bump: &'a u8
+    ) -> [&'a [u8]; 3] {
+        [USER.as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
     }
 }
 
