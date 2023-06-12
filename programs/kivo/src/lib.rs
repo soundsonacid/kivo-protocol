@@ -60,28 +60,61 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_withdrawal(ctx: Context<Withdrawal>, 
-                                        amount: u64, 
-                                        bump: u8) -> Result<()> {
+    pub fn handle_withdrawal(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
         msg!("Withdrawing");
-
+    
         let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
-
-        let withdraw_accounts = Transfer {
-            from: ctx.accounts.pda_token_account.to_account_info(),
-            to: ctx.accounts.withdrawer_token_account.to_account_info(),
-            authority: ctx.accounts.user_account.to_account_info().clone(),
-        };
-
-        let token_program = ctx.accounts.token_program.to_account_info().clone();
-
-        let withdraw_cpi_context = CpiContext::new_with_signer(token_program, withdraw_accounts, signer_seeds);
-
-        transfer(withdraw_cpi_context, amount)?;
-
+    
+        let wsol_mint: Pubkey = "So11111111111111111111111111111111111111112".parse().unwrap();
+    
+        if *ctx.accounts.mint.to_account_info().key == wsol_mint {
+            let transfer_to_temp_acc = Transfer {
+                from: ctx.accounts.pda_token_account.to_account_info(),
+                to: ctx.accounts.temp_wsol_account.to_account_info().clone(),
+                authority: ctx.accounts.user_account.to_account_info().clone(),
+            };
+    
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info().clone(),
+                transfer_to_temp_acc,
+                signer_seeds,
+            );
+    
+            transfer(cpi_ctx, amount)?;
+    
+            let close_acc = CloseAccount {
+                account: ctx.accounts.temp_wsol_account.to_account_info().clone(),
+                destination: ctx.accounts.withdrawer.to_account_info().clone(),
+                authority: ctx.accounts.user_account.to_account_info().clone(),
+            };
+    
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info().clone(),
+                close_acc,
+                signer_seeds,
+            );
+    
+            close_account(cpi_ctx)?;
+        } else {
+            let withdraw_accounts = Transfer {
+                from: ctx.accounts.pda_token_account.to_account_info(),
+                to: ctx.accounts.withdrawer_token_account.to_account_info(),
+                authority: ctx.accounts.user_account.to_account_info().clone(),
+            };
+    
+            let cpi_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info().clone(),
+                withdraw_accounts,
+                signer_seeds,
+            );
+    
+            transfer(cpi_ctx, amount)?;
+        }
+    
         Ok(())
     }
+    
 
     pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, 
                                                 amount: u64, 

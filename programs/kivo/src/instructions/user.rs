@@ -13,7 +13,7 @@ pub const USERNAME: &[u8] = b"username";
 pub const FRIEND: &[u8] = b"friend";
 
 #[derive(Accounts)]
-#[instruction(name: String)]
+#[instruction(name: [u8; 16])]
 pub struct InitializeUser<'info> {
     #[account(
         init,
@@ -21,7 +21,7 @@ pub struct InitializeUser<'info> {
         space = 8 + Username::SIZE,
         seeds = [
             USERNAME, 
-            name.as_bytes()
+            name.as_ref()
         ],
         bump
     )]
@@ -30,7 +30,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + User::SIZE,
+        space = 8 + std::mem::size_of::<User>(),
         seeds = [
             USER,
             payer.key.as_ref()
@@ -115,32 +115,26 @@ pub struct Deposit<'info> {
     /// CHECK: validated by cpi context
     pub depositor: UncheckedAccount<'info>,
 
-    #[account(mut, associated_token::authority = depositor, associated_token::mint = mint)]
+    // #[account(mut, associated_token::authority = depositor, associated_token::mint = mint)]
+    #[account(mut)]
     pub depositor_token_account: Account<'info, TokenAccount>,
 
-    #[account(
-        mut,
-        seeds = [
-            USER,
-            payer.key().as_ref()
-        ],
-        bump
-    )]
-    pub user_account: Account<'info, User>,
+    /// CHECK:
+    pub user_account: UncheckedAccount<'info>,
 
-    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
+    // #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
+    #[account(mut)]
     pub pda_token_account: Account<'info, TokenAccount>,
 
-    #[account()]
     pub mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(address = system_program::ID)]
+    // #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    #[account(address = anchor_spl::token::ID)]
+    // #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
 
@@ -149,32 +143,30 @@ pub struct Withdrawal<'info> {
     /// CHECK: Validated by signer seeds
     pub withdrawer: UncheckedAccount<'info>,
 
-    #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
+    // #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
+    #[account(mut)]
     pub withdrawer_token_account: Account<'info, TokenAccount>,
 
-    #[account(
-        mut,
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
-    pub user_account: Account<'info, User>,
+    /// CHECK: 
+    pub user_account: UncheckedAccount<'info>,
 
-    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
+    // #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
+    #[account(mut)]
     pub pda_token_account: Account<'info, TokenAccount>,
 
-    #[account()]
+    /// CHECK: we don't care about this account really
+    #[account(mut)]
+    pub temp_wsol_account: UncheckedAccount<'info>,
+
     pub mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(address = system_program::ID)]
+    // #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    #[account(address = anchor_spl::token::ID)]
+    // #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
 
