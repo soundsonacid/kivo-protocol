@@ -15,6 +15,7 @@ pub struct User {
     pub transactions: u64,
     pub num_friends: u32,
     pub num_contracts: u32,
+    pub preferred_token: Option<Pubkey>,
 }
 
 impl Size for User {
@@ -52,6 +53,10 @@ impl User {
 
     pub fn increment_withdrawals(&mut self) {
         self.total_withdraws = self.total_withdraws.saturating_add(1);
+    }
+
+    pub fn set_preferred_token(&mut self, token: Pubkey) {
+        self.preferred_token = Some(token);
     }
 
     pub fn get_user_signer_seeds<'a>(

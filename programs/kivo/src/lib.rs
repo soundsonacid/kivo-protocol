@@ -130,8 +130,6 @@ pub mod kivo {
         Ok(())
     }
     
-    
-
     pub fn handle_execute_transaction(ctx: Context<ExecuteTransaction>, 
                                                 amount: u64, 
                                                 bump: u8, 
@@ -215,6 +213,8 @@ pub mod kivo {
             false, 
         )?;
 
+        requester_transaction_account.exit(&crate::id())?;
+
         let fulfiller_transaction_account_key = fulfiller_transaction_account.key();
 
         fulfiller_transaction_account.new(
@@ -229,13 +229,13 @@ pub mod kivo {
             false,
         )?;
 
+        fulfiller_transaction_account.exit(&crate::id())?;
+
         requester.increment_transactions();
         fulfiller.increment_transactions();
 
         requester.exit(&crate::id())?;
-        requester_transaction_account.exit(&crate::id())?;
         fulfiller.exit(&crate::id())?;
-        fulfiller_transaction_account.exit(&crate::id())?;
 
         Ok(())
     }
@@ -305,6 +305,19 @@ pub mod kivo {
         user.exit(&crate::id())?;
         new_username.exit(&crate::id())?;
         
+        Ok(())
+    }
+
+    pub fn handle_set_preferred_token(ctx: Context<SetPreferredToken>) -> Result<()> {
+        msg!("Setting preferred token");
+
+        let user = &mut ctx.accounts.user_account;
+        let new_preferred_token = &ctx.accounts.preferred_token_mint;
+
+        user.set_preferred_token(new_preferred_token.key());
+
+        user.exit(&crate::id())?;
+
         Ok(())
     }
 

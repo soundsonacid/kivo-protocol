@@ -289,3 +289,25 @@ pub struct AddFriend<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct SetPreferredToken<'info> {
+    #[account(
+        mut, 
+        seeds = [
+            USER,
+            payer.key().as_ref(),
+        ],
+        bump
+    )]
+    pub user_account: Account<'info, User>,
+
+    #[account()]
+    pub preferred_token_mint: Account<'info, Mint>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+}
+
