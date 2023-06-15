@@ -50,6 +50,10 @@ impl User {
         self.num_contracts = self.num_contracts.saturating_add(1);
     }
 
+    pub fn increment_withdrawals(&mut self) {
+        self.total_withdraws = self.total_withdraws.saturating_add(1);
+    }
+
     pub fn get_user_signer_seeds<'a>(
         pubkey: &'a Pubkey, 
         bump: &'a u8

@@ -143,35 +143,82 @@ pub struct Withdrawal<'info> {
     /// CHECK: Validated by signer seeds
     pub withdrawer: UncheckedAccount<'info>,
 
-    // #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
-    #[account(mut)]
+    #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
     pub withdrawer_token_account: Account<'info, TokenAccount>,
 
-    /// CHECK: 
-    pub user_account: UncheckedAccount<'info>,
+    #[account(
+        mut, 
+        seeds = [
+            b"user", 
+            payer.key().as_ref()
+            ], 
+            bump
+        )]
+    pub user_account: Account<'info, User>,
 
-    // #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
-    #[account(mut)]
+    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
     pub pda_token_account: Account<'info, TokenAccount>,
-
-    /// CHECK: we don't care about this account really
-    #[account(mut)]
-    pub temp_wsol_account: UncheckedAccount<'info>,
 
     pub mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    // #[account(address = system_program::ID)]
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    // #[account(address = anchor_spl::token::ID)]
+    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
-#[instruction(new_name: String)]
+pub struct UnwrapWithdrawal<'info> {
+    /// CHECK: Validated by signer seeds
+    pub withdrawer: UncheckedAccount<'info>,
+
+    #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
+    pub withdrawer_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut, 
+        seeds = [
+            b"user", 
+            payer.key().as_ref()
+            ], 
+            bump
+        )]
+    pub user_account: Account<'info, User>,
+
+    #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
+    pub user_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        init,
+        seeds = [
+            b"unwrap",
+            user_account.total_withdraws.to_le_bytes().as_ref(),
+        ],
+        bump,
+        payer = payer,
+        token::mint = mint,
+        token::authority = user_account,
+    )]
+    pub temporary_token_account: Account<'info, TokenAccount>,
+
+    pub mint: Account<'info, Mint>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+
+    #[account(address = anchor_spl::token::ID)]
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+#[instruction(new_name: [u8; 16])]
 pub struct EditUsername<'info> {
     #[account(
         init,
@@ -179,10 +226,9 @@ pub struct EditUsername<'info> {
         space = 8 + Username::SIZE,
         seeds = [
             USERNAME, 
-            new_name.as_bytes()
+            new_name.as_ref()
         ],
         bump,
-        has_one = user_account,
     )]
     pub new_username_account: Account<'info, Username>,
 

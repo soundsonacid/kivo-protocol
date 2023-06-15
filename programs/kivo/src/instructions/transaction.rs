@@ -14,7 +14,7 @@ pub struct CreateRequest<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Transaction::SIZE,
+        space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
             TRANSACTION,
             requester.to_account_info().key.as_ref(),
@@ -26,7 +26,7 @@ pub struct CreateRequest<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Transaction::SIZE,
+        space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
             TRANSACTION,
             fulfiller.to_account_info().key.as_ref(),
@@ -69,7 +69,7 @@ pub struct ExecuteTransaction<'info> {
     #[account(
         mut,
         seeds = [
-            USER,
+            b"user",
             payer.key().as_ref(),
         ],
         bump
@@ -79,9 +79,9 @@ pub struct ExecuteTransaction<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Transaction::SIZE,
+        space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            TRANSACTION,
+            b"transaction",
             sender_user_account.to_account_info().key.as_ref(),
             sender_user_account.transactions.to_le_bytes().as_ref()
         ],
@@ -92,15 +92,15 @@ pub struct ExecuteTransaction<'info> {
     #[account(mut, associated_token::authority = sender_user_account, associated_token::mint = mint)]
     pub sender_token_account: Box<Account<'info, TokenAccount>>,
 
-    #[account()]
+    #[account(mut)]
     pub receiver_user_account: Account<'info, User>,
 
     #[account(
         init,
         payer = payer,
-        space = 8 + Transaction::SIZE,
+        space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            TRANSACTION,
+            b"transaction",
             receiver_user_account.to_account_info().key.as_ref(),
             receiver_user_account.transactions.to_le_bytes().as_ref()
         ],
