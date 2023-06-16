@@ -1,7 +1,7 @@
 [package]
 name = "kivo"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "decentralized banking on solana"
 edition = "2021"
 
 [lib]

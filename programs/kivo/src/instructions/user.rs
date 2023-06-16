@@ -149,7 +149,7 @@ pub struct Withdrawal<'info> {
     #[account(
         mut, 
         seeds = [
-            b"user", 
+            USER, 
             payer.key().as_ref()
             ], 
             bump
@@ -182,7 +182,7 @@ pub struct UnwrapWithdrawal<'info> {
     #[account(
         mut, 
         seeds = [
-            b"user", 
+            USER, 
             payer.key().as_ref()
             ], 
             bump

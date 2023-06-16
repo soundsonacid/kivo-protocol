@@ -19,7 +19,7 @@ pub struct User {
 }
 
 impl Size for User {
-    const SIZE: usize = 89;
+    const SIZE: usize = 114;
 }
 
 impl User {

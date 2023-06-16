@@ -4,7 +4,7 @@ use anchor_spl::token::*;
 
 use crate::state::transaction::Transaction;
 use crate::state::user::User;
-use crate::state::traits::Size;
+// use crate::state::traits::Size;
 
 pub const TRANSACTION: &[u8] = b"transaction";
 pub const USER: &[u8] = b"user";
@@ -69,7 +69,7 @@ pub struct ExecuteTransaction<'info> {
     #[account(
         mut,
         seeds = [
-            b"user",
+            USER,
             payer.key().as_ref(),
         ],
         bump
@@ -81,7 +81,7 @@ pub struct ExecuteTransaction<'info> {
         payer = payer,
         space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            b"transaction",
+            TRANSACTION,
             sender_user_account.to_account_info().key.as_ref(),
             sender_user_account.transactions.to_le_bytes().as_ref()
         ],
@@ -100,7 +100,7 @@ pub struct ExecuteTransaction<'info> {
         payer = payer,
         space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            b"transaction",
+            TRANSACTION,
             receiver_user_account.to_account_info().key.as_ref(),
             receiver_user_account.transactions.to_le_bytes().as_ref()
         ],
