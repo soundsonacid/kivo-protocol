@@ -11,6 +11,7 @@ pub struct Contract {
     pub sender_token_account: Pubkey,
     pub receiver: Pubkey,
     pub receiver_token_account: Pubkey,
+    pub thread: Option<Pubkey>,
     pub amount: u64,
     pub schedule: String,
     pub active: bool,
@@ -37,6 +38,7 @@ impl Contract {
         self.sender_token_account = sender_token_account;
         self.receiver = receiver;
         self.receiver_token_account = receiver_token_account;
+        self.thread = None;
         self.amount = amount;
         self.schedule = schedule;
         self.active = false;
@@ -46,8 +48,9 @@ impl Contract {
         Ok(())
     }
 
-    pub fn enter(&mut self) {
+    pub fn accept(&mut self, thread: Pubkey) {
         self.active = true;
+        self.thread = Some(thread);
     }
 
     pub fn increment_payments_made(&mut self) {

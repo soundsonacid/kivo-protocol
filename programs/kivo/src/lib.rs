@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 use anchor_lang::solana_program::instruction::Instruction;
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
+// use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 // use clockwork_sdk::state::ThreadResponse;
-use clockwork_sdk::ThreadProgram;
+// use clockwork_sdk::ThreadProgram;
 use clockwork_sdk::cpi::{ ThreadCreate, ThreadPause, thread_create, thread_pause };
 use clockwork_sdk::state::Trigger;
 
@@ -384,10 +384,7 @@ pub mod kivo {
             bump,
         )?;
 
-        contract.enter();
-
         obligor.exit(&crate::id())?;
-        contract.exit(&crate::id())?;
 
         let obligor_token_account = &mut ctx.accounts.obligor_token_account;
         let contract_thread = &ctx.accounts.contract_thread;
@@ -464,6 +461,9 @@ pub mod kivo {
         );
 
         thread_pause(thread_pause_cpi_context)?;
+
+        contract.accept(contract_thread.key());
+        contract.exit(&crate::id())?;
 
         Ok(())
     }
