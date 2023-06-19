@@ -382,12 +382,17 @@ pub mod kivo {
     }
 
     pub fn handle_reject_contract(ctx: Context<RejectContract>) -> Result<()> {
+        msg!("Rejecting contract");
+
         let contract = &mut ctx.accounts.contract;
         let authority = contract.sender;
         let assert = &ctx.accounts.payer.key();
 
         if authority == *assert {
             contract.close(ctx.accounts.payer.to_account_info())?;
+        }
+        else {
+            msg!("Failed to reject contract: Bad signer at handle_reject_contract - signer key must match contract.sender!");
         }
 
         Ok(())
