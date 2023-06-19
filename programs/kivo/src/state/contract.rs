@@ -46,10 +46,6 @@ impl Contract {
         self.active = true;
     }
 
-    pub fn reject(&mut self) {
-        
-    }
-
     pub fn get_contract_address(receiver: Pubkey, id: u64) -> (Pubkey, u8) {
         Pubkey::find_program_address(
             &[
@@ -104,6 +100,14 @@ impl Obligor {
             ],
             &crate::ID,
         )
+    }
+
+    pub fn get_obligor_signer_seeds<'a>(
+        obligor: &'a Pubkey, 
+        contract: &'a Pubkey,
+        bump: &'a u8
+    ) -> [&'a [u8]; 4] {
+        [OBLIGOR.as_ref(), obligor.as_ref(), contract.as_ref(), bytemuck::bytes_of(bump)]
     }
 }
 

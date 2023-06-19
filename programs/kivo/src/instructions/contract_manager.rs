@@ -2,11 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{ system_program, sysvar };
 use anchor_spl::token::*;
 use anchor_spl::associated_token::*;
-use clockwork_sdk::state::{ Thread, ThreadAccount, ThreadResponse };
 use std::mem::size_of;
+use clockwork_sdk::state::Thread;
+use clockwork_sdk::ThreadProgram;
 
 use crate::state::contract::*;
-use crate::state::transaction::Transaction;
 use crate::state::user::User;
 
 pub const USER: &[u8] = b"user";
@@ -70,8 +70,14 @@ pub struct ProposeContract<'info> {
 #[derive(Accounts)]
 pub struct AcceptContract<'info> {
     #[account(address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
-    pub contract: Account<'info, Contract>,
+    pub contract: Box<Account<'info, Contract>>,
 
+    #[account(address = contract.receiver.key())]
+    pub contract_owner: Box<Account<'info, User>>,
+
+    #[account()]
+    pub obligor_user_account: Box<Account<'info, User>>,
+    
     #[account(
         init, 
         seeds = [
@@ -83,10 +89,31 @@ pub struct AcceptContract<'info> {
         payer = payer,
         space = 8 + size_of::<Obligor>(),
     )]
-    pub obligor: Account<'info, Obligor>,
+    pub obligor: Box<Account<'info, Obligor>>,
+
+    #[account(associated_token::mint = mint, associated_token::authority = obligor.obligor)]    
+    pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as sender_token_account
+
+    #[account(associated_token::mint = mint, associated_token::authority = contract.receiver)]    
+    pub receiver_token_account: Box<Account<'info, TokenAccount>>,
+    
+    #[account(address = Thread::pubkey(contract.sender.key(), contract.id.to_le_bytes().to_vec()))]
+    pub contract_thread: Box<Account<'info, Thread>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account()]
+    pub mint: Box<Account<'info, Mint>>,
+
+    // Add Thread Program ID
+    pub thread_program: Program<'info, ThreadProgram>,
+
+    #[account(address = anchor_spl::token::ID)]
+    pub token_program: Program<'info, Token>,
+    
+    #[account(address = anchor_spl::associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
