@@ -4,8 +4,8 @@ use clockwork_sdk::state::ThreadResponse;
 
 use crate::instructions::user::*;
 use crate::instructions::transaction::*;
-use crate::instructions::contract::*;
-
+use crate::instructions::contract_creation::*;
+use crate::instructions::contract_controller::*;
 use crate::state::user::*;
 
 pub mod state;
@@ -340,86 +340,55 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_create_payment(ctx: Context<CreatePayment>, 
-                                            amount: u64, 
-                                            bump: u8) -> Result<()> {
-        msg!("Creating payment");
+    pub fn handle_propose_contract(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: u64, bump: u8) -> Result<()> {
+        msg!("Proposing contract");
 
-        let user = &mut ctx.accounts.user_account;
-        let user_token_account = &mut ctx.accounts.user_token_account;
-        let mint = &ctx.accounts.mint;
-        let payment = &mut ctx.accounts.payment;
-        let receipient = &ctx.accounts.receipient;
-        let token_program = &ctx.accounts.token_program;
+        let contract = &mut ctx.accounts.contract;
+        let sender = &ctx.accounts.sender_user_account;
+        let sender_token_account = &ctx.accounts.sender_token_account;
+        let receiver = &ctx.accounts.receiver_user_account;
+        let receiver_token_account = &ctx.accounts.receiver_token_account;
 
-        payment.new(
+        contract.new(
+            sender.key(),
+            sender_token_account.key(),
+            receiver.key(),
+            receiver_token_account.key(),
             amount,
-            user.key(),
-            mint.key(),
-            receipient.key(),
+            schedule,
+            id,
+            bump,
         )?;
-
-        let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
-        let signer_seeds = &[&signature_seeds[..]];
-
-        let delegate_accounts = Approve {
-            authority: user.to_account_info(),
-            to: user_token_account.to_account_info(),
-            delegate: payment.to_account_info(),
-        };
-
-        let delegate_cpi_context = CpiContext::new_with_signer(token_program.to_account_info(), delegate_accounts, signer_seeds);
-
-
-        approve(delegate_cpi_context, u64::MAX)?;
-
-        user.increment_contracts();
-        user.exit(&crate::id())?;
 
         Ok(())
     }
 
-    pub fn handle_disburse_payment(ctx: Context<DisbursePayment>) -> Result<ThreadResponse> {
-        msg!("Disbursing payment");
+    pub fn handle_accept_contract(ctx: Context<AcceptContract>, bump: u8) -> Result<()> {
+        msg!("Entering contract");
 
-        let user_token_account = &mut ctx.accounts.user_token_account;
-        let payment = &mut ctx.accounts.payment;
-        let receipient_token_account = &ctx.accounts.receipient;
-        let token_program = &ctx.accounts.token_program;
+        let contract = &mut ctx.accounts.contract;
+        let obligor = &mut ctx.accounts.obligor;
+        let obligor_sender = contract.sender;
 
-        let bump = *ctx.bumps.get("payment").unwrap();
-
-        transfer(
-            CpiContext::new_with_signer(
-                token_program.to_account_info(),
-                Transfer {
-                    from: user_token_account.to_account_info(),
-                    to: receipient_token_account.to_account_info(),
-                    authority: payment.to_account_info(),
-                },
-                &[&[
-                    b"payment",
-                    payment.authority.as_ref(),
-                    payment.mint.as_ref(),
-                    payment.receipient.as_ref(),
-                    &[bump]]
-                ]),
-            payment.amount,
+        obligor.new(
+            obligor_sender,
+            contract.key(),
+            bump,
         )?;
 
-        Ok(ThreadResponse::default())
+        contract.enter();
+
+        Ok(())
     }
 
-    pub fn handle_update_payment(ctx: Context<UpdatePayment>, amount: Option<u64>) -> Result<()> {
-        msg!("Updating payment");
+    pub fn handle_reject_contract(ctx: Context<RejectContract>) -> Result<()> {
+        let contract = &mut ctx.accounts.contract;
+        let authority = contract.sender;
+        let assert = &ctx.accounts.payer.key();
 
-        let payment = &mut ctx.accounts.payment;
-
-        if let Some(amount) = amount {
-            payment.amount = amount;
+        if authority == *assert {
+            contract.close(ctx.accounts.payer.to_account_info())?;
         }
-
-        payment.exit(&crate::id())?;
 
         Ok(())
     }
