@@ -347,7 +347,7 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_propose_contract(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: u64, bump: u8) -> Result<()> {
+    pub fn handle_propose_contract(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: u64, bump: u8, num_payments_obligated: u64) -> Result<()> {
         msg!("Proposing contract");
 
         let contract = &mut ctx.accounts.contract;
@@ -365,6 +365,7 @@ pub mod kivo {
             schedule,
             id,
             bump,
+            num_payments_obligated,
         )?;
 
         Ok(())

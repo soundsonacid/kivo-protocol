@@ -5,7 +5,7 @@ pub const CONTRACT: &[u8] = b"contract";
 pub const OBLIGOR: &[u8] = b"obligor";
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Contract {
     pub sender: Pubkey,
     pub sender_token_account: Pubkey,
@@ -15,7 +15,9 @@ pub struct Contract {
     pub schedule: String,
     pub active: bool,
     pub id: u64,
-    pub bump: u8
+    pub bump: u8,
+    pub num_payments_made: u64,
+    pub num_payments_obligated: u64,
 }
 
 impl Contract {
@@ -28,7 +30,8 @@ impl Contract {
         amount: u64,
         schedule: String,
         id: u64,
-        bump: u8
+        bump: u8,
+        num_payments_obligated: u64,
     ) -> Result<()> {
         self.sender = sender;
         self.sender_token_account = sender_token_account;
@@ -39,11 +42,20 @@ impl Contract {
         self.active = false;
         self.id = id;
         self.bump = bump;
+        self.num_payments_obligated = num_payments_obligated;
         Ok(())
     }
 
     pub fn enter(&mut self) {
         self.active = true;
+    }
+
+    pub fn increment_payments_made(&mut self) {
+        self.num_payments_made = self.num_payments_made.saturating_add(1);
+    }
+
+    pub fn is_fulfilled(&mut self) -> bool {
+        self.num_payments_made == self.num_payments_obligated
     }
 
     pub fn get_contract_address(receiver: Pubkey, id: u64) -> (Pubkey, u8) {
