@@ -73,7 +73,7 @@ pub struct AcceptContract<'info> {
     pub contract: Box<Account<'info, Contract>>,
 
     #[account(address = contract.receiver.key())]
-    pub contract_owner: Box<Account<'info, User>>,
+    pub contract_owner: Box<Account<'info, User>>, // The owner of the contract should be the creator, i.e the receiver.
 
     #[account()]
     pub obligor_user_account: Box<Account<'info, User>>,
@@ -92,7 +92,7 @@ pub struct AcceptContract<'info> {
     pub obligor: Box<Account<'info, Obligor>>,
 
     #[account(associated_token::mint = mint, associated_token::authority = obligor.user_account)]    
-    pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as sender_token_account
+    pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as contract.sender_token_account
 
     #[account(associated_token::mint = mint, associated_token::authority = contract.receiver)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
