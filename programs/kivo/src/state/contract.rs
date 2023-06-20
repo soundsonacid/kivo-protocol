@@ -83,7 +83,7 @@ impl TryFrom<Vec<u8>> for Contract {
 #[account]
 #[derive(Debug)]
 pub struct Obligor {
-    pub obligor: Pubkey,
+    pub user_account: Pubkey,
     pub contract: Pubkey,
     pub active: bool,
     pub last_payment_at: Option<i64>,
@@ -93,11 +93,11 @@ pub struct Obligor {
 impl Obligor {
     pub fn new(
         &mut self,
-        obligor: Pubkey,
+        user_account: Pubkey,
         contract: Pubkey,
         bump: u8,
     ) -> Result<()> {
-        self.obligor = obligor;
+        self.user_account = user_account;
         self.contract = contract;
         self.active = true;
         self.last_payment_at = None;

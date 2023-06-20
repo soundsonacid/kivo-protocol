@@ -25,7 +25,7 @@ pub struct ProposeContract<'info> {
             receiver_user_account.key().as_ref(),
             &id.to_be_bytes(),
             ],
-            bump,
+        bump,
         )]
     pub contract: Box<Account<'info, Contract>>,
 
@@ -41,7 +41,7 @@ pub struct ProposeContract<'info> {
             USER, 
             payer.key().as_ref()
             ], 
-            bump
+        bump
         )]
     pub receiver_user_account: Box<Account<'info, User>>,
 
@@ -77,7 +77,7 @@ pub struct AcceptContract<'info> {
 
     #[account()]
     pub obligor_user_account: Box<Account<'info, User>>,
-    
+
     #[account(
         init, 
         seeds = [
@@ -91,7 +91,7 @@ pub struct AcceptContract<'info> {
     )]
     pub obligor: Box<Account<'info, Obligor>>,
 
-    #[account(associated_token::mint = mint, associated_token::authority = obligor.obligor)]    
+    #[account(associated_token::mint = mint, associated_token::authority = obligor.user_account)]    
     pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as sender_token_account
 
     #[account(associated_token::mint = mint, associated_token::authority = contract.receiver)]    
