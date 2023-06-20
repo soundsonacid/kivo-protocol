@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 use anchor_lang::solana_program::instruction::Instruction;
-// use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
+use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 // use clockwork_sdk::state::ThreadResponse;
 // use clockwork_sdk::ThreadProgram;
 use clockwork_sdk::cpi::{ ThreadCreate, ThreadPause, thread_create, thread_pause };
@@ -447,7 +447,7 @@ pub mod kivo {
             skippable: false,
         };
 
-        // thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 100 as u64, contract_thread.id, settle_contract_payment_ix, trigger)?;
+        thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL as u64, contract_thread.id.clone(), vec![settle_contract_payment_ix.into()], trigger)?;
 
         let thread_pause_accounts = ThreadPause {
             authority: obligor.to_account_info(),
