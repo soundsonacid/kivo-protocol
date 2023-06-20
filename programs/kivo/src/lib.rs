@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 use anchor_lang::solana_program::instruction::Instruction;
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
+use anchor_lang::solana_program::hash;
 use clockwork_sdk::state::ThreadResponse;
 use clockwork_sdk::cpi::{ ThreadCreate, thread_create, ThreadDelete, thread_delete };
 use clockwork_sdk::state::Trigger;
@@ -404,6 +405,11 @@ pub mod kivo {
         let signature_seeds = Obligor::get_obligor_signer_seeds(&obligor_user_account_key, &contract_key, &bump);
         let signer_seeds = &[&signature_seeds[..]];
 
+
+        let mut discriminator = [0u8; 8];
+        let preimage = format!("{}:{}", "global", "settle_contract_payment");
+        discriminator.copy_from_slice(&hash::hash(preimage.as_bytes()).to_bytes()[..8]);
+
         let settle_contract_payment_ix = Instruction {
             program_id: crate::ID,
             accounts: vec![
@@ -419,7 +425,7 @@ pub mod kivo {
                 AccountMeta::new_readonly(token_program.key(), false),
                 AccountMeta::new_readonly(system_program.key(), false),
             ],
-            data: "I need to fix this".into(),
+            data: discriminator.into(),
         };
 
         let delegate_accounts = Approve {
