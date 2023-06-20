@@ -35,14 +35,7 @@ pub struct CreateRequest<'info> {
     )]
     pub fulfiller_transaction_account: Account<'info, Transaction>,
 
-    #[account(
-        mut,
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub requester: Account<'info, User>,
 
     #[account(mut)]
@@ -66,14 +59,7 @@ pub struct ExecuteTransaction<'info> {
     /// CHECK: validated by cpi signer seeds
     pub sender: UncheckedAccount<'info>,
 
-    #[account(
-        mut,
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub sender_user_account: Box<Account<'info, User>>,
 
     #[account(
@@ -126,13 +112,7 @@ pub struct ExecuteTransaction<'info> {
 
 #[derive(Accounts)]
 pub struct FulfillRequest<'info> {
-    #[account(
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub fulfiller: Box<Account<'info, User>>,
     
     #[account(mut)]

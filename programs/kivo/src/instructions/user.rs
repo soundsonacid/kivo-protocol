@@ -146,14 +146,7 @@ pub struct Withdrawal<'info> {
     #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
     pub withdrawer_token_account: Account<'info, TokenAccount>,
 
-    #[account(
-        mut, 
-        seeds = [
-            USER, 
-            payer.key().as_ref()
-            ], 
-            bump
-        )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
     #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
@@ -179,14 +172,7 @@ pub struct UnwrapWithdrawal<'info> {
     #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
     pub withdrawer_token_account: Account<'info, TokenAccount>,
 
-    #[account(
-        mut, 
-        seeds = [
-            USER, 
-            payer.key().as_ref()
-            ], 
-            bump
-        )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
     #[account(mut, associated_token::authority = user_account, associated_token::mint = mint)]
@@ -239,14 +225,7 @@ pub struct EditUsername<'info> {
     )]
     pub old_username_account: Account<'info, Username>,
 
-    #[account(
-        mut, 
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
     #[account(mut)]
@@ -271,14 +250,7 @@ pub struct AddFriend<'info> {
     )]
     pub new_friend: Account<'info, Friend>,
 
-    #[account(
-        mut,
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
     pub friend_account: Account<'info, User>,
@@ -292,14 +264,7 @@ pub struct AddFriend<'info> {
 
 #[derive(Accounts)]
 pub struct SetPreferredToken<'info> {
-    #[account(
-        mut, 
-        seeds = [
-            USER,
-            payer.key().as_ref(),
-        ],
-        bump
-    )]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
     #[account()]

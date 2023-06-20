@@ -65,6 +65,16 @@ impl User {
     ) -> [&'a [u8]; 3] {
         [USER.as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
     }
+
+    pub fn get_user_address(pubkey: Pubkey) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                USER,
+                pubkey.as_ref(),
+            ],
+            &crate::ID,
+        )
+    }
 }
 
 #[account]
