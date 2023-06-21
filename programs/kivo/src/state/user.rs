@@ -101,10 +101,6 @@ impl Username {
         self.username = username;
         Ok(())
     }
-
-    pub fn is_valid(username: [u8; 16]) -> bool {
-        username.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57))
-    }
 }
 
 #[account]
