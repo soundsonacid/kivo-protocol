@@ -29,20 +29,13 @@ pub struct ProposeContract<'info> {
         )]
     pub contract: Box<Account<'info, Contract>>,
 
-    #[account(mut)]
+    #[account()]
     pub sender_user_account: Box<Account<'info, User>>,
 
     #[account(associated_token::mint = mint, associated_token::authority = sender_user_account)]    
     pub sender_token_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        mut, 
-        seeds = [
-            USER, 
-            payer.key().as_ref()
-            ], 
-        bump
-        )]
+    #[account(address = User::get_user_address(payer.key()).0)]
     pub receiver_user_account: Box<Account<'info, User>>,
 
     #[account(associated_token::mint = mint, associated_token::authority = receiver_user_account)]    
@@ -69,13 +62,13 @@ pub struct ProposeContract<'info> {
 
 #[derive(Accounts)]
 pub struct AcceptContract<'info> {
-    #[account(address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
     pub contract: Box<Account<'info, Contract>>,
 
-    #[account(address = contract.receiver.key())]
+    #[account(mut, address = contract.receiver.key())]
     pub contract_owner: Box<Account<'info, User>>, // The owner of the contract should be the creator, i.e the receiver.
 
-    #[account()]
+    #[account(mut)]
     pub obligor_user_account: Box<Account<'info, User>>,
 
     #[account(
@@ -91,10 +84,10 @@ pub struct AcceptContract<'info> {
     )]
     pub obligor: Box<Account<'info, Obligor>>,
 
-    #[account(associated_token::mint = mint, associated_token::authority = obligor.user_account)]    
+    #[account(mut, associated_token::mint = mint, associated_token::authority = obligor.user_account)]    
     pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as contract.sender_token_account
 
-    #[account(associated_token::mint = mint, associated_token::authority = contract.receiver)]    
+    #[account(mut, associated_token::mint = mint, associated_token::authority = contract.receiver)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
     
     #[account(address = Thread::pubkey(contract.sender.key(), contract.id.to_le_bytes().to_vec()))]
@@ -121,7 +114,7 @@ pub struct AcceptContract<'info> {
 
 #[derive(Accounts)]
 pub struct RejectContract<'info> {
-    #[account(address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
     pub contract: Account<'info, Contract>,
 
     #[account(mut)]

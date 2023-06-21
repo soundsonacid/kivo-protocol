@@ -10,16 +10,16 @@ use crate::state::user::User;
 #[derive(Accounts)]
 pub struct SettleContractPayment<'info> {
 
-    #[account(address = Obligor::get_obligor_address(obligor.user_account, contract.key()).0)]
+    #[account(mut, address = Obligor::get_obligor_address(obligor.user_account, contract.key()).0)]
     pub obligor: Box<Account<'info, Obligor>>,
 
     #[account()]
     pub obligor_user_account: Box<Account<'info, User>>,
 
-    #[account(associated_token::mint = mint, associated_token::authority = obligor)]    
+    #[account(mut, associated_token::mint = mint, associated_token::authority = obligor)]    
     pub obligor_token_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
     pub contract: Box<Account<'info, Contract>>,
 
     #[account(signer)]
@@ -28,7 +28,7 @@ pub struct SettleContractPayment<'info> {
     #[account()]
     pub contract_owner: Box<Account<'info, User>>,
 
-    #[account(associated_token::mint = mint, associated_token::authority = contract.receiver)]    
+    #[account(mut, associated_token::mint = mint, associated_token::authority = contract.receiver)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
 
     #[account()]

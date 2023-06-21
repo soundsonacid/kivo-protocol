@@ -19,7 +19,7 @@ pub struct User {
 }
 
 impl Size for User {
-    const SIZE: usize = 114;
+    const SIZE: usize = 8 + 112;
 }
 
 impl User {
@@ -33,6 +33,23 @@ impl User {
         self.username = username;
         self.account_type = account_type;
         Ok(())
+    }
+
+    pub fn get_user_address(pubkey: Pubkey) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                USER,
+                pubkey.as_ref(),
+            ],
+            &crate::ID,
+        )
+    }
+    
+    pub fn get_user_signer_seeds<'a>(
+        pubkey: &'a Pubkey, 
+        bump: &'a u8
+    ) -> [&'a [u8]; 3] {
+        [USER.as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
     }
 
     pub fn set_username(&mut self, username: [u8; 16]) {
@@ -62,23 +79,6 @@ impl User {
     pub fn disable_preferred_token(&mut self) {
         self.preferred_token = None;
     }
-    
-    pub fn get_user_signer_seeds<'a>(
-        pubkey: &'a Pubkey, 
-        bump: &'a u8
-    ) -> [&'a [u8]; 3] {
-        [USER.as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
-    }
-
-    pub fn get_user_address(pubkey: Pubkey) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                USER,
-                pubkey.as_ref(),
-            ],
-            &crate::ID,
-        )
-    }
 }
 
 #[account]
@@ -88,7 +88,7 @@ pub struct Username {
 }
 
 impl Size for Username {
-    const SIZE: usize = 56;
+    const SIZE: usize = 8 + 48;
 }
 
 impl Username {
@@ -111,7 +111,7 @@ pub struct Friend {
 }
 
 impl Size for Friend {
-    const SIZE: usize = 57;
+    const SIZE: usize = 8 + 49;
 }
 
 impl Friend {

@@ -474,7 +474,12 @@ pub mod kivo {
 
         thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 10 as u64, contract_thread.id.clone(), vec![settle_contract_payment_ix.into()], trigger)?;
 
+        contract_owner.increment_contracts();
+        obligor_user_account.increment_contracts();
         contract.accept(contract_thread.key());
+
+        contract_owner.exit(&crate::id())?;
+        obligor_user_account.exit(&crate::id())?
         contract.exit(&crate::id())?;
 
         Ok(())
