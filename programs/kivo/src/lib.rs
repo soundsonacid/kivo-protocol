@@ -29,6 +29,8 @@ pub mod kivo {
                                             account_type: u8) -> Result<()> {
         msg!("Initalizing user!");
     
+        require!(name.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57)), KivoError::InvalidUsername);
+
         let user = &mut ctx.accounts.user_account;
         let username = &mut ctx.accounts.username_account;
     
@@ -388,7 +390,7 @@ pub mod kivo {
         
         let contract = &mut ctx.accounts.contract;
         let obligor = &mut ctx.accounts.obligor;
-        let obligor_user_account = &ctx.accounts.obligor_user_account;
+        let obligor_user_account = &mut ctx.accounts.obligor_user_account;
 
         obligor.new(
             obligor_user_account.key(),
@@ -408,7 +410,7 @@ pub mod kivo {
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let payer = &mut ctx.accounts.payer;
-        let contract_owner = &ctx.accounts.contract_owner;
+        let contract_owner = &mut ctx.accounts.contract_owner;
         let mint = &ctx.accounts.mint;
 
         let contract_key = contract.key();
@@ -479,7 +481,7 @@ pub mod kivo {
         contract.accept(contract_thread.key());
 
         contract_owner.exit(&crate::id())?;
-        obligor_user_account.exit(&crate::id())?
+        obligor_user_account.exit(&crate::id())?;
         contract.exit(&crate::id())?;
 
         Ok(())
@@ -520,6 +522,8 @@ pub mod kivo {
         let signer_seeds = &[&signature_seeds[..]];
 
         if contract.is_fulfilled() {
+            msg!("Contract fulfilled - deleting Thread");
+
             let thread_delete_accounts = ThreadDelete {
                 authority: contract_owner.to_account_info(),
                 close_to: obligor_token_account.to_account_info(),
@@ -553,7 +557,8 @@ pub mod kivo {
 
             contract.increment_payments_made();
 
-            contract.exit(&crate::ID)?;
+            contract.exit(&crate::id())?;
+            obligor.exit(&crate::id())?;
         }
         
         Ok(ThreadResponse::default())
@@ -566,4 +571,6 @@ pub enum KivoError {
     InsufficientBalanceToAcceptContract,
     #[msg("Failed to reject contract: Bad signer at handle_reject_contract - signer key must match contract.sender!")]
     BadSignerToRejectContract,
+    #[msg("Username contains invalid characters!")]
+    InvalidUsername,
 }
