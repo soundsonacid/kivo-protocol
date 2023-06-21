@@ -59,6 +59,10 @@ impl User {
         self.preferred_token = Some(token);
     }
 
+    pub fn disable_preferred_token(&mut self) {
+        self.preferred_token = None;
+    }
+    
     pub fn get_user_signer_seeds<'a>(
         pubkey: &'a Pubkey, 
         bump: &'a u8

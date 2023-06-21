@@ -328,6 +328,18 @@ pub mod kivo {
         Ok(())
     }
 
+    pub fn handle_disable_preferred_token(ctx: Context<DisablePreferredToken>) -> Result<()> {
+        msg!("Disabling preferred token");
+
+        let user = &mut ctx.accounts.user_account;
+
+        user.disable_preferred_token();
+
+        user.exit(&crate::id())?;
+
+        Ok(())
+    }
+
     pub fn handle_add_friend(ctx: Context<AddFriend>) -> Result<()> {
         msg!("Adding friend");
 
@@ -483,6 +495,7 @@ pub mod kivo {
     }
 
     pub fn handle_settle_contract_payment(ctx: Context<SettleContractPayment>) -> Result<ThreadResponse> {
+        msg!("Settling contract payment");
 
         let obligor = &mut ctx.accounts.obligor;
         let obligor_user_account = &ctx.accounts.obligor_user_account;

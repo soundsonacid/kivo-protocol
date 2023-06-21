@@ -277,3 +277,14 @@ pub struct SetPreferredToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct DisablePreferredToken<'info> {
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
+    pub user_account: Account<'info, User>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>,
+}
