@@ -29,7 +29,7 @@ pub mod kivo {
                                             account_type: u8) -> Result<()> {
         msg!("Initalizing user!");
     
-        require!(name.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57)), KivoError::InvalidUsername);
+        require!(name.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57) || (value == 0)), KivoError::InvalidUsername);
 
         let user = &mut ctx.accounts.user_account;
         let username = &mut ctx.accounts.username_account;
@@ -299,7 +299,7 @@ pub mod kivo {
     pub fn handle_edit_username(ctx: Context<EditUsername>, username: [u8; 16]) -> Result<()> {
         msg!("Editing username");
     
-        require!(username.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57)), KivoError::InvalidUsername);
+        require!(username.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57) || (value == 0)), KivoError::InvalidUsername);
 
         let new_username = &mut ctx.accounts.new_username_account;
         let user = &mut ctx.accounts.user_account;
