@@ -296,10 +296,10 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_edit_username(ctx: Context<EditUsername>, username: [u8; 16]) -> Result<()> {
+    pub fn handle_edit_username(ctx: Context<EditUsername>, name: [u8; 16]) -> Result<()> {
         msg!("Editing username");
     
-        require!(username.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57) || (value == 0)), KivoError::InvalidUsername);
+        require!(name.iter().all(|&value| (value >= 97 && value <= 122) || (value >= 48 && value <= 57) || (value == 0)), KivoError::InvalidUsername);
 
         let new_username = &mut ctx.accounts.new_username_account;
         let user = &mut ctx.accounts.user_account;
@@ -308,10 +308,10 @@ pub mod kivo {
     
         new_username.new(
             user.key(),
-            username,
+            name,
         )?;
     
-        user.set_username(username);
+        user.set_username(name);
     
         user.exit(&crate::id())?;
         new_username.exit(&crate::id())?;
