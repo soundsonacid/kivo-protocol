@@ -73,15 +73,15 @@ pub struct InitializeUser<'info> {
     pub usdt_vault: Box<Account<'info, TokenAccount>>,
 
     #[account()]
-    pub dai_mint: Box<Account<'info, Mint>>,
+    pub uxd_mint: Box<Account<'info, Mint>>,
 
     #[account(
         init,
         payer = payer,
-        associated_token::mint = dai_mint,
+        associated_token::mint = uxd_mint,
         associated_token::authority = user_account,
     )]
-    pub dai_vault: Box<Account<'info, TokenAccount>>,
+    pub uxd_vault: Box<Account<'info, TokenAccount>>,
 
     #[account()]
     pub bonk_mint: Box<Account<'info, Mint>>,
