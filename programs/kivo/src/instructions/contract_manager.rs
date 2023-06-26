@@ -23,7 +23,7 @@ pub struct ProposeContract<'info> {
         seeds = [
             CONTRACT,
             receiver_user_account.key().as_ref(),
-            &id.to_be_bytes(),
+            receiver_user_account.num_contracts.to_le_bytes().as_ref(),
             ],
         bump,
         )]
@@ -35,7 +35,7 @@ pub struct ProposeContract<'info> {
     #[account(associated_token::mint = mint, associated_token::authority = sender_user_account)]    
     pub sender_token_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(address = User::get_user_address(payer.key()).0)]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub receiver_user_account: Box<Account<'info, User>>,
 
     #[account(associated_token::mint = mint, associated_token::authority = receiver_user_account)]    
@@ -46,9 +46,6 @@ pub struct ProposeContract<'info> {
 
     #[account(mut)]
     pub payer: Signer<'info>,
-
-    #[account(address = sysvar::rent::ID)]
-    pub rent: Sysvar<'info, Rent>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,

@@ -202,7 +202,7 @@ pub mod kivo {
     pub fn handle_create_request(ctx: Context<CreateRequest>, 
                                             amount: u64, 
                                             time_stamp: u64) -> Result<()> {
-        msg!("Creating transaction account");
+        msg!("Creating request");
 
         let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
         let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
@@ -369,7 +369,7 @@ pub mod kivo {
         let contract = &mut ctx.accounts.contract;
         let sender = &ctx.accounts.sender_user_account;
         let sender_token_account = &ctx.accounts.sender_token_account;
-        let receiver = &ctx.accounts.receiver_user_account;
+        let receiver = &mut ctx.accounts.receiver_user_account;
         let receiver_token_account = &ctx.accounts.receiver_token_account;
 
         contract.new(
@@ -383,6 +383,10 @@ pub mod kivo {
             bump,
             num_payments_obligated,
         )?;
+
+        receiver.increment_contracts();
+
+        receiver.exit(&crate::id())?;
 
         Ok(())
     }
@@ -478,7 +482,6 @@ pub mod kivo {
 
         thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 10 as u64, contract_thread.id.clone(), vec![settle_contract_payment_ix.into()], trigger)?;
 
-        contract_owner.increment_contracts();
         obligor_user_account.increment_contracts();
         contract.accept(contract_thread.key());
 
