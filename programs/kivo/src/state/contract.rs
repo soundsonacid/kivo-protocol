@@ -15,10 +15,11 @@ pub struct Contract {
     pub amount: u64,
     pub schedule: String,
     pub active: bool,
-    pub id: u64,
+    pub id: String,
     pub bump: u8,
     pub num_payments_made: u64,
     pub num_payments_obligated: u64,
+    pub nonce: u32,
 }
 
 impl Contract {
@@ -30,9 +31,10 @@ impl Contract {
         receiver_token_account: Pubkey,
         amount: u64,
         schedule: String,
-        id: u64,
+        id: String,
         bump: u8,
         num_payments_obligated: u64,
+        nonce: u32,
     ) -> Result<()> {
         self.sender = sender;
         self.sender_token_account = sender_token_account;
@@ -45,6 +47,7 @@ impl Contract {
         self.id = id;
         self.bump = bump;
         self.num_payments_obligated = num_payments_obligated;
+        self.nonce = nonce;
         Ok(())
     }
 
@@ -61,12 +64,12 @@ impl Contract {
         self.num_payments_made == self.num_payments_obligated
     }
 
-    pub fn get_contract_address(receiver: Pubkey, id: u64) -> (Pubkey, u8) {
+    pub fn get_contract_address(receiver: Pubkey, nonce: u32) -> (Pubkey, u8) {
         Pubkey::find_program_address(
             &[
                 CONTRACT,
                 receiver.as_ref(),
-                &id.to_be_bytes(),
+                nonce.to_le_bytes().as_ref(),
             ],
             &crate::ID,
         )

@@ -363,7 +363,7 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_propose_contract(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: u64, bump: u8, num_payments_obligated: u64) -> Result<()> {
+    pub fn handle_propose_contract(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: String, bump: u8, num_payments_obligated: u64) -> Result<()> {
         msg!("Proposing contract");
 
         let contract = &mut ctx.accounts.contract;
@@ -382,6 +382,7 @@ pub mod kivo {
             id,
             bump,
             num_payments_obligated,
+            receiver.num_contracts.clone(),
         )?;
 
         receiver.increment_contracts();
@@ -497,9 +498,9 @@ pub mod kivo {
 
         let contract = &mut ctx.accounts.contract;
         let authority = contract.sender;
-        let assert = &ctx.accounts.payer.key();
+        let user = &ctx.accounts.user_account;
 
-        require!(authority == *assert, KivoError::BadSignerToRejectContract);
+        require!(authority == user.key(), KivoError::BadSignerToRejectContract);
 
         contract.close(ctx.accounts.payer.to_account_info())?;
 

@@ -19,7 +19,7 @@ pub struct SettleContractPayment<'info> {
     #[account(mut, associated_token::mint = mint, associated_token::authority = obligor)]    
     pub obligor_token_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
     pub contract: Box<Account<'info, Contract>>,
 
     #[account(signer)]

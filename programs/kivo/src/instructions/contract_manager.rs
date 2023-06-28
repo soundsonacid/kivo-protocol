@@ -14,7 +14,6 @@ pub const CONTRACT: &[u8] = b"contract";
 pub const OBLIGOR: &[u8] = b"obligor";
 
 #[derive(Accounts)]
-#[instruction(id: u64)]
 pub struct ProposeContract<'info> {
     #[account(
         init, 
@@ -59,7 +58,7 @@ pub struct ProposeContract<'info> {
 
 #[derive(Accounts)]
 pub struct AcceptContract<'info> {
-    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
     pub contract: Box<Account<'info, Contract>>,
 
     #[account(mut, address = contract.receiver.key())]
@@ -87,7 +86,11 @@ pub struct AcceptContract<'info> {
     #[account(mut, associated_token::mint = mint, associated_token::authority = contract.receiver)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
     
-    #[account(address = Thread::pubkey(contract.sender.key(), contract.id.to_le_bytes().to_vec()))]
+    #[account(init, 
+              payer = payer, 
+              space = 8 + size_of::<Thread>(),
+              address = Thread::pubkey(contract.sender.key(), contract.id.clone().into_bytes()
+              ))]
     pub contract_thread: Box<Account<'info, Thread>>,
 
     #[account(mut)]
@@ -111,8 +114,11 @@ pub struct AcceptContract<'info> {
 
 #[derive(Accounts)]
 pub struct RejectContract<'info> {
-    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.id.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
     pub contract: Account<'info, Contract>,
+
+    #[account(address = User::get_user_address(payer.key()).0)]
+    pub user_account: Account<'info, User>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
