@@ -86,12 +86,9 @@ pub struct AcceptContract<'info> {
     #[account(mut, associated_token::mint = mint, associated_token::authority = contract.receiver)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
     
-    #[account(init, 
-              payer = payer, 
-              space = 8 + size_of::<Thread>(),
-              address = Thread::pubkey(contract.sender.key(), contract.id.clone().into_bytes()
-              ))]
-    pub contract_thread: Box<Account<'info, Thread>>,
+    /// CHECK: Thread initialized via CPI
+    #[account(mut, address = Thread::pubkey(contract.sender.key(), contract.id.clone().into_bytes()))]
+    pub contract_thread: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

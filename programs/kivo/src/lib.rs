@@ -481,7 +481,7 @@ pub mod kivo {
             skippable: false,
         };
 
-        thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 10 as u64, contract_thread.id.clone(), vec![settle_contract_payment_ix.into()], trigger)?;
+        thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 10 as u64, contract.id.clone().as_bytes().to_vec(), vec![settle_contract_payment_ix.into()], trigger)?;
 
         obligor_user_account.increment_contracts();
         contract.accept(contract_thread.key());
