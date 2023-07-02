@@ -399,6 +399,11 @@ pub mod kivo {
         let obligor = &mut ctx.accounts.obligor;
         let obligor_user_account = &mut ctx.accounts.obligor_user_account;
 
+        let obligor_token_account = &mut ctx.accounts.obligor_token_account;
+
+        require!(obligor_token_account.amount >= contract.amount, KivoError::InsufficientBalanceToAcceptContract);
+        require!(contract.sender.key() == ctx.accounts.payer.key(), KivoError::BadSignerToAcceptContract);
+
         obligor.new(
             obligor_user_account.key(),
             contract.key(),
@@ -406,10 +411,6 @@ pub mod kivo {
         )?;
 
         obligor.exit(&crate::id())?;
-
-        let obligor_token_account = &mut ctx.accounts.obligor_token_account;
-
-        require!(obligor_token_account.amount >= contract.amount, KivoError::InsufficientBalanceToAcceptContract);
 
         let contract_thread = &ctx.accounts.contract_thread;
         let receiver_token_account = &ctx.accounts.receiver_token_account;
@@ -480,12 +481,6 @@ pub mod kivo {
             thread_create_accounts
         );
 
-        // let thread_create_cpi_context = CpiContext::new_with_signer(
-        //     thread_program.to_account_info(),
-        //     thread_create_accounts,
-        //     user_signer_seeds,
-        // );
-
         let trigger = Trigger::Cron {
             schedule: contract.schedule.clone(),
             skippable: false,
@@ -542,19 +537,19 @@ pub mod kivo {
         if contract.is_fulfilled() {
             msg!("Contract fulfilled - deleting Thread");
 
-            // let thread_delete_accounts = ThreadDelete {
-            //     authority: payer.to_account_info(),
-            //     close_to: obligor_token_account.to_account_info(),
-            //     thread: contract_thread.to_account_info(),
-            // };
+            let thread_delete_accounts = ThreadDelete {
+                authority: payer.to_account_info(),
+                close_to: obligor_token_account.to_account_info(),
+                thread: contract_thread.to_account_info(),
+            };
 
-            // let thread_delete_cpi_context = CpiContext::new_with_signer(
-            //     thread_program.to_account_info(),
-            //     thread_delete_accounts,
-            //     signer_seeds,
-            // );
+            let thread_delete_cpi_context = CpiContext::new_with_signer(
+                thread_program.to_account_info(),
+                thread_delete_accounts,
+                signer_seeds,
+            );
 
-            // thread_delete(thread_delete_cpi_context)?;
+            thread_delete(thread_delete_cpi_context)?;
         } 
         else {
             obligor.last_payment_at = Some(Clock::get().unwrap().unix_timestamp);
@@ -589,6 +584,8 @@ pub enum KivoError {
     InsufficientBalanceToAcceptContract,
     #[msg("Failed to reject contract: Bad signer at handle_reject_contract - signer key must match contract.sender!")]
     BadSignerToRejectContract,
-    #[msg("Username contains invalid characters!")]
+    #[msg("Failed to accept contract: Bad signer at handle_accept_contract - signer key must match contract.sender!")]
+    BadSignerToAcceptContract,
+    #[msg("Username contains invalid characters - Usernames must be 16 characters or less and all lowercase letters or numbers!")]
     InvalidUsername,
 }
