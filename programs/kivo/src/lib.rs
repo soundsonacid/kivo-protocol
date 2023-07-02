@@ -392,8 +392,8 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_accept_contract(ctx: Context<AcceptContract>, bump: u8) -> Result<()> {
-        msg!("Entering contract");
+    pub fn handle_accept_contract(ctx: Context<AcceptContract>, obligor_bump: u8, user_bump: u8) -> Result<()> {
+        msg!("Accepting contract");
         
         let contract = &mut ctx.accounts.contract;
         let obligor = &mut ctx.accounts.obligor;
@@ -402,7 +402,7 @@ pub mod kivo {
         obligor.new(
             obligor_user_account.key(),
             contract.key(),
-            bump,
+            obligor_bump,
         )?;
 
         obligor.exit(&crate::id())?;
@@ -417,15 +417,11 @@ pub mod kivo {
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let payer = &mut ctx.accounts.payer;
-        let contract_owner = &mut ctx.accounts.contract_owner;
+        let contract_creator = &mut ctx.accounts.contract_creator;
         let mint = &ctx.accounts.mint;
 
         let contract_key = contract.key();
         let obligor_user_account_key = obligor_user_account.key();
-
-        let signature_seeds = Obligor::get_obligor_signer_seeds(&obligor_user_account_key, &contract_key, &bump);
-        let signer_seeds = &[&signature_seeds[..]];
-
 
         let mut discriminator = [0u8; 8];
         let preimage = format!("{}:{}", "global", "settle_contract_payment");
@@ -439,7 +435,7 @@ pub mod kivo {
                 AccountMeta::new(obligor_token_account.key(), false),
                 AccountMeta::new(contract.key(), false),
                 AccountMeta::new_readonly(contract_thread.key(), true),
-                AccountMeta::new(contract_owner.key(), false),
+                AccountMeta::new(contract_creator.key(), false),
                 AccountMeta::new(receiver_token_account.key(), false),
                 AccountMeta::new_readonly(mint.key(), false),
                 AccountMeta::new_readonly(thread_program.key(), false),
@@ -448,6 +444,13 @@ pub mod kivo {
             ],
             data: discriminator.into(),
         };
+
+        msg!("Instruction built");
+
+        let payer_key = payer.key();
+
+        let user_signature_seeds = User::get_user_signer_seeds(&payer_key, &user_bump);
+        let user_signer_seeds = &[&user_signature_seeds[..]];
 
         let delegate_accounts = Approve {
             authority: obligor_user_account.to_account_info(),
@@ -458,35 +461,44 @@ pub mod kivo {
         let delegate_cpi_context = CpiContext::new_with_signer(
             token_program.to_account_info(),
             delegate_accounts,
-            signer_seeds,
+            user_signer_seeds,
         );
 
         approve(delegate_cpi_context, u64::MAX)?;
 
+        msg!("Delegate approved");
+
         let thread_create_accounts = ThreadCreate {
-            authority: contract_owner.to_account_info(),
+            authority: payer.to_account_info(),
             payer: payer.to_account_info(),
             system_program: system_program.to_account_info(),
             thread: contract_thread.to_account_info(),
         };
 
-        let thread_create_cpi_context = CpiContext::new_with_signer(
-            thread_program.to_account_info(),
-            thread_create_accounts,
-            signer_seeds,
+        let thread_create_cpi_context = CpiContext::new(
+            thread_program.to_account_info(), 
+            thread_create_accounts
         );
+
+        // let thread_create_cpi_context = CpiContext::new_with_signer(
+        //     thread_program.to_account_info(),
+        //     thread_create_accounts,
+        //     user_signer_seeds,
+        // );
 
         let trigger = Trigger::Cron {
             schedule: contract.schedule.clone(),
             skippable: false,
         };
 
-        thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 10 as u64, contract.id.clone().as_bytes().to_vec(), vec![settle_contract_payment_ix.into()], trigger)?;
+        thread_create(thread_create_cpi_context, LAMPORTS_PER_SOL / 100 as u64, contract.id.clone().as_bytes().to_vec(), vec![settle_contract_payment_ix.into()], trigger)?;
+
+        msg!("Thread created");
 
         obligor_user_account.increment_contracts();
         contract.accept(contract_thread.key());
 
-        contract_owner.exit(&crate::id())?;
+        contract_creator.exit(&crate::id())?;
         obligor_user_account.exit(&crate::id())?;
         contract.exit(&crate::id())?;
 
@@ -518,7 +530,7 @@ pub mod kivo {
         let receiver_token_account = &mut ctx.accounts.receiver_token_account;
         let thread_program = &ctx.accounts.thread_program;
         let token_program = &ctx.accounts.token_program;
-        let contract_owner = &ctx.accounts.contract_owner;
+        let contract_creator = &ctx.accounts.contract_creator;
 
         let contract_key = contract.key();
         let obligor_user_account_key = obligor_user_account.key();
@@ -530,19 +542,19 @@ pub mod kivo {
         if contract.is_fulfilled() {
             msg!("Contract fulfilled - deleting Thread");
 
-            let thread_delete_accounts = ThreadDelete {
-                authority: contract_owner.to_account_info(),
-                close_to: obligor_token_account.to_account_info(),
-                thread: contract_thread.to_account_info(),
-            };
+            // let thread_delete_accounts = ThreadDelete {
+            //     authority: payer.to_account_info(),
+            //     close_to: obligor_token_account.to_account_info(),
+            //     thread: contract_thread.to_account_info(),
+            // };
 
-            let thread_delete_cpi_context = CpiContext::new_with_signer(
-                thread_program.to_account_info(),
-                thread_delete_accounts,
-                signer_seeds,
-            );
+            // let thread_delete_cpi_context = CpiContext::new_with_signer(
+            //     thread_program.to_account_info(),
+            //     thread_delete_accounts,
+            //     signer_seeds,
+            // );
 
-            thread_delete(thread_delete_cpi_context)?;
+            // thread_delete(thread_delete_cpi_context)?;
         } 
         else {
             obligor.last_payment_at = Some(Clock::get().unwrap().unix_timestamp);

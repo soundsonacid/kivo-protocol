@@ -26,7 +26,7 @@ pub struct SettleContractPayment<'info> {
     pub contract_thread: Box<Account<'info, Thread>>,
 
     #[account()]
-    pub contract_owner: Box<Account<'info, User>>,
+    pub contract_creator: Box<Account<'info, User>>,
 
     #[account(mut, associated_token::mint = mint, associated_token::authority = contract.receiver)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,

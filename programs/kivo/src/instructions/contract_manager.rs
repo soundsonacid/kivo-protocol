@@ -62,7 +62,7 @@ pub struct AcceptContract<'info> {
     pub contract: Box<Account<'info, Contract>>,
 
     #[account(mut, address = contract.receiver.key())]
-    pub contract_owner: Box<Account<'info, User>>, // The owner of the contract should be the creator, i.e the receiver.
+    pub contract_creator: Box<Account<'info, User>>, 
 
     #[account(mut)]
     pub obligor_user_account: Box<Account<'info, User>>,
@@ -80,10 +80,10 @@ pub struct AcceptContract<'info> {
     )]
     pub obligor: Box<Account<'info, Obligor>>,
 
-    #[account(mut, associated_token::mint = mint, associated_token::authority = obligor.user_account)]    
+    #[account(mut, associated_token::mint = mint, associated_token::authority = obligor_user_account)]    
     pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as contract.sender_token_account
 
-    #[account(mut, associated_token::mint = mint, associated_token::authority = contract.receiver)]    
+    #[account(mut, associated_token::mint = mint, associated_token::authority = contract_creator)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
     
     /// CHECK: Thread initialized via CPI
