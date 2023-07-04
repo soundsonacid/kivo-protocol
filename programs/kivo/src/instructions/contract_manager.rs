@@ -28,7 +28,7 @@ pub struct ProposeContract<'info> {
         )]
     pub contract: Box<Account<'info, Contract>>,
 
-    #[account()]
+    #[account(mut)]
     pub sender_user_account: Box<Account<'info, User>>,
 
     #[account(associated_token::mint = mint, associated_token::authority = sender_user_account)]    

@@ -367,7 +367,7 @@ pub mod kivo {
         msg!("Proposing contract");
 
         let contract = &mut ctx.accounts.contract;
-        let sender = &ctx.accounts.sender_user_account;
+        let sender = &mut ctx.accounts.sender_user_account;
         let sender_token_account = &ctx.accounts.sender_token_account;
         let receiver = &mut ctx.accounts.receiver_user_account;
         let receiver_token_account = &ctx.accounts.receiver_token_account;
@@ -386,7 +386,9 @@ pub mod kivo {
         )?;
 
         receiver.increment_contracts();
+        sender.increment_contracts();
 
+        sender.exit(&crate::id())?;
         receiver.exit(&crate::id())?;
 
         Ok(())
@@ -490,11 +492,9 @@ pub mod kivo {
 
         msg!("Thread created");
 
-        obligor_user_account.increment_contracts();
         contract.accept(contract_thread.key());
 
         contract_creator.exit(&crate::id())?;
-        obligor_user_account.exit(&crate::id())?;
         contract.exit(&crate::id())?;
 
         Ok(())
@@ -537,19 +537,19 @@ pub mod kivo {
         if contract.is_fulfilled() {
             msg!("Contract fulfilled - deleting Thread");
 
-            let thread_delete_accounts = ThreadDelete {
-                authority: payer.to_account_info(),
-                close_to: obligor_token_account.to_account_info(),
-                thread: contract_thread.to_account_info(),
-            };
+            // let thread_delete_accounts = ThreadDelete {
+            //     authority: payer.to_account_info(),
+            //     close_to: obligor_token_account.to_account_info(),
+            //     thread: contract_thread.to_account_info(),
+            // };
 
-            let thread_delete_cpi_context = CpiContext::new_with_signer(
-                thread_program.to_account_info(),
-                thread_delete_accounts,
-                signer_seeds,
-            );
+            // let thread_delete_cpi_context = CpiContext::new_with_signer(
+            //     thread_program.to_account_info(),
+            //     thread_delete_accounts,
+            //     signer_seeds,
+            // );
 
-            thread_delete(thread_delete_cpi_context)?;
+            // thread_delete(thread_delete_cpi_context)?;
         } 
         else {
             obligor.last_payment_at = Some(Clock::get().unwrap().unix_timestamp);
