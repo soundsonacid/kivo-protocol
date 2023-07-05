@@ -825,9 +825,9 @@ dependencies = [
 
 [[package]]
 name = "clockwork-cron"
-version = "2.0.17"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51a5388a27b0d3a140c12902f73c81af1490918fd2f229029d28971eb8ebaf8d"
+checksum = "c7707b32bac51aaaf22a29dce4854a47eb3a9e8c5551bc6cf9de5a72a9a5e82f"
 dependencies = [
  "chrono",
  "nom",
@@ -836,21 +836,22 @@ dependencies = [
 
 [[package]]
 name = "clockwork-network-program"
-version = "2.0.17"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb4c9b8d7d8bd161de660ea1589e9ad2df8de616ee22c3744865f6734bc514d7"
+checksum = "b11de3810467341c84cbfdec027db20b548c1018bf485ab46292d6b284e39f50"
 dependencies = [
  "anchor-lang 0.27.0",
  "anchor-spl",
  "clockwork-utils",
+ "toml_datetime",
  "winnow",
 ]
 
 [[package]]
 name = "clockwork-sdk"
-version = "2.0.17"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3d06d1254c958998ac5fee261af453f8d7d576b1b4892a8baaaf680927e73b6"
+checksum = "09753e81af6b434965e0f72ceae6cd87fa2b01b5bfe491bd3a89a748473abc38"
 dependencies = [
  "anchor-lang 0.27.0",
  "chrono",
@@ -861,9 +862,9 @@ dependencies = [
 
 [[package]]
 name = "clockwork-thread-program"
-version = "2.0.17"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4126682148ef50befd5d4c974b410e8b9cf33e151ac179895e070b317eddc88"
+checksum = "c38f82b4faec2ba15330e239fe4de0fc5e609265167b329f67b559aedb539762"
 dependencies = [
  "anchor-lang 0.27.0",
  "chrono",
@@ -888,9 +889,9 @@ dependencies = [
 
 [[package]]
 name = "clockwork-utils"
-version = "2.0.17"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "615a24a00efd7b230169ddf7ef1ecfba75105e94156b19be579bc2aa5235befa"
+checksum = "bc123f0fb67df1e3f2ec52f10326863b682860565f12976e9d1ac251adaf024b"
 dependencies = [
  "anchor-lang 0.27.0",
  "base64 0.13.1",

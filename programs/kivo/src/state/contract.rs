@@ -46,6 +46,7 @@ impl Contract {
         self.active = false;
         self.id = id;
         self.bump = bump;
+        self.num_payments_made = 0;
         self.num_payments_obligated = num_payments_obligated;
         self.nonce = nonce;
         Ok(())
