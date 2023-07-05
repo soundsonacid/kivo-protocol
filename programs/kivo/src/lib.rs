@@ -18,7 +18,7 @@ use crate::state::contract::Obligor;
 pub mod state;
 pub mod instructions;
 
-declare_id!("HyA8SiVhkkYoidUuFkmVXWDgRtiiwQTy465GwH5m6XSw");
+declare_id!("7bRUosmoUkYVgZJHj2UDWM6kgHoy748R6NGweiDEk2vZ");
 
 #[program]
 pub mod kivo {
@@ -471,8 +471,15 @@ pub mod kivo {
 
         msg!("Delegate approved");
 
+        // let thread_create_accounts = ThreadCreate {
+        //     authority: payer.to_account_info(),
+        //     payer: payer.to_account_info(),
+        //     system_program: system_program.to_account_info(),
+        //     thread: contract_thread.to_account_info(),
+        // };
+
         let thread_create_accounts = ThreadCreate {
-            authority: payer.to_account_info(),
+            authority: obligor.to_account_info(),
             payer: payer.to_account_info(),
             system_program: system_program.to_account_info(),
             thread: contract_thread.to_account_info(),
