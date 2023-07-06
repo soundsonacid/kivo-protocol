@@ -423,9 +423,6 @@ pub mod kivo {
         let contract_creator = &mut ctx.accounts.contract_creator;
         let mint = &ctx.accounts.mint;
 
-        let _contract_key = contract.key();
-        let _obligor_user_account_key = obligor_user_account.key();
-
         let mut discriminator = [0u8; 8];
         let preimage = format!("{}:{}", "global", "settle_contract_payment");
         discriminator.copy_from_slice(&hash::hash(preimage.as_bytes()).to_bytes()[..8]);
@@ -452,8 +449,14 @@ pub mod kivo {
 
         let payer_key = payer.key();
 
+        let contract_key = contract.key();
+        let obligor_user_account_key = obligor_user_account.key();
+
         let user_signature_seeds = User::get_user_signer_seeds(&payer_key, &user_bump);
         let user_signer_seeds = &[&user_signature_seeds[..]];
+
+        let obligor_signature_seeds = Obligor::get_obligor_signer_seeds(&obligor_user_account_key, &contract_key, &obligor_bump);
+        let _obligor_signer_seeds = &[&obligor_signature_seeds[..]];
 
         let delegate_accounts = Approve {
             authority: obligor_user_account.to_account_info(),
