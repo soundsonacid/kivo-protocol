@@ -6,8 +6,8 @@ use std::mem::size_of;
 use clockwork_sdk::state::Thread;
 use clockwork_sdk::ThreadProgram;
 
-use crate::state::contract::*;
 use crate::state::user::User;
+use crate::state::contract::*;
 
 pub const USER: &[u8] = b"user";
 pub const CONTRACT: &[u8] = b"contract";
