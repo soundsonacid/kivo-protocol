@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{ system_program, sysvar };
+use anchor_lang::solana_program::{ system_program };
 use anchor_spl::token::*;
 use anchor_spl::associated_token::*;
 use std::mem::size_of;
