@@ -19,3 +19,5 @@ default = []
 anchor-lang = "0.27.0"
 anchor-spl = "0.27.0"
 bytemuck = { version = "1.4.0" }
+# marginfi-cpi = "0.1.3"
+

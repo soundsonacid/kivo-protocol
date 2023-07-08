@@ -9,8 +9,11 @@ pub struct InitializeLendingAccount<'info> {
     /// CHECK: verified by CPI
     pub kivo_account: UncheckedAccount<'info>,
 
-    /// CHECK: verified by CPI
+    /// CHECK: awaiting marginfi-cpi
     pub marginfi_account: UncheckedAccount<'info>,
+
+    /// CHECK: awaiting marginfi-cpi
+    pub marginfi_group: UncheckedAccount<'info>,
 
     #[account(
         init,
@@ -27,5 +30,10 @@ pub struct InitializeLendingAccount<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    pub kivo_program: Program<'info, Kivo>,
+
+    pub marginfi_program: Program<'info, MarginFi>,
+
     pub system_program: Program<'info, System>,
 }
+
