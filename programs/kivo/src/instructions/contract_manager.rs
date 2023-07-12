@@ -12,6 +12,7 @@ use crate::state::contract::*;
 pub const USER: &[u8] = b"user";
 pub const CONTRACT: &[u8] = b"contract";
 pub const OBLIGOR: &[u8] = b"obligor";
+pub const PROPOSAL: &[u8] = b"proposal";
 
 #[derive(Accounts)]
 pub struct ProposeContract<'info> {
@@ -21,12 +22,25 @@ pub struct ProposeContract<'info> {
         space = 8 + size_of::<Contract>(),
         seeds = [
             CONTRACT,
-            receiver_user_account.key().as_ref(),
-            receiver_user_account.num_contracts.to_le_bytes().as_ref(),
+            sender_user_account.key().as_ref(),
+            sender_user_account.num_contracts.to_le_bytes().as_ref(),
             ],
         bump,
         )]
     pub contract: Box<Account<'info, Contract>>,
+
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + size_of::<Proposal>(),
+        seeds = [
+            PROPOSAL,
+            receiver_user_account.key().as_ref(),
+            receiver_user_account.num_proposals.to_le_bytes().as_ref(),
+        ],
+        bump,
+    )]
+    pub proposal: Box<Account<'info, Proposal>>,
 
     #[account(mut)]
     pub sender_user_account: Box<Account<'info, User>>,

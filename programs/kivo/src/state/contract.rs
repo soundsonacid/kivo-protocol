@@ -1,5 +1,4 @@
 use anchor_lang::{ prelude::*, AnchorDeserialize };
-use std::convert::TryFrom;
 
 pub const CONTRACT: &[u8] = b"contract";
 pub const OBLIGOR: &[u8] = b"obligor";
@@ -20,6 +19,7 @@ pub struct Contract {
     pub num_payments_made: u64,
     pub num_payments_obligated: u64,
     pub nonce: u32,
+    pub proposal: Pubkey,
 }
 
 impl Contract {
@@ -35,6 +35,7 @@ impl Contract {
         bump: u8,
         num_payments_obligated: u64,
         nonce: u32,
+        proposal: Pubkey,
     ) -> Result<()> {
         self.sender = sender;
         self.sender_token_account = sender_token_account;
@@ -49,6 +50,7 @@ impl Contract {
         self.num_payments_made = 0;
         self.num_payments_obligated = num_payments_obligated;
         self.nonce = nonce;
+        self.proposal = proposal;
         Ok(())
     }
 
@@ -77,10 +79,41 @@ impl Contract {
     }
 }
 
-impl TryFrom<Vec<u8>> for Contract {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Contract::try_deserialize(&mut data.as_slice())
+#[account]
+#[derive(Debug, Default)]
+pub struct Proposal {
+    pub payer_account: Pubkey,
+    pub payer_username: [u8; 16],
+    pub schedule: String,
+    pub payments_made: u32,
+    pub payments_obligated: u64,
+    pub description: String,
+    pub status: Option<bool>,
+    pub amount: u64,
+    pub contract: Pubkey,
+}
+
+impl Proposal {
+    pub fn new(
+        &mut self,
+        payer_account: Pubkey,
+        payer_username: [u8; 16],
+        schedule: String,
+        payments_obligated: u64,
+        description: String,
+        amount: u64,
+        contract: Pubkey,
+    ) -> Result<()> {
+        self.payer_account = payer_account;
+        self.payer_username = payer_username;
+        self.schedule = schedule;
+        self.payments_obligated = payments_obligated;
+        self.description = description;
+        self.status = None;
+        self.amount = amount;
+        self.contract = contract;
+
+        Ok(())
     }
 }
 
@@ -127,12 +160,5 @@ impl Obligor {
         bump: &'a u8
     ) -> [&'a [u8]; 4] {
         [OBLIGOR.as_ref(), obligor.as_ref(), contract.as_ref(), bytemuck::bytes_of(bump)]
-    }
-}
-
-impl TryFrom<Vec<u8>> for Obligor {
-    type Error = Error;
-    fn try_from(data: Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        Obligor::try_deserialize(&mut data.as_slice())
     }
 }

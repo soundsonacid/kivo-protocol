@@ -367,10 +367,14 @@ pub mod kivo {
         msg!("Proposing contract");
 
         let contract = &mut ctx.accounts.contract;
+        let proposal = &mut ctx.accounts.proposal;
         let sender = &mut ctx.accounts.sender_user_account;
         let sender_token_account = &ctx.accounts.sender_token_account;
         let receiver = &mut ctx.accounts.receiver_user_account;
         let receiver_token_account = &ctx.accounts.receiver_token_account;
+
+        let id_clone = id.clone();
+        let sched_clone = schedule.clone();
 
         contract.new(
             sender.key(),
@@ -383,8 +387,20 @@ pub mod kivo {
             bump,
             num_payments_obligated,
             receiver.num_contracts.clone(),
+            proposal.key(),
         )?;
 
+        proposal.new(
+            sender.key(),
+            sender.username.clone(),
+            sched_clone,
+            num_payments_obligated.clone(),
+            id_clone,
+            amount,
+            contract.key(),
+        )?;
+
+        receiver.increment_proposals();
         receiver.increment_contracts();
         sender.increment_contracts();
 

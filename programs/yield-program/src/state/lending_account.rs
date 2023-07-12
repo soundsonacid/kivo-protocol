@@ -1,22 +1,27 @@
 use anchor_lang::prelude::*;
 
-pub const LENDING_ACCOUNT: &[u8] = b"lending_account";
+pub const LENDING_ACCOUNT: &[u8] = b"passive_lending_account";
 
 #[account]
 #[derive(Default)]
-pub struct LendingAccount {
+pub struct PassiveLendingAccount {
     pub kivo_account: Pubkey,
     pub marginfi_account: Pubkey,
+    pub marginfi_group: Pubkey,
+    pub total_deposits: u64, 
+
 }
 
-impl LendingAccount {
+impl PassiveLendingAccount {
     pub fn new(
         &mut self,
         kivo_account: Pubkey,
-        marginfi_account: Pubkey
+        marginfi_account: Pubkey,
+        marginfi_group: Pubkey,
     ) -> Result<()> {
         self.kivo_account = kivo_account;
         self.marginfi_account = marginfi_account;
+        self.marginfi_group = marginfi_group;
         Ok(())
     }
 
