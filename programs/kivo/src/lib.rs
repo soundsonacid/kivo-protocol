@@ -409,7 +409,6 @@ pub mod kivo {
         )?;
 
         receiver.increment_proposals();
-        receiver.increment_contracts();
         sender.increment_contracts();
 
         sender.exit(&crate::id())?;
