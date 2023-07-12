@@ -15,100 +15,88 @@ pub const FRIEND: &[u8] = b"friend";
 #[derive(Accounts)]
 #[instruction(name: [u8; 16])]
 pub struct InitializeUser<'info> {
-    #[account(
-        init,
-        payer = payer,
-        space = 8 + size_of::<Username>(),
-        seeds = [
-            USERNAME, 
-            name.as_ref()
-        ],
-        bump
-    )]
-    pub username_account: Box<Account<'info, Username>>,
 
-    #[account(
-        init,
-        payer = payer,
-        space = 8 + size_of::<User>(),
-        seeds = [
-            USER,
-            payer.key.as_ref()
-        ], 
-        bump,
-    )]
-    pub user_account: Box<Account<'info, User>>,  
+  #[account(init, 
+            payer = payer, 
+            space = 8 + size_of::<Username>(), 
+            seeds = [
+                USERNAME, 
+                name.as_ref()
+                ], 
+            bump
+        )]
+  pub username_account: Box<Account<'info, Username>>,
 
-    #[account()]
-    pub wsol_mint: Box<Account<'info, Mint>>,
+  #[account(init, 
+            payer = payer, 
+            space = 8 + size_of::<User>(), 
+            seeds = [
+                USER, 
+                payer.key.as_ref()
+                ], 
+            bump
+        )]
+  pub user_account: Box<Account<'info, User>>,  
 
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = wsol_mint,
-        associated_token::authority = user_account,
-    )]
-    pub wsol_vault: Box<Account<'info, TokenAccount>>,
+  #[account(mut)]
+  pub payer: Signer<'info>,
 
-    #[account()]
-    pub usdc_mint: Box<Account<'info, Mint>>,
+  pub owner: Signer<'info>,
 
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = usdc_mint,
-        associated_token::authority = user_account,
-    )]
-    pub usdc_vault: Box<Account<'info, TokenAccount>>,
+  #[account(address = system_program::ID)]
+  pub system_program: Program<'info, System>
 
-    #[account()]
-    pub usdt_mint: Box<Account<'info, Mint>>,
-
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = usdt_mint,
-        associated_token::authority = user_account,
-    )]
-    pub usdt_vault: Box<Account<'info, TokenAccount>>,
-
-    #[account()]
-    pub uxd_mint: Box<Account<'info, Mint>>,
-
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = uxd_mint,
-        associated_token::authority = user_account,
-    )]
-    pub uxd_vault: Box<Account<'info, TokenAccount>>,
-
-    #[account()]
-    pub bonk_mint: Box<Account<'info, Mint>>,
-
-    #[account(
-        init,
-        payer = payer,
-        associated_token::mint = bonk_mint,
-        associated_token::authority = user_account,
-    )]
-    pub bonk_vault: Box<Account<'info, TokenAccount>>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,                
-
-    /// CHECK: 
-    pub owner: UncheckedAccount<'info>,      
-
-    #[account(address = system_program::ID)]
-    pub system_program: Program<'info, System>,
-
-    #[account(address = anchor_spl::token::ID)]
-    pub token_program: Program<'info, Token>,
-
-    #[account(address = anchor_spl::associated_token::ID)]
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
+
+#[derive(Accounts)]
+pub struct InitializeUserVaults<'info> {
+
+  #[account(mut)]
+  pub user_account: Account<'info, User>,
+
+  #[account()]
+  pub wsol_mint: Box<Account<'info, Mint>>,
+
+  #[account(init, payer=payer, associated_token::mint = wsol_mint, associated_token::authority = user_account)]
+  pub wsol_vault: Box<Account<'info, TokenAccount>>,
+
+  #[account()]
+  pub usdc_mint: Box<Account<'info, Mint>>,
+
+  #[account(init, payer=payer, associated_token::mint = usdc_mint, associated_token::authority = user_account)]
+  pub usdc_vault: Box<Account<'info, TokenAccount>>,  
+
+  #[account()]
+  pub usdt_mint: Box<Account<'info, Mint>>,
+
+  #[account(init, payer=payer, associated_token::mint = usdt_mint, associated_token::authority = user_account)]
+  pub usdt_vault: Box<Account<'info, TokenAccount>>,
+
+  #[account()]
+  pub uxd_mint: Box<Account<'info, Mint>>,
+
+  #[account(init, payer=payer, associated_token::mint = uxd_mint, associated_token::authority = user_account)]
+  pub uxd_vault: Box<Account<'info, TokenAccount>>,
+
+  #[account()]
+  pub bonk_mint: Box<Account<'info, Mint>>,
+
+  #[account(init, payer=payer, associated_token::mint = bonk_mint, associated_token::authority = user_account)]
+  pub bonk_vault: Box<Account<'info, TokenAccount>>,
+
+  #[account(mut)]
+  pub payer: Signer<'info>,
+
+  #[account(address = anchor_spl::token::ID)]
+  pub token_program: Program<'info, Token>,
+
+  pub associated_token_program: Program<'info, AssociatedToken>,
+
+  #[account(address = system_program::ID)]
+  pub system_program: Program<'info, System>
+}
+
+// handlers omitted
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -131,10 +119,10 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    // #[account(address = system_program::ID)]
+    #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,
 
-    // #[account(address = anchor_spl::token::ID)]
+    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 }
 

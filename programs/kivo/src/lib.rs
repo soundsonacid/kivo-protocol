@@ -51,6 +51,11 @@ pub mod kivo {
         Ok(())
     }
 
+    pub fn handle_initialize_user_vaults(ctx: Context<InitializeUserVaults>) -> Result<()> {
+
+        Ok(())
+    }
+
     pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         msg!("Depositing");
 
@@ -445,7 +450,7 @@ pub mod kivo {
         let preimage = format!("{}:{}", "global", "SettleContractPayment");
         let hash_result = &hash::hash(preimage.as_bytes());
         discriminator.copy_from_slice(&hash_result.to_bytes()[..8]);
-        
+
         let settle_contract_payment_ix = Instruction {
             program_id: crate::ID,
             accounts: vec![
