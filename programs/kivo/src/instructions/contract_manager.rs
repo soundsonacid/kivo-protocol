@@ -75,6 +75,9 @@ pub struct AcceptContract<'info> {
     #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
     pub contract: Box<Account<'info, Contract>>,
 
+    #[account(mut, address = Proposal::get_proposal_address(contract.receiver.key(), proposal.nonce.clone()).0)]
+    pub proposal: Box<Account<'info, Proposal>>,
+
     #[account(mut, address = contract.receiver.key())]
     pub contract_creator: Box<Account<'info, User>>, 
 
@@ -127,6 +130,9 @@ pub struct AcceptContract<'info> {
 pub struct RejectContract<'info> {
     #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
     pub contract: Account<'info, Contract>,
+
+    #[account(mut, address = Proposal::get_proposal_address(contract.receiver.key(), proposal.nonce.clone()).0)]
+    pub proposal: Account<'info, Proposal>,
 
     #[account(address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,

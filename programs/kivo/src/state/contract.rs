@@ -2,6 +2,7 @@ use anchor_lang::{ prelude::*, AnchorDeserialize };
 
 pub const CONTRACT: &[u8] = b"contract";
 pub const OBLIGOR: &[u8] = b"obligor";
+pub const PROPOSAL: &[u8] = b"proposal";
 
 #[account]
 #[derive(Debug, Default)]
@@ -91,6 +92,7 @@ pub struct Proposal {
     pub status: Option<bool>,
     pub amount: u64,
     pub contract: Pubkey,
+    pub nonce: u32,
 }
 
 impl Proposal {
@@ -103,6 +105,7 @@ impl Proposal {
         description: String,
         amount: u64,
         contract: Pubkey,
+        nonce: u32,
     ) -> Result<()> {
         self.payer_account = payer_account;
         self.payer_username = payer_username;
@@ -112,8 +115,28 @@ impl Proposal {
         self.status = None;
         self.amount = amount;
         self.contract = contract;
-
+        self.nonce = nonce;
+        
         Ok(())
+    }
+
+    pub fn reject(&mut self) {
+        self.status = Some(false);
+    }
+
+    pub fn accept(&mut self) {
+        self.status = Some(true);
+    }
+
+    pub fn get_proposal_address(proposer: Pubkey, proposer_num_proposals: u32) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                PROPOSAL,
+                proposer.as_ref(),
+                proposer_num_proposals.to_le_bytes().as_ref(),
+            ],
+            &crate::ID,
+        )
     }
 }
 

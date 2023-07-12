@@ -398,6 +398,7 @@ pub mod kivo {
             id_clone,
             amount,
             contract.key(),
+            receiver.num_proposals,
         )?;
 
         receiver.increment_proposals();
@@ -414,6 +415,7 @@ pub mod kivo {
         msg!("Accepting contract");
         
         let contract = &mut ctx.accounts.contract;
+        let proposal = &mut ctx.accounts.proposal;
         let obligor = &mut ctx.accounts.obligor;
         let obligor_user_account = &mut ctx.accounts.obligor_user_account;
 
@@ -519,9 +521,11 @@ pub mod kivo {
         msg!("Thread created");
 
         contract.accept(contract_thread.key());
+        proposal.accept();
 
         contract_creator.exit(&crate::id())?;
         contract.exit(&crate::id())?;
+        proposal.exit(&crate::id())?;
 
         Ok(())
     }
@@ -530,13 +534,17 @@ pub mod kivo {
         msg!("Rejecting contract");
 
         let contract = &mut ctx.accounts.contract;
+        let proposal = &mut ctx.accounts.proposal;
         let authority = contract.sender;
         let user = &ctx.accounts.user_account;
 
         require!(authority == user.key(), KivoError::BadSignerToRejectContract);
 
         contract.close(ctx.accounts.payer.to_account_info())?;
+        proposal.reject();
 
+        proposal.exit(&crate::id())?;
+        
         Ok(())
     }
 
