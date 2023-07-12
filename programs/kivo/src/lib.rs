@@ -374,6 +374,7 @@ pub mod kivo {
         let contract = &mut ctx.accounts.contract;
         let proposal = &mut ctx.accounts.proposal;
         let sender = &mut ctx.accounts.sender_user_account;
+        let sender_username = sender.username;
         let sender_token_account = &ctx.accounts.sender_token_account;
         let receiver = &mut ctx.accounts.receiver_user_account;
         let receiver_token_account = &ctx.accounts.receiver_token_account;
@@ -383,6 +384,7 @@ pub mod kivo {
 
         contract.new(
             sender.key(),
+            sender_username,
             sender_token_account.key(),
             receiver.key(),
             receiver_token_account.key(),

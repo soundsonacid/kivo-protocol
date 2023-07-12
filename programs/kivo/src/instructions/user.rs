@@ -57,31 +57,51 @@ pub struct InitializeUserVaults<'info> {
   #[account()]
   pub wsol_mint: Box<Account<'info, Mint>>,
 
-  #[account(init, payer=payer, associated_token::mint = wsol_mint, associated_token::authority = user_account)]
+  #[account(init, 
+            payer = payer, 
+            associated_token::mint = wsol_mint, 
+            associated_token::authority = user_account
+            )]
   pub wsol_vault: Box<Account<'info, TokenAccount>>,
 
   #[account()]
   pub usdc_mint: Box<Account<'info, Mint>>,
 
-  #[account(init, payer=payer, associated_token::mint = usdc_mint, associated_token::authority = user_account)]
+  #[account(init, 
+            payer = payer, 
+            associated_token::mint = usdc_mint, 
+            associated_token::authority = user_account
+            )]
   pub usdc_vault: Box<Account<'info, TokenAccount>>,  
 
   #[account()]
   pub usdt_mint: Box<Account<'info, Mint>>,
 
-  #[account(init, payer=payer, associated_token::mint = usdt_mint, associated_token::authority = user_account)]
+  #[account(init, 
+            payer = payer, 
+            associated_token::mint = usdt_mint, 
+            associated_token::authority = user_account
+            )]
   pub usdt_vault: Box<Account<'info, TokenAccount>>,
 
   #[account()]
   pub uxd_mint: Box<Account<'info, Mint>>,
 
-  #[account(init, payer=payer, associated_token::mint = uxd_mint, associated_token::authority = user_account)]
+  #[account(init, 
+            payer = payer, 
+            associated_token::mint = uxd_mint, 
+            associated_token::authority = user_account
+            )]
   pub uxd_vault: Box<Account<'info, TokenAccount>>,
 
   #[account()]
   pub bonk_mint: Box<Account<'info, Mint>>,
 
-  #[account(init, payer=payer, associated_token::mint = bonk_mint, associated_token::authority = user_account)]
+  #[account(init, 
+            payer = payer, 
+            associated_token::mint = bonk_mint, 
+            associated_token::authority = user_account
+            )]
   pub bonk_vault: Box<Account<'info, TokenAccount>>,
 
   #[account(mut)]
@@ -95,8 +115,6 @@ pub struct InitializeUserVaults<'info> {
   #[account(address = system_program::ID)]
   pub system_program: Program<'info, System>
 }
-
-// handlers omitted
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
