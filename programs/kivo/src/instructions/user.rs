@@ -2,11 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{system_program};
 use anchor_spl::token::*;
 use anchor_spl::associated_token::*;
+use std::mem::size_of;
 
 use crate::state::user::Username;
 use crate::state::user::User;
 use crate::state::user::Friend;
-use crate::state::traits::Size;
 
 pub const USER: &[u8] = b"user";
 pub const USERNAME: &[u8] = b"username";
@@ -18,7 +18,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Username::SIZE,
+        space = 8 + size_of::<Username>(),
         seeds = [
             USERNAME, 
             name.as_ref()
@@ -30,7 +30,7 @@ pub struct InitializeUser<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + std::mem::size_of::<User>(),
+        space = 8 + size_of::<User>(),
         seeds = [
             USER,
             payer.key.as_ref()
@@ -210,7 +210,7 @@ pub struct EditUsername<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Username::SIZE,
+        space = 8 + size_of::<Username>(),
         seeds = [
             USERNAME, 
             new_name.as_ref()
@@ -240,7 +240,7 @@ pub struct AddFriend<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + Friend::SIZE,
+        space = 8 + size_of::<Friend>(),
         seeds = [
             FRIEND,
             user_account.to_account_info().key.as_ref(),

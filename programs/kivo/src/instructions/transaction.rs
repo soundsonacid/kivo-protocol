@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{system_program, sysvar};
 use anchor_spl::token::*;
+use std::mem::size_of;
 
 use crate::state::transaction::Transaction;
 use crate::state::user::User;
-// use crate::state::traits::Size;
 
 pub const TRANSACTION: &[u8] = b"transaction";
 pub const USER: &[u8] = b"user";
@@ -14,7 +14,7 @@ pub struct CreateRequest<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + std::mem::size_of::<Transaction>(),
+        space = 8 + size_of::<Transaction>(),
         seeds = [
             TRANSACTION,
             requester.to_account_info().key.as_ref(),
@@ -26,7 +26,7 @@ pub struct CreateRequest<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + std::mem::size_of::<Transaction>(),
+        space = 8 + size_of::<Transaction>(),
         seeds = [
             TRANSACTION,
             fulfiller.to_account_info().key.as_ref(),
@@ -65,7 +65,7 @@ pub struct ExecuteTransaction<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + std::mem::size_of::<Transaction>(),
+        space = 8 + size_of::<Transaction>(),
         seeds = [
             TRANSACTION,
             sender_user_account.to_account_info().key.as_ref(),
@@ -84,7 +84,7 @@ pub struct ExecuteTransaction<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + std::mem::size_of::<Transaction>(),
+        space = 8 + size_of::<Transaction>(),
         seeds = [
             TRANSACTION,
             receiver_user_account.to_account_info().key.as_ref(),

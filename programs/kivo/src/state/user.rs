@@ -1,6 +1,4 @@
 use anchor_lang::prelude::*;
-use static_assertions::const_assert_eq;
-use crate::state::traits::Size;
 
 pub const USER: &[u8] = b"user";
 
@@ -17,10 +15,6 @@ pub struct User {
     pub num_contracts: u32,
     pub num_proposals: u32,
     pub preferred_token: Option<Pubkey>,
-}
-
-impl Size for User {
-    const SIZE: usize = 8 + 112;
 }
 
 impl User {
@@ -92,10 +86,6 @@ pub struct Username {
     pub username: [u8; 16]
 }
 
-impl Size for Username {
-    const SIZE: usize = 8 + 48;
-}
-
 impl Username {
     pub fn new(
         &mut self,
@@ -115,10 +105,6 @@ pub struct Friend {
     pub friend_account_type: u8
 }
 
-impl Size for Friend {
-    const SIZE: usize = 8 + 49;
-}
-
 impl Friend {
     pub fn new(
         &mut self,
@@ -132,8 +118,3 @@ impl Friend {
         Ok(())
     }
 }
-
-
-// const_assert_eq!(User::SIZE, std::mem::size_of::<User>() + 8);
-const_assert_eq!(Username::SIZE, std::mem::size_of::<Username>() + 8);
-const_assert_eq!(Friend::SIZE, std::mem::size_of::<Friend>() + 8);
