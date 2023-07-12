@@ -72,7 +72,7 @@ pub struct ProposeContract<'info> {
 
 #[derive(Accounts)]
 pub struct AcceptContract<'info> {
-    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.sender.key(), contract.nonce.clone()).0)]
     pub contract: Box<Account<'info, Contract>>,
 
     #[account(mut, address = Proposal::get_proposal_address(contract.receiver.key(), proposal.nonce.clone()).0)]
@@ -128,7 +128,7 @@ pub struct AcceptContract<'info> {
 
 #[derive(Accounts)]
 pub struct RejectContract<'info> {
-    #[account(mut, address = Contract::get_contract_address(contract.receiver.key(), contract.nonce.clone()).0)]
+    #[account(mut, address = Contract::get_contract_address(contract.sender.key(), contract.nonce.clone()).0)]
     pub contract: Account<'info, Contract>,
 
     #[account(mut, address = Proposal::get_proposal_address(contract.receiver.key(), proposal.nonce.clone()).0)]

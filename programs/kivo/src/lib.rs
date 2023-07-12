@@ -386,7 +386,7 @@ pub mod kivo {
             id,
             bump,
             num_payments_obligated,
-            receiver.num_contracts.clone(),
+            sender.num_contracts.clone(),
             proposal.key(),
         )?;
 
@@ -544,7 +544,7 @@ pub mod kivo {
         proposal.reject();
 
         proposal.exit(&crate::id())?;
-        
+
         Ok(())
     }
 
