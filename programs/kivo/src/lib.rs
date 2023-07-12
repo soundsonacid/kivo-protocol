@@ -442,9 +442,10 @@ pub mod kivo {
         let mint = &ctx.accounts.mint;
 
         let mut discriminator = [0u8; 8];
-        let preimage = format!("{}:{}", "global", "settle_contract_payment");
-        discriminator.copy_from_slice(&hash::hash(preimage.as_bytes()).to_bytes()[..8]);
-
+        let preimage = format!("{}:{}", "global", "SettleContractPayment");
+        let hash_result = &hash::hash(preimage.as_bytes());
+        discriminator.copy_from_slice(&hash_result.to_bytes()[..8]);
+        
         let settle_contract_payment_ix = Instruction {
             program_id: crate::ID,
             accounts: vec![
@@ -474,7 +475,7 @@ pub mod kivo {
         let user_signer_seeds = &[&user_signature_seeds[..]];
 
         let obligor_signature_seeds = Obligor::get_obligor_signer_seeds(&obligor_user_account_key, &contract_key, &obligor_bump);
-        let _obligor_signer_seeds = &[&obligor_signature_seeds[..]];
+        let obligor_signer_seeds = &[&obligor_signature_seeds[..]];
 
         let delegate_accounts = Approve {
             authority: obligor_user_account.to_account_info(),
@@ -506,9 +507,10 @@ pub mod kivo {
             thread: contract_thread.to_account_info(),
         };
 
-        let thread_create_cpi_context = CpiContext::new(
+        let thread_create_cpi_context = CpiContext::new_with_signer(
             thread_program.to_account_info(), 
-            thread_create_accounts
+            thread_create_accounts,
+            obligor_signer_seeds,
         );
 
         let trigger = Trigger::Cron {
