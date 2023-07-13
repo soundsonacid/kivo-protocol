@@ -499,24 +499,29 @@ pub mod kivo {
 
         msg!("Delegate approved");
 
-        // let thread_create_accounts = ThreadCreate {
-        //     authority: payer.to_account_info(),
-        //     payer: payer.to_account_info(),
-        //     system_program: system_program.to_account_info(),
-        //     thread: contract_thread.to_account_info(),
-        // };
-
         let thread_create_accounts = ThreadCreate {
-            authority: obligor.to_account_info(),
+            authority: payer.to_account_info(),
             payer: payer.to_account_info(),
             system_program: system_program.to_account_info(),
             thread: contract_thread.to_account_info(),
         };
 
-        let thread_create_cpi_context = CpiContext::new_with_signer(
+        // let thread_create_accounts = ThreadCreate {
+        //     authority: obligor.to_account_info(),
+        //     payer: payer.to_account_info(),
+        //     system_program: system_program.to_account_info(),
+        //     thread: contract_thread.to_account_info(),
+        // };
+
+        // let thread_create_cpi_context = CpiContext::new_with_signer(
+        //     thread_program.to_account_info(), 
+        //     thread_create_accounts,
+        //     obligor_signer_seeds,
+        // );
+
+        let thread_create_cpi_context = CpiContext::new(
             thread_program.to_account_info(), 
             thread_create_accounts,
-            obligor_signer_seeds,
         );
 
         let trigger = Trigger::Cron {
