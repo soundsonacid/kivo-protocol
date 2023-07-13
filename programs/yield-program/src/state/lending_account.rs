@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 pub const LENDING_ACCOUNT: &[u8] = b"passive_lending_account";
+pub const KIVO_MFI_ACCOUNT: &[u8] = b"kivo_mfi_account";
 
 #[account]
 #[derive(Default)]
@@ -8,8 +9,8 @@ pub struct PassiveLendingAccount {
     pub kivo_account: Pubkey,
     pub marginfi_account: Pubkey,
     pub marginfi_group: Pubkey,
-    pub total_deposits: u64, 
-
+    pub total_deposits: u64,
+    pub total_withdrawals: u64,
 }
 
 impl PassiveLendingAccount {
@@ -30,5 +31,25 @@ impl PassiveLendingAccount {
         bump: &'a u8
     ) -> [&'a [u8]; 3] {
         [LENDING_ACCOUNT.as_ref(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
+    }
+
+    pub fn get_lender_address(pubkey: Pubkey) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                LENDING_ACCOUNT,
+                pubkey.as_ref(),
+            ],
+            &crate::ID,
+        )
+    }
+
+    pub fn get_mfi_address(pubkey: Pubkey) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                KIVO_MFI_ACCOUNT,
+                pubkey.as_ref(),
+            ],
+            &crate::ID,
+        )
     }
 }
