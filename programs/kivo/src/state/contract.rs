@@ -7,12 +7,14 @@ pub const PROPOSAL: &[u8] = b"proposal";
 #[account]
 #[derive(Debug, Default)]
 pub struct Contract {
-    pub sender: Pubkey,
-    pub receiver_username: [u8; 16],
-    pub sender_token_account: Pubkey,
-    pub receiver: Pubkey,
-    pub receiver_token_account: Pubkey,
+    pub obligor_user_account: Pubkey,
+    pub obligor_token_account: Pubkey,
+    pub proposer_user_account: Pubkey,
+    pub proposer_username: [u8; 16],
+    pub proposer_token_account: Pubkey,
     pub thread: Option<Pubkey>,
+    pub proposal: Pubkey,
+    pub mint: Pubkey,
     pub amount: u64,
     pub schedule: String,
     pub active: bool,
@@ -21,30 +23,32 @@ pub struct Contract {
     pub num_payments_made: u64,
     pub num_payments_obligated: u64,
     pub nonce: u32,
-    pub proposal: Pubkey,
 }
 
 impl Contract {
     pub fn new(
         &mut self,
-        sender: Pubkey,
-        receiver_username: [u8; 16],
-        sender_token_account: Pubkey,
-        receiver: Pubkey,
-        receiver_token_account: Pubkey,
+        obligor_user_account: Pubkey,
+        obligor_token_account: Pubkey,
+        proposer_user_account: Pubkey,
+        proposer_username: [u8; 16],
+        proposer_token_account: Pubkey,
+        proposal: Pubkey,
+        mint: Pubkey,
         amount: u64,
         schedule: String,
         id: String,
         bump: u8,
         num_payments_obligated: u64,
         nonce: u32,
-        proposal: Pubkey,
     ) -> Result<()> {
-        self.sender = sender;
-        self.receiver_username = receiver_username;
-        self.sender_token_account = sender_token_account;
-        self.receiver = receiver;
-        self.receiver_token_account = receiver_token_account;
+        self.obligor_user_account = obligor_user_account;
+        self.obligor_token_account = obligor_token_account;
+        self.proposer_user_account = proposer_user_account;
+        self.proposer_username = proposer_username;
+        self.proposer_token_account = proposer_token_account;
+        self.proposal = proposal;
+        self.mint = mint;
         self.thread = None;
         self.amount = amount;
         self.schedule = schedule;
@@ -54,7 +58,6 @@ impl Contract {
         self.num_payments_made = 0;
         self.num_payments_obligated = num_payments_obligated;
         self.nonce = nonce;
-        self.proposal = proposal;
         Ok(())
     }
 

@@ -373,46 +373,48 @@ pub mod kivo {
 
         let contract = &mut ctx.accounts.contract;
         let proposal = &mut ctx.accounts.proposal;
-        let sender = &mut ctx.accounts.sender_user_account;
-        let sender_token_account = &ctx.accounts.sender_token_account;
-        let receiver = &mut ctx.accounts.receiver_user_account;
-        let receiver_token_account = &ctx.accounts.receiver_token_account;
-        let receiver_username = receiver.username;
+        let obligor = &mut ctx.accounts.obligor_user_account;
+        let obligor_token_account = &ctx.accounts.obligor_token_account;
+        let proposer = &mut ctx.accounts.proposer_user_account;
+        let proposer_token_account = &ctx.accounts.proposer_token_account;
+        let proposer_username = proposer.username;
+        let mint = &ctx.accounts.mint;
 
         let id_clone = id.clone();
         let sched_clone = schedule.clone();
 
         contract.new(
-            sender.key(),
-            receiver_username,
-            sender_token_account.key(),
-            receiver.key(),
-            receiver_token_account.key(),
+            obligor.key(),
+            obligor_token_account.key(),
+            proposer.key(),
+            proposer_username,
+            proposer_token_account.key(),
+            proposal.key(),
+            mint.key(),
             amount,
             schedule,
             id,
             bump,
             num_payments_obligated,
-            sender.num_contracts.clone(),
-            proposal.key(),
+            obligor.num_contracts.clone(),
         )?;
 
         proposal.new(
-            sender.key(),
-            sender.username.clone(),
+            obligor.key(),
+            obligor.username.clone(),
             sched_clone,
             num_payments_obligated.clone(),
             id_clone,
             amount,
             contract.key(),
-            receiver.num_proposals,
+            proposer.num_proposals,
         )?;
 
-        receiver.increment_proposals();
-        sender.increment_contracts();
+        proposer.increment_proposals();
+        obligor.increment_contracts();
 
-        sender.exit(&crate::id())?;
-        receiver.exit(&crate::id())?;
+        obligor.exit(&crate::id())?;
+        proposer.exit(&crate::id())?;
 
         Ok(())
     }
@@ -428,7 +430,7 @@ pub mod kivo {
         let obligor_token_account = &mut ctx.accounts.obligor_token_account;
 
         require!(obligor_token_account.amount >= contract.amount, KivoError::InsufficientBalanceToAcceptContract);
-        require!(contract.sender.key() == User::get_user_address(ctx.accounts.payer.key()).0, KivoError::BadSignerToAcceptContract);
+        require!(contract.obligor_user_account.key() == User::get_user_address(ctx.accounts.payer.key()).0, KivoError::BadSignerToAcceptContract);
 
         obligor.new(
             obligor_user_account.key(),
@@ -444,7 +446,7 @@ pub mod kivo {
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let payer = &mut ctx.accounts.payer;
-        let contract_creator = &mut ctx.accounts.contract_creator;
+        let proposer = &mut ctx.accounts.proposer;
         let mint = &ctx.accounts.mint;
 
         let mut discriminator = [0u8; 8];
@@ -460,7 +462,7 @@ pub mod kivo {
                 AccountMeta::new(obligor_token_account.key(), false),
                 AccountMeta::new(contract.key(), false),
                 AccountMeta::new_readonly(contract_thread.key(), true),
-                AccountMeta::new(contract_creator.key(), false),
+                AccountMeta::new(proposer.key(), false),
                 AccountMeta::new(receiver_token_account.key(), false),
                 AccountMeta::new_readonly(mint.key(), false),
                 AccountMeta::new_readonly(thread_program.key(), false),
@@ -536,7 +538,7 @@ pub mod kivo {
         contract.accept(contract_thread.key());
         proposal.accept();
 
-        contract_creator.exit(&crate::id())?;
+        proposer.exit(&crate::id())?;
         contract.exit(&crate::id())?;
         proposal.exit(&crate::id())?;
 
@@ -548,7 +550,7 @@ pub mod kivo {
 
         let contract = &mut ctx.accounts.contract;
         let proposal = &mut ctx.accounts.proposal;
-        let authority = contract.sender;
+        let authority = contract.obligor_user_account;
         let user = &ctx.accounts.user_account;
 
         require!(authority == user.key(), KivoError::BadSignerToRejectContract);
