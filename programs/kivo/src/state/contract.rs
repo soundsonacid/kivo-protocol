@@ -8,7 +8,7 @@ pub const PROPOSAL: &[u8] = b"proposal";
 #[derive(Debug, Default)]
 pub struct Contract {
     pub sender: Pubkey,
-    pub sender_username: [u8; 16],
+    pub receiver_username: [u8; 16],
     pub sender_token_account: Pubkey,
     pub receiver: Pubkey,
     pub receiver_token_account: Pubkey,
@@ -28,7 +28,7 @@ impl Contract {
     pub fn new(
         &mut self,
         sender: Pubkey,
-        sender_username: [u8; 16],
+        receiver_username: [u8; 16],
         sender_token_account: Pubkey,
         receiver: Pubkey,
         receiver_token_account: Pubkey,
@@ -41,7 +41,7 @@ impl Contract {
         proposal: Pubkey,
     ) -> Result<()> {
         self.sender = sender;
-        self.sender_username = sender_username;
+        self.receiver_username = receiver_username;
         self.sender_token_account = sender_token_account;
         self.receiver = receiver;
         self.receiver_token_account = receiver_token_account;
