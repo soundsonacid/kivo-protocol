@@ -39,5 +39,20 @@ pub mod kivo_yield_program {
 
         Ok(())
     }
+
+    pub fn handle_passive_lending_account_deposit(ctx: Context<PassiveLendingAccountDeposit>, bump: u8) -> Result<()> {
+
+        Ok(())
+    }
+
+    pub fn handle_passive_lending_account_withdraw(ctx: Context<PassiveLendingAccountWithdraw>, bump: u8) -> Result<()> {
+
+        Ok(())
+    }
+
+    pub fn handle_passive_lending_account_claim_interest(ctx: Context<PassiveLendingAccountClaimInterest>, bump: u8) -> Result<()> {
+
+        Ok(())
+    }
 }   
 

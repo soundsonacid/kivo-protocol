@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
-// use marginfi::state::marginfi_account::MarginfiAccount;
-// use marginfi::state::marginfi_group::MarginfiGroup;
+use anchor_spl::token::*;
 use marginfi::program::Marginfi;
-// use kivo::state::user::User;
 
 use crate::state::lending_account::PassiveLendingAccount;
 
@@ -56,20 +54,89 @@ pub struct InitializePassiveLendingAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// #[derive(Accounts)]
-// pub struct PassiveLendingDeposit<'info> {
-    // pub kivo_account: UncheckedAccount<'info>,
+#[derive(Accounts)]
+pub struct PassiveLendingAccountDeposit<'info> {
+    /// CHECK: verified by pda derivation
+    #[account(
+        seeds = [
+            USER,
+            payer.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub kivo_account: UncheckedAccount<'info>,
 
-    // pub marginfi_account: UncheckedAccount<'info>,
+    #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]
+    pub kivo_token_account: Account<'info, TokenAccount>,
 
-    // pub kivo_program: Program<'info, Kivo>,
+    #[account(mut, address = PassiveLendingAccount::get_lender_address(payer.key()).0)]
+    pub passive_lending_account: Account<'info, PassiveLendingAccount>,
 
-    // pub marginfi_program: Program<'info, MarginFi>,
+    #[account()]
+    pub mint: Account<'info, Mint>,
 
-    // pub system_program: Program<'info, System>,
-// }
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
-// #[derive(Accounts)]
-// pub struct PassiveLendingWithdraw<'info> {
+    pub marginfi_program: Program<'info, Marginfi>,
 
-// }
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct PassiveLendingAccountWithdraw<'info> {
+    /// CHECK: verified by pda derivation
+    #[account(
+        seeds = [
+            USER,
+            payer.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub kivo_account: UncheckedAccount<'info>,
+
+    #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]
+    pub kivo_token_account: Account<'info, TokenAccount>,
+
+    #[account(mut, address = PassiveLendingAccount::get_lender_address(payer.key()).0)]
+    pub passive_lending_account: Account<'info, PassiveLendingAccount>,
+
+    #[account()]
+    pub mint: Account<'info, Mint>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub marginfi_program: Program<'info, Marginfi>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct PassiveLendingAccountClaimInterest<'info> {
+    /// CHECK: verified by pda derivation
+    #[account(
+        seeds = [
+            USER,
+            payer.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub kivo_account: UncheckedAccount<'info>,
+
+    #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]
+    pub kivo_token_account: Account<'info, TokenAccount>,
+
+    #[account(mut, address = PassiveLendingAccount::get_lender_address(payer.key()).0)]
+    pub passive_lending_account: Account<'info, PassiveLendingAccount>,
+
+    #[account()]
+    pub mint: Account<'info, Mint>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub marginfi_program: Program<'info, Marginfi>,
+
+    pub system_program: Program<'info, System>,
+}
