@@ -51,7 +51,7 @@ pub mod kivo {
         Ok(())
     }
 
-    pub fn handle_initialize_user_vaults(ctx: Context<InitializeUserVaults>) -> Result<()> {
+    pub fn handle_initialize_user_vaults(_ctx: Context<InitializeUserVaults>) -> Result<()> {
 
         Ok(())
     }
@@ -428,7 +428,7 @@ pub mod kivo {
         let obligor_token_account = &mut ctx.accounts.obligor_token_account;
 
         require!(obligor_token_account.amount >= contract.amount, KivoError::InsufficientBalanceToAcceptContract);
-        require!(contract.sender.key() == ctx.accounts.payer.key(), KivoError::BadSignerToAcceptContract);
+        require!(contract.sender.key() == User::get_user_address(ctx.accounts.payer.key()).0, KivoError::BadSignerToAcceptContract);
 
         obligor.new(
             obligor_user_account.key(),
