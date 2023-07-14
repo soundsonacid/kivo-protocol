@@ -98,13 +98,13 @@ pub struct AcceptContract<'info> {
     pub obligor: Box<Account<'info, Obligor>>,
 
     #[account(mut, associated_token::mint = mint, associated_token::authority = obligor_user_account)]    
-    pub obligor_token_account: Box<Account<'info, TokenAccount>>, // this is the same as contract.sender_token_account
+    pub obligor_token_account: Box<Account<'info, TokenAccount>>, 
 
     #[account(mut, associated_token::mint = mint, associated_token::authority = proposer)]    
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
     
     /// CHECK: Thread initialized via CPI
-    #[account(mut, address = Thread::pubkey(contract.obligor_user_account.key(), contract.id.clone().into_bytes()))]
+    #[account(mut, address = Thread::pubkey(payer.key(), contract.id.clone().into_bytes()))]
     pub contract_thread: UncheckedAccount<'info>,
 
     #[account(mut)]
