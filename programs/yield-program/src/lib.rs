@@ -140,12 +140,40 @@ pub mod kivo_yield_program {
         Ok(())
     }
 
-    pub fn handle_passive_lending_account_repay(ctx: Context<PassiveLendingAccountRepay>) -> Result<()> {
+    pub fn handle_passive_lending_account_repay(ctx: Context<PassiveLendingAccountRepay>, amount: u64, repay_all: Option<bool>, bump: u8) -> Result<()> {
+        let signature_seeds = kivo::state::user::User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
+        let kivo_signer_seeds = &[&signature_seeds[..]];
+
+        let mfi_repay_acc = marginfi::cpi::accounts::LendingAccountRepay {
+            marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
+            marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
+            signer: ctx.accounts.kivo_account.to_account_info(),
+            bank: ctx.accounts.marginfi_bank.to_account_info(),
+            signer_token_account: ctx.accounts.kivo_token_account.to_account_info(),
+            bank_liquidity_vault: ctx.accounts.bank_vault.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+        };
+
+        let mfi_repay_ctx = CpiContext::new_with_signer(
+            ctx.accounts.marginfi_program.to_account_info().clone(),
+            mfi_repay_acc,
+            kivo_signer_seeds,
+        );
+
+        let repay_all = repay_all;
+
+        let amount = if repay_all == Some(true) {
+          0
+        } else {
+          amount
+        };
+
+        marginfi::cpi::lending_account_repay(mfi_repay_ctx, amount, repay_all)?;
 
         Ok(())
     }
 
-    pub fn handle_passive_lending_account_claim_interest(ctx: Context<PassiveLendingAccountClaimInterest>, amount: u64, bump: u8) -> Result<()> {
+    pub fn handle_passive_lending_account_claim_interest(_ctx: Context<PassiveLendingAccountClaimInterest>, _amount: u64, _bump: u8) -> Result<()> {
 
         Ok(())
     }

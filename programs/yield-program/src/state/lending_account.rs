@@ -38,7 +38,7 @@ impl PassiveLendingAccount {
     pub fn increment_borrows(&mut self, borrow: u64) {
         self.total_borrows = self.total_borrows.saturating_add(borrow);
     }
-    
+
     pub fn get_lender_signer_seeds<'a>(
         pubkey: &'a Pubkey, 
         bump: &'a u8
