@@ -26,6 +26,14 @@ impl PassiveLendingAccount {
         Ok(())
     }
 
+    pub fn increment_deposits(&mut self, deposit: u64) {
+        self.total_deposits = self.total_deposits.saturating_add(deposit);
+    }
+
+    pub fn increment_withdrawals(&mut self, withdrawal: u64) {
+        self.total_withdrawals = self.total_withdrawals.saturating_add(withdrawal);
+    }
+
     pub fn get_lender_signer_seeds<'a>(
         pubkey: &'a Pubkey, 
         bump: &'a u8

@@ -40,17 +40,21 @@ pub mod kivo_yield_program {
         Ok(())
     }
 
-    pub fn handle_passive_lending_account_deposit(ctx: Context<PassiveLendingAccountDeposit>, bump: u8) -> Result<()> {
+    pub fn handle_passive_lending_account_deposit(ctx: Context<PassiveLendingAccountDeposit>, amount: u64, bump: u8) -> Result<()> {
+        let passive_lending_account = &mut ctx.accounts.passive_lending_account;
 
+        passive_lending_account.increment_deposits(amount);
         Ok(())
     }
 
-    pub fn handle_passive_lending_account_withdraw(ctx: Context<PassiveLendingAccountWithdraw>, bump: u8) -> Result<()> {
+    pub fn handle_passive_lending_account_withdraw(ctx: Context<PassiveLendingAccountWithdraw>, amount: u64, bump: u8) -> Result<()> {
+        let passive_lending_account = &mut ctx.accounts.passive_lending_account;
 
+        passive_lending_account.increment_withdrawals(amount);
         Ok(())
     }
 
-    pub fn handle_passive_lending_account_claim_interest(ctx: Context<PassiveLendingAccountClaimInterest>, bump: u8) -> Result<()> {
+    pub fn handle_passive_lending_account_claim_interest(ctx: Context<PassiveLendingAccountClaimInterest>, amount: u64, bump: u8) -> Result<()> {
 
         Ok(())
     }
