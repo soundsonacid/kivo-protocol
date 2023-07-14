@@ -483,7 +483,7 @@ pub mod kivo {
         let user_signer_seeds = &[&user_signature_seeds[..]];
 
         let obligor_signature_seeds = Obligor::get_obligor_signer_seeds(&obligor_user_account_key, &contract_key, &obligor_bump);
-        let obligor_signer_seeds = &[&obligor_signature_seeds[..]];
+        let _obligor_signer_seeds = &[&obligor_signature_seeds[..]];
 
         let delegate_accounts = Approve {
             authority: obligor_user_account.to_account_info(),

@@ -1410,6 +1410,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "kivo"
+version = "0.1.0"
+source = "git+https://github.com/soundsonacid/kivo-protocol.git#f8afea228f5597ff59c1a584eb72b3a598b5607a"
+dependencies = [
+ "anchor-lang 0.27.0",
+ "anchor-spl 0.27.0",
+ "bytemuck",
+ "clockwork-sdk",
+ "spl-token-swap",
+ "static_assertions",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2895,10 +2908,11 @@ checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"
 name = "yield-program"
 version = "0.1.0"
 dependencies = [
- "anchor-lang 0.27.0",
- "anchor-spl 0.27.0",
+ "anchor-lang 0.26.0",
+ "anchor-spl 0.26.0",
  "bytemuck",
  "half",
+ "kivo 0.1.0 (git+https://github.com/soundsonacid/kivo-protocol.git)",
  "marginfi",
 ]
 
