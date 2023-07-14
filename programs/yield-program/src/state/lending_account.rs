@@ -11,6 +11,7 @@ pub struct PassiveLendingAccount {
     pub marginfi_group: Pubkey,
     pub total_deposits: u64,
     pub total_withdrawals: u64,
+    pub total_borrows: u64,
 }
 
 impl PassiveLendingAccount {
@@ -34,6 +35,10 @@ impl PassiveLendingAccount {
         self.total_withdrawals = self.total_withdrawals.saturating_add(withdrawal);
     }
 
+    pub fn increment_borrows(&mut self, borrow: u64) {
+        self.total_borrows = self.total_borrows.saturating_add(borrow);
+    }
+    
     pub fn get_lender_signer_seeds<'a>(
         pubkey: &'a Pubkey, 
         bump: &'a u8
