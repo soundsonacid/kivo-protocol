@@ -18,11 +18,11 @@ pub struct Contract {
     pub amount: u64,
     pub schedule: String,
     pub active: bool,
-    pub id: String,
+    pub description: String,
     pub bump: u8,
     pub num_payments_made: u64,
     pub num_payments_obligated: u64,
-    pub nonce: u32,
+    pub id: u32,
 }
 
 impl Contract {
@@ -37,10 +37,10 @@ impl Contract {
         mint: Pubkey,
         amount: u64,
         schedule: String,
-        id: String,
+        description: String,
         bump: u8,
         num_payments_obligated: u64,
-        nonce: u32,
+        id: u32,
     ) -> Result<()> {
         self.obligor_user_account = obligor_user_account;
         self.obligor_token_account = obligor_token_account;
@@ -53,11 +53,11 @@ impl Contract {
         self.amount = amount;
         self.schedule = schedule;
         self.active = false;
-        self.id = id;
+        self.description = description;
         self.bump = bump;
         self.num_payments_made = 0;
         self.num_payments_obligated = num_payments_obligated;
-        self.nonce = nonce;
+        self.id = id;
         Ok(())
     }
 

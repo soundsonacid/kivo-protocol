@@ -4,7 +4,7 @@ use marginfi::program::Marginfi;
 
 use crate::state::lending_account::PassiveLendingAccount;
 
-pub fn handler(_ctx: Context<PassiveLendingAccountClaim>, _amount: u64, _bump: u8) -> Result<()> {
+pub fn process(_ctx: Context<PassiveLendingAccountClaim>, _amount: u64, _bump: u8) -> Result<()> {
 
     Ok(())
 }

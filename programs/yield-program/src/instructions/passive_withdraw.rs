@@ -12,7 +12,7 @@ use crate::state::lending_account::PassiveLendingAccount;
 
 pub const KIVO_MFI_ACCOUNT: &[u8] = b"kivo_mfi_account";
 
-pub fn handler(ctx: Context<PassiveLendingAccountWithdraw>, amount: u64, bump: u8, withdraw_all:  Option<bool>) -> Result<()> {
+pub fn process(ctx: Context<PassiveLendingAccountWithdraw>, amount: u64, bump: u8, withdraw_all:  Option<bool>) -> Result<()> {
     let passive_lending_account = &mut ctx.accounts.passive_lending_account;
 
     let signature_seeds = kivo::state::user::User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
