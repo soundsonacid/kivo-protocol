@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-
-use crate::instructions::*;
+use instructions::*;
 
 declare_id!("7aQcTJCAtyWLxEfysNdSBoshCFU1DyiFhkkzEkNmpSWL");
 
@@ -28,7 +27,7 @@ pub mod kivo_yield_program {
     }
 
     pub fn handle_passive_lending_account_repay(ctx: Context<PassiveLendingAccountRepay>, amount: u64, repay_all: Option<bool>, bump: u8) -> Result<()> {
-        passive_repay::handler(ctx, amount, repay_all, bump)
+        passive_repay::handler(ctx, amount, bump, repay_all)
     }
 
     pub fn handle_passive_lending_account_claim_interest(ctx: Context<PassiveLendingAccountClaim>, amount: u64, bump: u8) -> Result<()> {
