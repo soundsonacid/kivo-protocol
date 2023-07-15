@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 use marginfi::program::Marginfi;
+use crate::{
+    state::lending_account::PassiveLendingAccount,
+    constants::{
+        KIVO_MFI_ACCOUNT, LENDING_ACCOUNT
+    },
+};
 
-use crate::state::lending_account::PassiveLendingAccount;
-
-pub const LENDING_ACCOUNT: &[u8] = b"passive_lending_account";
-pub const KIVO_MFI_ACCOUNT: &[u8] = b"kivo_mfi_account";
-
-
-pub fn process(ctx: Context<InitializePassiveLendingAccount>, bump: u8) -> Result<()> {
+pub fn process(ctx: Context<PassiveLendingAccountInitialize>, bump: u8) -> Result<()> {
     let signature_seeds = kivo::state::user::User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let kivo_signer_seeds = &[&signature_seeds[..]];  
 
@@ -37,7 +37,7 @@ pub fn process(ctx: Context<InitializePassiveLendingAccount>, bump: u8) -> Resul
 }
 
 #[derive(Accounts)]
-pub struct InitializePassiveLendingAccount<'info> {
+pub struct PassiveLendingAccountInitialize<'info> {
     /// CHECK: validated by address derivation
     #[account(address = kivo::state::user::User::get_user_address(payer.key()).0)]
     pub kivo_account: UncheckedAccount<'info>,

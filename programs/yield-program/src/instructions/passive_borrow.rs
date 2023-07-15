@@ -7,10 +7,10 @@ use marginfi::{
         marginfi_account::MarginfiAccount,
     }
 };
-
-use crate::state::lending_account::PassiveLendingAccount;
-
-pub const KIVO_MFI_ACCOUNT: &[u8] = b"kivo_mfi_account";
+use crate::{
+    state::lending_account::PassiveLendingAccount,
+    constants::KIVO_MFI_ACCOUNT,
+};
 
 pub fn process(ctx: Context<PassiveLendingAccountBorrow>, amount: u64, bump: u8) -> Result<()> {
     let passive_lending_account = &mut ctx.accounts.passive_lending_account;

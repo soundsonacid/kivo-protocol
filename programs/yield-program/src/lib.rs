@@ -1,17 +1,27 @@
+// Created by Frank
 use anchor_lang::prelude::*;
 use instructions::*;
 
 declare_id!("7aQcTJCAtyWLxEfysNdSBoshCFU1DyiFhkkzEkNmpSWL");
 
 pub mod state;
+pub mod constants;
 mod instructions;
 
 #[program]
 pub mod kivo_yield_program {
     use super::*;
 
+    // Passive Lending endpoints
+    // 1. handle_passive_lending_account_initialize
+    // 2. handle_passive_lending_account_deposit
+    // 3. handle_passive_lending_account_withdraw
+    // 4. handle_passive_lending_account_borrow
+    // 5. handle_passive_lending_account_repay
+    // 6. handle_passive_lending_account_claim_interest
+
     pub fn handle_passive_lending_account_initialize(
-            ctx: Context<InitializePassiveLendingAccount>, 
+            ctx: Context<PassiveLendingAccountInitialize>, 
             bump: u8
         ) -> Result<()> {
         passive_initialize::process(ctx, bump)
@@ -45,8 +55,8 @@ pub mod kivo_yield_program {
     pub fn handle_passive_lending_account_repay(
             ctx: Context<PassiveLendingAccountRepay>, 
             amount: u64, 
+            bump: u8,
             repay_all: Option<bool>, 
-            bump: u8
         ) -> Result<()> {
         passive_repay::process(ctx, amount, bump, repay_all)
     }

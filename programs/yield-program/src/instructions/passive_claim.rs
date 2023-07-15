@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::*;
 use marginfi::program::Marginfi;
-
 use crate::state::lending_account::PassiveLendingAccount;
 
 pub fn process(_ctx: Context<PassiveLendingAccountClaim>, _amount: u64, _bump: u8) -> Result<()> {
