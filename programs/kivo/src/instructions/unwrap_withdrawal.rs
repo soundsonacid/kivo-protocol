@@ -56,8 +56,8 @@ pub struct UnwrapWithdrawal<'info> {
     /// CHECK: Validated by signer seeds
     pub withdrawer: UncheckedAccount<'info>,
 
-    #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
-    pub withdrawer_token_account: Account<'info, TokenAccount>,
+    // #[account(mut, associated_token::authority = withdrawer, associated_token::mint = mint)]
+    // pub withdrawer_token_account: Account<'info, TokenAccount>,
 
     #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
