@@ -2,11 +2,11 @@
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("7aQcTJCAtyWLxEfysNdSBoshCFU1DyiFhkkzEkNmpSWL");
-
 pub mod state;
 pub mod constants;
 mod instructions;
+
+declare_id!("7aQcTJCAtyWLxEfysNdSBoshCFU1DyiFhkkzEkNmpSWL");
 
 #[program]
 pub mod kivo_yield_program {

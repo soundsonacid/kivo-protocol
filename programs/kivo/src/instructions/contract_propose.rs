@@ -55,6 +55,7 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
         id_clone,
         amount,
         contract.key(),
+        mint.key(),
         proposer.num_proposals,
     )?;
 

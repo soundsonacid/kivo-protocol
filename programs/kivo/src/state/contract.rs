@@ -98,6 +98,7 @@ pub struct Proposal {
     pub status: Option<bool>,
     pub amount: u64,
     pub contract: Pubkey,
+    pub mint: Pubkey,
     pub nonce: u32,
 }
 
@@ -111,6 +112,7 @@ impl Proposal {
         description: String,
         amount: u64,
         contract: Pubkey,
+        mint: Pubkey,
         nonce: u32,
     ) -> Result<()> {
         self.payer_account = payer_account;
@@ -121,6 +123,7 @@ impl Proposal {
         self.status = None;
         self.amount = amount;
         self.contract = contract;
+        self.mint = mint;
         self.nonce = nonce;
 
         Ok(())
