@@ -25,12 +25,10 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64) -> Res
 
     requester_transaction_account.new(
         requester.key(),
-        requester.username.clone(),
         mint.key(), 
         amount, 
         time_stamp, 
         fulfiller.key(),
-        fulfiller.username.clone(),
         fulfiller_transaction_account.key(), 
         false, 
     )?;
@@ -41,12 +39,10 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64) -> Res
 
     fulfiller_transaction_account.new(
         requester.key(),
-        requester.username.clone(),
         mint.key(),
         amount,
         time_stamp,
         fulfiller.key(),
-        fulfiller.username.clone(),
         fulfiller_transaction_account_key,
         false,
     )?;

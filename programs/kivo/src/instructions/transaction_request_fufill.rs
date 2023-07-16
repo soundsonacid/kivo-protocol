@@ -35,17 +35,13 @@ pub fn process(ctx: Context<FulfillRequest>,
 
     fulfiller_transaction_account.fulfill(
         fulfiller.key(),
-        fulfiller.username.clone(),
         requester.key(),
-        requester.username.clone(),
         true
     )?;
 
     requester_transaction_account.fulfill(
         fulfiller.key(),
-        fulfiller.username.clone(),
         requester.key(),
-        requester.username.clone(),
         true
     )?;
 

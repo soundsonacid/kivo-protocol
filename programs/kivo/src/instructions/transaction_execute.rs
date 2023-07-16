@@ -37,24 +37,20 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_sta
 
     sender_transaction_account.new(
         sender.key(),
-        sender.username.clone(),
         mint.key(),
         amount,
         time_stamp,
         receiver.key(),
-        receiver.username.clone(),
         receiver_transaction_account.key(),
         true,
     )?;
 
     receiver_transaction_account.new(
         sender.key(),
-        sender.username.clone(),
         mint.key(),
         amount,
         time_stamp,
         receiver.key(),
-        receiver.username.clone(),
         sender_transaction_account.key(),
         true,
     )?;

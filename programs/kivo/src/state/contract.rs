@@ -20,8 +20,8 @@ pub struct Contract {
     pub active: bool,
     pub description: String,
     pub bump: u8,
-    pub num_payments_made: u64,
-    pub num_payments_obligated: u64,
+    pub num_payments_made: u32,
+    pub num_payments_obligated: u32,
     pub id: u32,
 }
 
@@ -39,7 +39,7 @@ impl Contract {
         schedule: String,
         description: String,
         bump: u8,
-        num_payments_obligated: u64,
+        num_payments_obligated: u32,
         id: u32,
     ) -> Result<()> {
         self.obligor_user_account = obligor_user_account;
@@ -93,7 +93,7 @@ pub struct Proposal {
     pub payer_username: [u8; 16],
     pub schedule: String,
     pub payments_made: u32,
-    pub payments_obligated: u64,
+    pub payments_obligated: u32,
     pub description: String,
     pub status: Option<bool>,
     pub amount: u64,
@@ -108,7 +108,7 @@ impl Proposal {
         payer_account: Pubkey,
         payer_username: [u8; 16],
         schedule: String,
-        payments_obligated: u64,
+        payments_obligated: u32,
         description: String,
         amount: u64,
         contract: Pubkey,

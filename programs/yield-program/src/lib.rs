@@ -1,7 +1,6 @@
 // Created by Frank
 use anchor_lang::prelude::*;
 use instructions::*;
-
 pub mod state;
 pub mod constants;
 mod instructions;
@@ -69,4 +68,3 @@ pub mod kivo_yield_program {
         passive_claim::process(ctx, amount, bump)
     }
 }   
-

@@ -128,7 +128,7 @@ pub mod kivo {
             schedule: String, 
             id: String, 
             bump: u8, 
-            num_payments_obligated: u64
+            num_payments_obligated: u32
         ) -> Result<()> {
         contract_propose::process(ctx, amount, schedule, id, bump, num_payments_obligated)
     }

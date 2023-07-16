@@ -16,7 +16,7 @@ use crate::{
 };
 
 
-pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: String, bump: u8, num_payments_obligated: u64) -> Result<()> {
+pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: String, bump: u8, num_payments_obligated: u32) -> Result<()> {
     msg!("Proposing contract");
 
     let contract = &mut ctx.accounts.contract;
