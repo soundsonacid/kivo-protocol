@@ -21,11 +21,13 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64, receiv
     let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
     let requester = &mut ctx.accounts.requester;
     let fulfiller = &mut ctx.accounts.fulfiller;
-    let mint = &ctx.accounts.mint;
+    let mint = &ctx.accounts.mint.key();
+
+    let mint_id = Transaction::get_mint_id(mint);
 
     requester_transaction_account.new(
         requester.key(),
-        mint.key(), 
+        mint_id,
         amount, 
         time_stamp, 
         fulfiller.key(),
@@ -34,10 +36,10 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64, receiv
     )?;
 
     requester_transaction_account.exit(&crate::id())?;
-    
+
     fulfiller_transaction_account.new(
         requester.key(),
-        mint.key(),
+        mint_id,
         amount,
         time_stamp,
         fulfiller.key(),

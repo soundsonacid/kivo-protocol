@@ -11,7 +11,7 @@ use crate::{
     }
 };
 
-pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_stamp: u64, receiver_tx_seed: u32,) -> Result<()> {
+pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_stamp: u64, receiver_tx_seed: u32) -> Result<()> {
     msg!("Executing transaction");
 
     let sender_transaction_account = &mut ctx.accounts.sender_transaction_account;
@@ -19,6 +19,8 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_sta
     let sender = &mut ctx.accounts.sender_user_account;
     let receiver = &mut ctx.accounts.receiver_user_account;
     let mint = &ctx.accounts.mint;
+
+    let mint_id = Transaction::get_mint_id(&mint.key());
 
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.sender.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];
@@ -37,7 +39,7 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_sta
 
     sender_transaction_account.new(
         sender.key(),
-        mint.key(),
+        mint_id,
         amount,
         time_stamp,
         receiver.key(),
@@ -47,7 +49,7 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, bump: u8, time_sta
 
     receiver_transaction_account.new(
         sender.key(),
-        mint.key(),
+        mint_id,
         amount,
         time_stamp,
         receiver.key(),

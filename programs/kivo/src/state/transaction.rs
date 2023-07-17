@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Transaction {
     pub sender_account: Pubkey, 
-    pub mint: Pubkey,
+    pub mint_id: Option<u8>,
     pub amount: u64,
     pub time_stamp: u64,
     pub receiver_account: Pubkey,
@@ -15,7 +15,7 @@ impl Transaction {
     pub fn new(
         &mut self,
         sender_account: Pubkey,
-        mint: Pubkey,
+        mint_id: Option<u8>,
         amount: u64,
         time_stamp: u64,
         receiver_account: Pubkey,
@@ -23,7 +23,7 @@ impl Transaction {
         status: Option<bool>,
     ) -> Result<()> {
         self.sender_account = sender_account;
-        self.mint = mint;
+        self.mint_id = mint_id;
         self.amount = amount;
         self.time_stamp = time_stamp;
         self.receiver_account = receiver_account;
@@ -46,5 +46,18 @@ impl Transaction {
 
     pub fn reject(&mut self) {
         self.status = Some(false);
+    }
+
+    pub fn get_mint_id(mint: &Pubkey) -> Option<u8> {
+        let mint = mint.to_string();
+    
+        match mint.as_str() {
+            "So11111111111111111111111111111111111111112" => Some(1),
+            "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" => Some(2),
+            "BhWwL5K6k98xvy2vndXLVvq6vRsnCq9RSM6sCHNPSGMe" => Some(3),
+            "G3Cb13RiPcTtdKSfZEyhHCpXkgqyTr9BdVvdUbtERHUR" => Some(4),
+            "J9JkoZFdi31nJAcSniPMemfneJ7AL2iMYZkrEC9yvTDK" => Some(5),
+            _ => None,
+        }
     }
 }
