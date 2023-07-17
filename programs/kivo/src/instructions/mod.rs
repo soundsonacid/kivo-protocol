@@ -13,6 +13,7 @@ pub mod user_preferred_token_disable;
 pub mod transaction_execute;
 pub mod transaction_request_create;
 pub mod transaction_request_fufill;
+pub mod transaction_request_reject;
 
 // Contract instructions
 pub mod contract_propose;
@@ -33,6 +34,7 @@ pub use user_preferred_token_disable::*;
 pub use transaction_execute::*;
 pub use transaction_request_create::*;
 pub use transaction_request_fufill::*;
+pub use transaction_request_reject::*;
 pub use contract_propose::*;
 pub use contract_accept::*;
 pub use contract_reject::*; 

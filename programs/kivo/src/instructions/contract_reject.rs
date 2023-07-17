@@ -20,7 +20,7 @@ pub fn process(ctx: Context<RejectContract>) -> Result<()> {
 
     require!(authority == user.key(), KivoError::BadSignerToRejectContract);
 
-    contract.close(ctx.accounts.payer.to_account_info())?;
+    contract.close(user.to_account_info())?;
     proposal.reject();
 
     proposal.exit(&crate::id())?;

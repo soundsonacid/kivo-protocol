@@ -7,8 +7,8 @@ pub struct Transaction {
     pub amount: u64,
     pub time_stamp: u64,
     pub receiver_account: Pubkey,
-    pub receiver_transaction_account: Pubkey,
-    pub status: bool 
+    pub receiver_tx_seed: u32,
+    pub status: Option<bool>, 
 }
 
 impl Transaction {
@@ -19,15 +19,15 @@ impl Transaction {
         amount: u64,
         time_stamp: u64,
         receiver_account: Pubkey,
-        receiver_transaction_account: Pubkey,
-        status: bool,
+        receiver_tx_seed: u32,
+        status: Option<bool>,
     ) -> Result<()> {
         self.sender_account = sender_account;
         self.mint = mint;
         self.amount = amount;
         self.time_stamp = time_stamp;
         self.receiver_account = receiver_account;
-        self.receiver_transaction_account = receiver_transaction_account;
+        self.receiver_tx_seed = receiver_tx_seed;
         self.status = status;
         Ok(())
     }
@@ -40,7 +40,11 @@ impl Transaction {
     ) -> Result<()> {
         self.sender_account = fulfiller;
         self.receiver_account = requester;
-        self.status = status;
+        self.status = Some(status);
         Ok(())
+    }
+
+    pub fn reject(&mut self) {
+        self.status = Some(false);
     }
 }

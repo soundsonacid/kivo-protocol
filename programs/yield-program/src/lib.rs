@@ -5,7 +5,7 @@ pub mod state;
 pub mod constants;
 mod instructions;
 
-declare_id!("7aQcTJCAtyWLxEfysNdSBoshCFU1DyiFhkkzEkNmpSWL");
+declare_id!("FUcr3cVqbuQb7fHnCVzeLMcwPKQ3joH3kfxEwMXd96is");
 
 #[program]
 pub mod kivo_yield_program {
@@ -67,4 +67,4 @@ pub mod kivo_yield_program {
         ) -> Result<()> {
         passive_claim::process(ctx, amount, bump)
     }
-}   
+}

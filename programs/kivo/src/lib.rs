@@ -95,17 +95,19 @@ pub mod kivo {
             ctx: Context<ExecuteTransaction>, 
             amount: u64, 
             bump: u8, 
-            time_stamp: u64
+            time_stamp: u64,
+            receiver_tx_seed: u32
         ) -> Result<()> {
-        transaction_execute::process(ctx, amount, bump, time_stamp)
+        transaction_execute::process(ctx, amount, bump, time_stamp, receiver_tx_seed)
     }
 
     pub fn handle_create_request(
             ctx: Context<CreateRequest>, 
             amount: u64, 
-            time_stamp: u64
+            time_stamp: u64,
+            receiver_tx_seed: u32
         ) -> Result<()> {
-        transaction_request_create::process(ctx, amount, time_stamp)
+        transaction_request_create::process(ctx, amount, time_stamp, receiver_tx_seed)
     }
 
     pub fn handle_fulfill_request(
@@ -114,6 +116,12 @@ pub mod kivo {
             bump: u8
         ) -> Result<()> {
         transaction_request_fufill::process(ctx, amount, bump)
+    }
+
+    pub fn handle_reject_request(
+        ctx: Context<RejectRequest>
+    ) -> Result<()> {
+        transaction_request_reject::process(ctx)
     }
 
     // Contract endpoints

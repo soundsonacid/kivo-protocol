@@ -10,4 +10,6 @@ pub enum KivoError {
     BadSignerToAcceptContract,
     #[msg("Username contains invalid characters - Usernames must be 16 characters or less and all lowercase letters or numbers!")]
     InvalidUsername,
+    #[msg("Failed to reject request: Bad signer at handle_reject_request - signer key must match requester_transaction_account.fulfiller!")]
+    BadSignerToRejectRequest,
 }
