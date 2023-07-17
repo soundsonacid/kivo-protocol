@@ -8,15 +8,15 @@ use crate::state::{
         transaction::Transaction,
 };
 
-pub fn process(ctx: Context<FulfillRequest>, 
-    amount: u64, 
-    bump: u8) -> Result<()> {
+pub fn process(ctx: Context<FulfillRequest>, amount: u64) -> Result<()> {
     msg!("Fulfilling transaction!");
 
     let fulfiller = &ctx.accounts.fulfiller;
     let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
     let requester = &ctx.accounts.requester;
     let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
+
+    let bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];

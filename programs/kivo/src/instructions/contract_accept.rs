@@ -22,7 +22,7 @@ use crate::{
     error::KivoError,
 };
 
-pub fn process(ctx: Context<AcceptContract>, obligor_bump: u8, user_bump: u8) -> Result<()> {
+pub fn process(ctx: Context<AcceptContract>) -> Result<()> {
     msg!("Accepting contract");
     
     let contract = &mut ctx.accounts.contract;
@@ -31,6 +31,9 @@ pub fn process(ctx: Context<AcceptContract>, obligor_bump: u8, user_bump: u8) ->
     let obligor_user_account = &mut ctx.accounts.obligor_user_account;
 
     let obligor_token_account = &mut ctx.accounts.obligor_token_account;
+
+    let obligor_bump = Obligor::get_obligor_address(obligor.key(), contract.key()).1;
+    let user_bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
     require!(obligor_token_account.amount >= contract.amount, KivoError::InsufficientBalanceToAcceptContract);
     require!(contract.obligor_user_account.key() == User::get_user_address(ctx.accounts.payer.key()).0, KivoError::BadSignerToAcceptContract);

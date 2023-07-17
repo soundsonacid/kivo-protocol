@@ -8,8 +8,10 @@ use crate::{
     constants::UNWRAP,
 };
 
-pub fn process(ctx: Context<UnwrapWithdrawal>, amount: u64, bump: u8) -> Result<()> {
+pub fn process(ctx: Context<UnwrapWithdrawal>, amount: u64) -> Result<()> {
     msg!("Unwrapping & withdrawing");
+
+    let bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];   

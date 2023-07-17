@@ -48,17 +48,15 @@ pub mod kivo {
     pub fn handle_withdrawal(
             ctx: Context<Withdrawal>, 
             amount: u64, 
-            bump: u8
         ) -> Result<()> {
-        user_withdraw::process(ctx, amount, bump)
+        user_withdraw::process(ctx, amount)
     }
     
     pub fn handle_unwrap_withdrawal(
             ctx: Context<UnwrapWithdrawal>, 
             amount: u64, 
-            bump: u8
         ) -> Result<()> {
-        user_unwrap_withdraw::process(ctx, amount, bump)
+        user_unwrap_withdraw::process(ctx, amount)
     }
 
     pub fn handle_edit_username(
@@ -90,15 +88,15 @@ pub mod kivo {
     // 1. handle_execute_transaction
     // 2. handle_create_request
     // 3. handle_fulfill_request
+    // 4. handle_reject_request
 
     pub fn handle_execute_transaction(
             ctx: Context<ExecuteTransaction>, 
             amount: u64, 
-            bump: u8, 
             time_stamp: u64,
             receiver_tx_seed: u32,
         ) -> Result<()> {
-        transaction_execute::process(ctx, amount, bump, time_stamp, receiver_tx_seed)
+        transaction_execute::process(ctx, amount, time_stamp, receiver_tx_seed)
     }
 
     pub fn handle_create_request(
@@ -113,9 +111,8 @@ pub mod kivo {
     pub fn handle_fulfill_request(
             ctx: Context<FulfillRequest>, 
             amount: u64, 
-            bump: u8
         ) -> Result<()> {
-        transaction_request_fufill::process(ctx, amount, bump)
+        transaction_request_fufill::process(ctx, amount)
     }
 
     pub fn handle_reject_request(
@@ -135,18 +132,15 @@ pub mod kivo {
             amount: u64, 
             schedule: String, 
             id: String, 
-            bump: u8, 
             num_payments_obligated: u32
         ) -> Result<()> {
-        contract_propose::process(ctx, amount, schedule, id, bump, num_payments_obligated)
+        contract_propose::process(ctx, amount, schedule, id, num_payments_obligated)
     }
 
     pub fn handle_accept_contract(
             ctx: Context<AcceptContract>, 
-            obligor_bump: u8, 
-            user_bump: u8
         ) -> Result<()> {
-        contract_accept::process(ctx, obligor_bump, user_bump)
+        contract_accept::process(ctx)
     }
 
     pub fn handle_reject_contract(

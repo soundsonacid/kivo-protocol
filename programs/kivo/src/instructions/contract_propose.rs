@@ -16,7 +16,7 @@ use crate::{
 };
 
 
-pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: String, bump: u8, num_payments_obligated: u32) -> Result<()> {
+pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: String, num_payments_obligated: u32) -> Result<()> {
     msg!("Proposing contract");
 
     let contract = &mut ctx.accounts.contract;
@@ -30,6 +30,8 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
 
     let id_clone = id.clone();
     let sched_clone = schedule.clone();
+
+    let bump = Contract::get_contract_address(proposer.key(), proposer.num_contracts.clone()).1;
 
     contract.new(
         obligor.key(),

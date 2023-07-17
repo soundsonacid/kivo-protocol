@@ -5,8 +5,10 @@ use anchor_lang::{
 use anchor_spl::token::*;
 use crate::state::user::User;
 
-pub fn process(ctx: Context<Withdrawal>, amount: u64, bump: u8) -> Result<()> {
+pub fn process(ctx: Context<Withdrawal>, amount: u64) -> Result<()> {
     msg!("Withdrawing");
+
+    let bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];    
