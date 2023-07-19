@@ -8,13 +8,10 @@ pub const PROPOSAL: &[u8] = b"proposal";
 #[derive(Debug, Default)]
 pub struct Contract {
     pub obligor_user_account: Pubkey,
-    pub obligor_token_account: Pubkey,
     pub proposer_user_account: Pubkey,
-    pub proposer_username: [u8; 16],
-    pub proposer_token_account: Pubkey,
     pub thread: Option<Pubkey>,
     pub proposal: Pubkey,
-    pub mint: Pubkey,
+    pub mint_id: Option<u8>,
     pub amount: u64,
     pub schedule: String,
     pub active: bool,
@@ -29,12 +26,9 @@ impl Contract {
     pub fn new(
         &mut self,
         obligor_user_account: Pubkey,
-        obligor_token_account: Pubkey,
         proposer_user_account: Pubkey,
-        proposer_username: [u8; 16],
-        proposer_token_account: Pubkey,
         proposal: Pubkey,
-        mint: Pubkey,
+        mint_id: Option<u8>,
         amount: u64,
         schedule: String,
         description: String,
@@ -43,12 +37,9 @@ impl Contract {
         id: u32,
     ) -> Result<()> {
         self.obligor_user_account = obligor_user_account;
-        self.obligor_token_account = obligor_token_account;
         self.proposer_user_account = proposer_user_account;
-        self.proposer_username = proposer_username;
-        self.proposer_token_account = proposer_token_account;
         self.proposal = proposal;
-        self.mint = mint;
+        self.mint_id = mint_id;
         self.thread = None;
         self.amount = amount;
         self.schedule = schedule;
@@ -90,7 +81,6 @@ impl Contract {
 #[derive(Debug, Default)]
 pub struct Proposal {
     pub payer_account: Pubkey,
-    pub payer_username: [u8; 16],
     pub schedule: String,
     pub payments_made: u32,
     pub payments_obligated: u32,
@@ -98,7 +88,7 @@ pub struct Proposal {
     pub status: Option<bool>,
     pub amount: u64,
     pub contract: Pubkey,
-    pub mint: Pubkey,
+    pub mint_id: Option<u8>,
     pub nonce: u32,
 }
 
@@ -106,24 +96,22 @@ impl Proposal {
     pub fn new(
         &mut self,
         payer_account: Pubkey,
-        payer_username: [u8; 16],
         schedule: String,
         payments_obligated: u32,
         description: String,
         amount: u64,
         contract: Pubkey,
-        mint: Pubkey,
+        mint_id: Option<u8>,
         nonce: u32,
     ) -> Result<()> {
         self.payer_account = payer_account;
-        self.payer_username = payer_username;
         self.schedule = schedule;
         self.payments_obligated = payments_obligated;
         self.description = description;
         self.status = None;
         self.amount = amount;
         self.contract = contract;
-        self.mint = mint;
+        self.mint_id = mint_id;
         self.nonce = nonce;
 
         Ok(())

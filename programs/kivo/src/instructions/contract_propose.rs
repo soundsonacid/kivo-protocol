@@ -11,6 +11,7 @@ use crate::{
         user::User,
         contract::Contract,
         contract::Proposal,
+        transaction::Transaction,
     },
     constants::{CONTRACT, PROPOSAL},
 };
@@ -22,11 +23,10 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
     let contract = &mut ctx.accounts.contract;
     let proposal = &mut ctx.accounts.proposal;
     let obligor = &mut ctx.accounts.obligor_user_account;
-    let obligor_token_account = &ctx.accounts.obligor_token_account;
     let proposer = &mut ctx.accounts.proposer_user_account;
-    let proposer_token_account = &ctx.accounts.proposer_token_account;
-    let proposer_username = proposer.username;
     let mint = &ctx.accounts.mint;
+
+    let mint_id = Transaction::get_mint_id(&mint.key());
 
     let id_clone = id.clone();
     let sched_clone = schedule.clone();
@@ -35,12 +35,9 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
 
     contract.new(
         obligor.key(),
-        obligor_token_account.key(),
         proposer.key(),
-        proposer_username,
-        proposer_token_account.key(),
         proposal.key(),
-        mint.key(),
+        mint_id,
         amount,
         schedule,
         id,
@@ -51,13 +48,12 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
 
     proposal.new(
         obligor.key(),
-        obligor.username.clone(),
         sched_clone,
         num_payments_obligated.clone(),
         id_clone,
         amount,
         contract.key(),
-        mint.key(),
+        mint_id,
         proposer.num_proposals,
     )?;
 
