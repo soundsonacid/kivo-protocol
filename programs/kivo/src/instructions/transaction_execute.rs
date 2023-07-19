@@ -11,7 +11,7 @@ use crate::{
     }
 };
 
-pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64, receiver_tx_seed: u32) -> Result<()> {
+pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64) -> Result<()> {
     msg!("Executing transaction");
 
     let sender_transaction_account = &mut ctx.accounts.sender_transaction_account;
@@ -45,8 +45,8 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64, r
         amount,
         time_stamp,
         receiver.key(),
-        receiver_tx_seed,
         Some(true),
+        sender.transactions,
     )?;
 
     receiver_transaction_account.new(
@@ -55,8 +55,8 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64, r
         amount,
         time_stamp,
         receiver.key(),
-        receiver_tx_seed,
         Some(true),
+        sender.transactions,
     )?;
 
     receiver.increment_transactions();

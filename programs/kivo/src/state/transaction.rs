@@ -7,8 +7,8 @@ pub struct Transaction {
     pub amount: u64,
     pub time_stamp: u64,
     pub receiver_account: Pubkey,
-    pub receiver_tx_seed: u32,
     pub status: Option<bool>, 
+    pub requester_tx_seed: u32,
 }
 
 impl Transaction {
@@ -19,16 +19,16 @@ impl Transaction {
         amount: u64,
         time_stamp: u64,
         receiver_account: Pubkey,
-        receiver_tx_seed: u32,
         status: Option<bool>,
+        requester_tx_seed: u32,
     ) -> Result<()> {
         self.sender_account = sender_account;
         self.mint_id = mint_id;
         self.amount = amount;
         self.time_stamp = time_stamp;
         self.receiver_account = receiver_account;
-        self.receiver_tx_seed = receiver_tx_seed;
         self.status = status;
+        self.requester_tx_seed = requester_tx_seed;
         Ok(())
     }
 

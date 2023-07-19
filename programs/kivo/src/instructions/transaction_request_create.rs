@@ -14,7 +14,7 @@ use crate::{
     }
 };
 
-pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64, receiver_tx_seed: u32) -> Result<()> {
+pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64) -> Result<()> {
     msg!("Creating request");
 
     let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
@@ -31,8 +31,8 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64, receiv
         amount, 
         time_stamp, 
         fulfiller.key(),
-        receiver_tx_seed,
-        None
+        None,
+        requester.transactions,
     )?;
 
     requester_transaction_account.exit(&crate::id())?;
@@ -43,8 +43,8 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64, receiv
         amount,
         time_stamp,
         fulfiller.key(),
-        receiver_tx_seed,
-        None
+        None,
+        requester.transactions
     )?;
 
     fulfiller_transaction_account.exit(&crate::id())?;

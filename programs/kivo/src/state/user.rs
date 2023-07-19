@@ -10,7 +10,7 @@ pub struct User {
     pub account_type: u8, 
     pub total_deposits: u64, 
     pub total_withdraws: u64, 
-    pub transactions: u64,
+    pub transactions: u32,
     pub num_friends: u32,
     pub num_contracts: u32,
     pub num_proposals: u32,

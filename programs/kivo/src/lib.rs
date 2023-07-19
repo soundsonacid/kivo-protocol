@@ -94,18 +94,16 @@ pub mod kivo {
             ctx: Context<ExecuteTransaction>, 
             amount: u64, 
             time_stamp: u64,
-            receiver_tx_seed: u32,
         ) -> Result<()> {
-        transaction_execute::process(ctx, amount, time_stamp, receiver_tx_seed)
+        transaction_execute::process(ctx, amount, time_stamp)
     }
 
     pub fn handle_create_request(
             ctx: Context<CreateRequest>, 
             amount: u64, 
             time_stamp: u64,
-            receiver_tx_seed: u32,
         ) -> Result<()> {
-        transaction_request_create::process(ctx, amount, time_stamp, receiver_tx_seed)
+        transaction_request_create::process(ctx, amount, time_stamp)
     }
 
     pub fn handle_fulfill_request(
