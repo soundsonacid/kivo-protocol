@@ -1,8 +1,8 @@
 use anchor_lang::{
     prelude::*,
+    InstructionData,
     solana_program::{
         system_program,
-        hash,
         native_token::LAMPORTS_PER_SOL,
         instruction::Instruction,
     },
@@ -20,6 +20,7 @@ use crate::{
     },
     constants::OBLIGOR,
     error::KivoError,
+    instruction::HandleSettleContractPayment,
 };
 
 pub fn process(ctx: Context<AcceptContract>) -> Result<()> {
@@ -55,11 +56,6 @@ pub fn process(ctx: Context<AcceptContract>) -> Result<()> {
     let proposer = &mut ctx.accounts.proposer;
     let mint = &ctx.accounts.mint;
 
-    let mut discriminator = [0u8; 8];
-    let preimage = format!("{}:{}", "global", "SettleContractPayment");
-    let hash_result = &hash::hash(preimage.as_bytes());
-    discriminator.copy_from_slice(&hash_result.to_bytes()[..8]);
-
     let settle_contract_payment_ix = Instruction {
         program_id: crate::ID,
         accounts: vec![
@@ -75,7 +71,7 @@ pub fn process(ctx: Context<AcceptContract>) -> Result<()> {
             AccountMeta::new_readonly(token_program.key(), false),
             AccountMeta::new_readonly(system_program.key(), false),
         ],
-        data: discriminator.into(),
+        data: HandleSettleContractPayment.data(),
     };
 
     msg!("Instruction built");

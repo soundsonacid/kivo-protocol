@@ -36,7 +36,7 @@ pub struct RejectContract<'info> {
     #[account(mut, address = Proposal::get_proposal_address(contract.proposer_user_account.key(), proposal.nonce.clone()).0)]
     pub proposal: Account<'info, Proposal>,
 
-    #[account(address = User::get_user_address(payer.key()).0)]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
     #[account(mut)]
