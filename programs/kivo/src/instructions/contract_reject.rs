@@ -2,6 +2,7 @@ use anchor_lang::{
     prelude::*,
     solana_program::system_program,
 };
+use anchor_spl::token::TokenAccount;
 use crate::{
     state::{
         user::User,
@@ -20,7 +21,7 @@ pub fn process(ctx: Context<RejectContract>) -> Result<()> {
 
     require!(authority == user.key(), KivoError::BadSignerToRejectContract);
 
-    contract.close(user.to_account_info())?;
+    contract.close(ctx.accounts.user_token_account.to_account_info())?;
     proposal.reject();
 
     proposal.exit(&crate::id())?;
@@ -38,6 +39,9 @@ pub struct RejectContract<'info> {
 
     #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
+
+    #[account(mut)]
+    pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

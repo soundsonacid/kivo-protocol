@@ -2,6 +2,7 @@ use anchor_lang::{
     prelude::*,
     solana_program::system_program,
 };
+use anchor_spl::token::TokenAccount;
 use crate::{
     state::{
         user::User,
@@ -15,12 +16,12 @@ pub fn process(ctx: Context<RejectRequest>) -> Result<()> {
 
     let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
     let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
-    let authority = requester_transaction_account.sender_account;
+    let authority = requester_transaction_account.receiver_account;
     let user = &ctx.accounts.user_account;
 
     require!(authority == user.key(), KivoError::BadSignerToRejectRequest);
 
-    fulfiller_transaction_account.close(user.to_account_info())?;
+    fulfiller_transaction_account.close(ctx.accounts.user_token_account.to_account_info())?;
     requester_transaction_account.reject();
 
     requester_transaction_account.exit(&crate::id())?;
@@ -37,6 +38,8 @@ pub struct RejectRequest<'info> {
     #[account(address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
+    #[account(mut)]
+    pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
