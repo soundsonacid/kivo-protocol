@@ -10,7 +10,8 @@ pub struct User {
     pub account_type: u8, 
     pub total_deposits: u64, 
     pub total_withdraws: u64, 
-    pub transactions: u32,
+    pub incoming_tx: u32,
+    pub outgoing_tx: u32,
     pub num_friends: u32,
     pub num_contracts: u32,
     pub num_proposals: u32,
@@ -51,10 +52,13 @@ impl User {
         self.username = username;
     }
 
-    pub fn increment_transactions(&mut self) {
-        self.transactions = self.transactions.saturating_add(1);
+    pub fn increment_outgoing_transactions(&mut self) {
+        self.outgoing_tx = self.outgoing_tx.saturating_add(1);
     }
 
+    pub fn increment_incoming_transactions(&mut self) {
+        self.incoming_tx = self.incoming_tx.saturating_add(1);
+    }
     pub fn increment_friends(&mut self) {
         self.num_friends = self.num_friends.saturating_add(1);
     }

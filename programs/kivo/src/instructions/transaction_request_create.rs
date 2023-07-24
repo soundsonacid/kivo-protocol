@@ -26,13 +26,12 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64) -> Res
     let mint_id = Transaction::get_mint_id(mint);
 
     requester_transaction_account.new(
-        requester.key(),
+        fulfiller.key(),
         mint_id,
         amount, 
         time_stamp, 
-        fulfiller.key(),
         None,
-        requester.transactions,
+        fulfiller.outgoing_tx,
     )?;
 
     requester_transaction_account.exit(&crate::id())?;
@@ -42,15 +41,14 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64, time_stamp: u64) -> Res
         mint_id,
         amount,
         time_stamp,
-        fulfiller.key(),
         None,
-        requester.transactions
+        requester.incoming_tx,
     )?;
 
     fulfiller_transaction_account.exit(&crate::id())?;
 
-    requester.increment_transactions();
-    fulfiller.increment_transactions();
+    requester.increment_incoming_transactions();
+    fulfiller.increment_outgoing_transactions();
 
     requester.exit(&crate::id())?;
     fulfiller.exit(&crate::id())?;
@@ -67,7 +65,7 @@ pub struct CreateRequest<'info> {
         seeds = [
             TRANSACTION,
             requester.to_account_info().key.as_ref(),
-            requester.transactions.to_le_bytes().as_ref()],
+            requester.incoming_tx.to_le_bytes().as_ref()],
         bump
     )]
     pub requester_transaction_account: Account<'info, Transaction>,
@@ -79,7 +77,7 @@ pub struct CreateRequest<'info> {
         seeds = [
             TRANSACTION,
             fulfiller.to_account_info().key.as_ref(),
-            fulfiller.transactions.to_le_bytes().as_ref()],
+            fulfiller.outgoing_tx.to_le_bytes().as_ref()],
         bump
     )]
     pub fulfiller_transaction_account: Account<'info, Transaction>,

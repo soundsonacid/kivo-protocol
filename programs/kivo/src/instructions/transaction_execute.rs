@@ -40,13 +40,12 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64) -
     transfer(transaction_cpi_context, amount)?;
 
     sender_transaction_account.new(
-        sender.key(),
+        receiver.key(),
         mint_id,
         amount,
         time_stamp,
-        receiver.key(),
         Some(true),
-        sender.transactions,
+        receiver.incoming_tx,
     )?;
 
     receiver_transaction_account.new(
@@ -54,13 +53,12 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64) -
         mint_id,
         amount,
         time_stamp,
-        receiver.key(),
         Some(true),
-        sender.transactions,
+        sender.outgoing_tx,
     )?;
 
-    receiver.increment_transactions();
-    sender.increment_transactions();
+    receiver.increment_incoming_transactions();
+    sender.increment_outgoing_transactions();
 
     receiver.exit(&crate::id())?;
     sender.exit(&crate::id())?;
@@ -83,7 +81,7 @@ pub struct ExecuteTransaction<'info> {
         seeds = [
             TRANSACTION,
             sender_user_account.to_account_info().key.as_ref(),
-            sender_user_account.transactions.to_le_bytes().as_ref()
+            sender_user_account.outgoing_tx.to_le_bytes().as_ref()
         ],
         bump
     )]
@@ -102,7 +100,7 @@ pub struct ExecuteTransaction<'info> {
         seeds = [
             TRANSACTION,
             receiver_user_account.to_account_info().key.as_ref(),
-            receiver_user_account.transactions.to_le_bytes().as_ref()
+            receiver_user_account.incoming_tx.to_le_bytes().as_ref()
         ],
         bump
     )]

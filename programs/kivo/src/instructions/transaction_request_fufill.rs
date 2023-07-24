@@ -35,12 +35,10 @@ pub fn process(ctx: Context<FulfillRequest>, amount: u64) -> Result<()> {
 
     fulfiller_transaction_account.fulfill(
         fulfiller.key(),
-        requester.key(),
         true
     )?;
 
     requester_transaction_account.fulfill(
-        fulfiller.key(),
         requester.key(),
         true
     )?;

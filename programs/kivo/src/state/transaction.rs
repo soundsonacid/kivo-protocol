@@ -2,44 +2,39 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct Transaction {
-    pub sender_account: Pubkey, 
+    pub counterparty: Pubkey, 
     pub mint_id: Option<u8>,
     pub amount: u64,
     pub time_stamp: u64,
-    pub receiver_account: Pubkey,
     pub status: Option<bool>, 
-    pub requester_tx_seed: u32,
+    pub counterparty_tx_seed: u32,
 }
 
 impl Transaction {
     pub fn new(
         &mut self,
-        sender_account: Pubkey,
+        counterparty: Pubkey,
         mint_id: Option<u8>,
         amount: u64,
         time_stamp: u64,
-        receiver_account: Pubkey,
         status: Option<bool>,
-        requester_tx_seed: u32,
+        counterparty_tx_seed: u32,
     ) -> Result<()> {
-        self.sender_account = sender_account;
+        self.counterparty = counterparty;
         self.mint_id = mint_id;
         self.amount = amount;
         self.time_stamp = time_stamp;
-        self.receiver_account = receiver_account;
         self.status = status;
-        self.requester_tx_seed = requester_tx_seed;
+        self.counterparty_tx_seed = counterparty_tx_seed;
         Ok(())
     }
 
     pub fn fulfill(
         &mut self,
-        fulfiller: Pubkey,
-        requester: Pubkey,
+        counterparty: Pubkey,
         status: bool
     ) -> Result<()> {
-        self.sender_account = fulfiller;
-        self.receiver_account = requester;
+        self.counterparty = counterparty;
         self.status = Some(status);
         Ok(())
     }
