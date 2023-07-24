@@ -22,8 +22,10 @@ use crate::{
     error::KivoError,
     instruction::HandleSettleContractPayment,
 };
+use clockwork_cron::Schedule;
+use std::str::FromStr;
 
-pub fn process(ctx: Context<AcceptContract>) -> Result<()> {
+pub fn process(ctx: Context<AcceptContract>, schedule: String) -> Result<()> {
     msg!("Accepting contract");
     
     let contract = &mut ctx.accounts.contract;
@@ -128,8 +130,10 @@ pub fn process(ctx: Context<AcceptContract>) -> Result<()> {
         thread_create_accounts,
     );
 
+    let schedule = Schedule::from_str(&schedule).unwrap();
+    
     let trigger = clockwork_sdk::state::Trigger::Cron {
-        schedule: contract.schedule.clone(),
+        schedule: schedule.to_string(),
         skippable: false,
     };
 

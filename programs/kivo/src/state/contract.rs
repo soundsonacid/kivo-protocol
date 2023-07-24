@@ -13,9 +13,7 @@ pub struct Contract {
     pub proposal: Pubkey,
     pub mint_id: Option<u8>,
     pub amount: u64,
-    pub schedule: String,
     pub active: bool,
-    pub description: String,
     pub bump: u8,
     pub num_payments_made: u32,
     pub num_payments_obligated: u32,
@@ -30,8 +28,6 @@ impl Contract {
         proposal: Pubkey,
         mint_id: Option<u8>,
         amount: u64,
-        schedule: String,
-        description: String,
         bump: u8,
         num_payments_obligated: u32,
         id: u32,
@@ -42,9 +38,7 @@ impl Contract {
         self.mint_id = mint_id;
         self.thread = None;
         self.amount = amount;
-        self.schedule = schedule;
         self.active = false;
-        self.description = description;
         self.bump = bump;
         self.num_payments_made = 0;
         self.num_payments_obligated = num_payments_obligated;
@@ -81,10 +75,8 @@ impl Contract {
 #[derive(Debug, Default)]
 pub struct Proposal {
     pub payer_account: Pubkey,
-    pub schedule: String,
     pub payments_made: u32,
     pub payments_obligated: u32,
-    pub description: String,
     pub status: Option<bool>,
     pub amount: u64,
     pub contract: Pubkey,
@@ -96,18 +88,14 @@ impl Proposal {
     pub fn new(
         &mut self,
         payer_account: Pubkey,
-        schedule: String,
         payments_obligated: u32,
-        description: String,
         amount: u64,
         contract: Pubkey,
         mint_id: Option<u8>,
         nonce: u32,
     ) -> Result<()> {
         self.payer_account = payer_account;
-        self.schedule = schedule;
         self.payments_obligated = payments_obligated;
-        self.description = description;
         self.status = None;
         self.amount = amount;
         self.contract = contract;

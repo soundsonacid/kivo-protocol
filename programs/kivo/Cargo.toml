@@ -20,5 +20,6 @@ anchor-lang = { version = "0.27.0", features = ["init-if-needed"] }
 anchor-spl = "0.27.0"
 spl-token-swap = { version = "3.0.0", features = [ "no-entrypoint" ]}
 clockwork-sdk = "2.0.17"
+clockwork-cron = "2.0.18"
 static_assertions = "1.1.0"
 bytemuck = { version = "1.4.0" }

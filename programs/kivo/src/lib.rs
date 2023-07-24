@@ -128,17 +128,16 @@ pub mod kivo {
     pub fn handle_propose_contract(
             ctx: Context<ProposeContract>, 
             amount: u64, 
-            schedule: String, 
-            id: String, 
             num_payments_obligated: u32
         ) -> Result<()> {
-        contract_propose::process(ctx, amount, schedule, id, num_payments_obligated)
+        contract_propose::process(ctx, amount, num_payments_obligated)
     }
 
     pub fn handle_accept_contract(
             ctx: Context<AcceptContract>, 
+            schedule: String
         ) -> Result<()> {
-        contract_accept::process(ctx)
+        contract_accept::process(ctx, schedule)
     }
 
     pub fn handle_reject_contract(

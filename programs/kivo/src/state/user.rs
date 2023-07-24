@@ -59,6 +59,7 @@ impl User {
     pub fn increment_incoming_transactions(&mut self) {
         self.incoming_tx = self.incoming_tx.saturating_add(1);
     }
+    
     pub fn increment_friends(&mut self) {
         self.num_friends = self.num_friends.saturating_add(1);
     }

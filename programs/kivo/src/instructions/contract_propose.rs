@@ -16,8 +16,7 @@ use crate::{
     constants::{CONTRACT, PROPOSAL},
 };
 
-
-pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id: String, num_payments_obligated: u32) -> Result<()> {
+pub fn process(ctx: Context<ProposeContract>, amount: u64, num_payments_obligated: u32) -> Result<()> {
     msg!("Proposing contract");
 
     let contract = &mut ctx.accounts.contract;
@@ -28,9 +27,6 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
 
     let mint_id = Transaction::get_mint_id(&mint.key());
 
-    let id_clone = id.clone();
-    let sched_clone = schedule.clone();
-
     let bump = Contract::get_contract_address(proposer.key(), proposer.num_contracts.clone()).1;
 
     contract.new(
@@ -39,8 +35,6 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
         proposal.key(),
         mint_id,
         amount,
-        schedule,
-        id,
         bump,
         num_payments_obligated,
         obligor.num_contracts.clone(),
@@ -48,9 +42,7 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
 
     proposal.new(
         obligor.key(),
-        sched_clone,
         num_payments_obligated.clone(),
-        id_clone,
         amount,
         contract.key(),
         mint_id,
@@ -60,8 +52,8 @@ pub fn process(ctx: Context<ProposeContract>, amount: u64, schedule: String, id:
     proposer.increment_proposals();
     obligor.increment_contracts();
 
-    obligor.exit(&crate::id())?;
     proposer.exit(&crate::id())?;
+    obligor.exit(&crate::id())?;
 
     Ok(())
 }

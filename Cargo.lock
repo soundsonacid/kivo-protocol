@@ -1404,6 +1404,7 @@ dependencies = [
  "anchor-lang 0.27.0",
  "anchor-spl 0.27.0",
  "bytemuck",
+ "clockwork-cron",
  "clockwork-sdk",
  "spl-token-swap",
  "static_assertions",
