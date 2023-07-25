@@ -7,31 +7,41 @@ use crate::{
     },
 };
 
-pub fn process(ctx: Context<PassiveLendingAccountInitialize>, bump: u8) -> Result<()> {
-    let signature_seeds = kivo::state::user::User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
-    let kivo_signer_seeds = &[&signature_seeds[..]];  
+pub fn process(ctx: Context<PassiveLendingAccountInitialize>, lender_bump: u8, mfi_bump: u8) -> Result<()> {
+    msg!("Initializing passive lending account");
 
-    let init_mfi_acc = marginfi::cpi::accounts::MarginfiAccountInitialize {
-        marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
-        marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
-        authority: ctx.accounts.kivo_account.to_account_info(),
-        fee_payer: ctx.accounts.payer.to_account_info(),
-        system_program: ctx.accounts.system_program.to_account_info(),
-    };
+    let kivo_signer_seeds: &[&[u8]] = &[
+        "lending_account".as_bytes(),
+        &ctx.accounts.kivo_account.key().to_bytes(),
+        &[lender_bump],
+    ];
 
-    let init_mfi_acc_ctx = CpiContext::new_with_signer(
-        ctx.accounts.marginfi_program.to_account_info().clone(),
-        init_mfi_acc,
-        kivo_signer_seeds
-    );
-
-    marginfi::cpi::marginfi_account_initialize(init_mfi_acc_ctx)?;
+    marginfi::cpi::marginfi_account_initialize(CpiContext::new_with_signer(
+        ctx.accounts.marginfi_program.to_account_info(),
+        marginfi::cpi::accounts::MarginfiAccountInitialize {
+            marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
+            authority: ctx.accounts.passive_lending_account.to_account_info(),
+            marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+            fee_payer: ctx.accounts.payer.to_account_info(),
+        },
+        &[
+            kivo_signer_seeds,
+            &[
+                KIVO_MFI_ACCOUNT.as_bytes(),
+                &ctx.accounts.kivo_account.key().to_bytes(),
+                &[mfi_bump],
+            ],
+        ],
+    ))?;
 
     ctx.accounts.passive_lending_account.new(
         ctx.accounts.kivo_account.key(),
         ctx.accounts.marginfi_account.key(),
         ctx.accounts.marginfi_group.key(),
     )?;
+
+    msg!("Passive lending account initialized");
 
     Ok(())
 }
@@ -46,7 +56,7 @@ pub struct PassiveLendingAccountInitialize<'info> {
     #[account(
         mut,
         seeds = [
-            KIVO_MFI_ACCOUNT,
+            KIVO_MFI_ACCOUNT.as_bytes(),
             kivo_account.key().as_ref(),
         ],
         bump,
@@ -59,7 +69,7 @@ pub struct PassiveLendingAccountInitialize<'info> {
     #[account(
         init,
         payer = payer,
-        space = std::mem::size_of::<PassiveLendingAccount>(),
+        space = 8 + std::mem::size_of::<PassiveLendingAccount>(),
         seeds = [
             LENDING_ACCOUNT,
             kivo_account.key().as_ref()
