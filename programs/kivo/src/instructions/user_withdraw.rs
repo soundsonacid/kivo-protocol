@@ -30,7 +30,7 @@ pub fn process(ctx: Context<Withdrawal>, amount: u64) -> Result<()> {
     ctx.accounts.user_account.increment_withdrawals();
 
     ctx.accounts.user_account.exit(&crate::id())?;
-
+    
     Ok(())
 }
 

@@ -21,6 +21,8 @@ pub mod contract_accept;
 pub mod contract_reject;
 pub mod contract_settle;
 
+pub mod lending_deposit;
+
 // Exports
 pub use user_init::*;  
 pub use user_vaults_init::*;
@@ -39,3 +41,4 @@ pub use contract_propose::*;
 pub use contract_accept::*;
 pub use contract_reject::*; 
 pub use contract_settle::*;
+pub use lending_deposit::*;

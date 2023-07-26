@@ -151,4 +151,13 @@ pub mod kivo {
         ) -> Result<clockwork_sdk::state::ThreadResponse> {
         contract_settle::process(ctx)
     }
+
+    // Lending endpoints
+    // 1. handle_lending_deposit
+    pub fn handle_lending_deposit(
+        ctx: Context<LendingDeposit>,
+        amount: u64
+    ) -> Result<()> {
+        lending_deposit::process(ctx, amount)
+    }
 }

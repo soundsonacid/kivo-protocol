@@ -13,16 +13,22 @@ pub mod kivo_yield_program {
 
     // Passive Lending endpoints
     // 1. handle_passive_lending_account_initialize
-    // 2. handle_passive_lending_account_deposit
-    // 3. handle_passive_lending_account_withdraw
-    // 4. handle_passive_lending_account_borrow
-    // 5. handle_passive_lending_account_repay
-    // 6. handle_passive_lending_account_claim_interest
+    // 2. handle_initialize_lending_vaults
+    // 3. handle_passive_lending_account_deposit
+    // 4. handle_passive_lending_account_withdraw
+    // 5. handle_passive_lending_account_borrow
+    // 6. handle_passive_lending_account_repay
 
     pub fn handle_passive_lending_account_initialize(
             ctx: Context<PassiveLendingAccountInitialize>, 
         ) -> Result<()> {
         passive_initialize::process(ctx)
+    }
+
+    pub fn handle_initialize_lending_vaults(
+        ctx: Context<InitializeLendingVaults>,
+    ) -> Result<()> {
+        passive_init_vaults::process(ctx)
     }
 
     pub fn handle_passive_lending_account_deposit(
