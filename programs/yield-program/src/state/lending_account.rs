@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
-
-pub const LENDING_ACCOUNT: &[u8] = b"passive_lending_account";
-pub const KIVO_MFI_ACCOUNT: &[u8] = b"kivo_mfi_account";
+use crate::constants::{KIVO_MFI_ACCOUNT, LENDING_ACCOUNT};
 
 #[account]
 #[derive(Default)]
@@ -56,10 +54,17 @@ impl PassiveLendingAccount {
         )
     }
 
+    pub fn get_mfi_signer_seeds<'a> (
+        pubkey: &'a Pubkey,
+        bump: &'a u8
+    ) -> [&'a [u8]; 3] {
+        [KIVO_MFI_ACCOUNT.as_bytes(), pubkey.as_ref(), bytemuck::bytes_of(bump)]
+    }
+
     pub fn get_mfi_address(pubkey: Pubkey) -> (Pubkey, u8) {
         Pubkey::find_program_address(
             &[
-                KIVO_MFI_ACCOUNT,
+                KIVO_MFI_ACCOUNT.as_bytes(),
                 pubkey.as_ref(),
             ],
             &crate::ID,

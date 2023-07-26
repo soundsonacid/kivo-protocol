@@ -21,18 +21,15 @@ pub mod kivo_yield_program {
 
     pub fn handle_passive_lending_account_initialize(
             ctx: Context<PassiveLendingAccountInitialize>, 
-            lender_bump: u8,
-            mfi_bump: u8
         ) -> Result<()> {
-        passive_initialize::process(ctx, lender_bump, mfi_bump)
+        passive_initialize::process(ctx)
     }
 
     pub fn handle_passive_lending_account_deposit(
             ctx: Context<PassiveLendingAccountDeposit>, 
             amount: u64, 
-            bump: u8
         ) -> Result<()> {
-        passive_deposit::process(ctx, amount, bump)
+        passive_deposit::process(ctx, amount)
     }
 
     pub fn handle_passive_lending_account_withdraw(

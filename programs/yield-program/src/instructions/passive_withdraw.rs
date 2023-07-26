@@ -63,7 +63,7 @@ pub struct PassiveLendingAccountWithdraw<'info> {
     #[account(
         mut,
         seeds = [
-            KIVO_MFI_ACCOUNT,
+            KIVO_MFI_ACCOUNT.as_bytes(),
             kivo_account.key().as_ref(),
         ],
         bump,

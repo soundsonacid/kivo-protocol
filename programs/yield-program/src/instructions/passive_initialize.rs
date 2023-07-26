@@ -7,8 +7,11 @@ use crate::{
     },
 };
 
-pub fn process(ctx: Context<PassiveLendingAccountInitialize>, lender_bump: u8, mfi_bump: u8) -> Result<()> {
+pub fn process(ctx: Context<PassiveLendingAccountInitialize>) -> Result<()> {
     msg!("Initializing passive lending account");
+
+    let lender_bump = PassiveLendingAccount::get_lender_address(ctx.accounts.kivo_account.key()).1;
+    let mfi_bump = PassiveLendingAccount::get_mfi_address(ctx.accounts.kivo_account.key()).1;
 
     let kivo_signer_seeds: &[&[u8]] = &[
         "lending_account".as_bytes(),

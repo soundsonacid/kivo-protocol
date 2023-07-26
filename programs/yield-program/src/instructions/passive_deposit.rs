@@ -15,32 +15,38 @@ use crate::{
 };
 
 
-pub fn process(ctx: Context<PassiveLendingAccountDeposit>, amount: u64, bump: u8) -> Result<()> {
-    let passive_lending_account = &mut ctx.accounts.passive_lending_account;
+pub fn process(ctx: Context<PassiveLendingAccountDeposit>, amount: u64) -> Result<()> {
+    
+    msg!("Depositing into mfi account");
 
-    let signature_seeds = kivo::state::user::User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
-    let kivo_signer_seeds = &[&signature_seeds[..]];  
+    let lender_bump = PassiveLendingAccount::get_lender_address(ctx.accounts.kivo_account.key()).1;
 
-    let mfi_deposit_acc = marginfi::cpi::accounts::LendingAccountDeposit {
-        marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
-        marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
-        signer: ctx.accounts.kivo_account.to_account_info(),
-        bank: ctx.accounts.marginfi_bank.to_account_info(),
-        signer_token_account: ctx.accounts.kivo_token_account.to_account_info(),
-        bank_liquidity_vault: ctx.accounts.bank_vault.to_account_info(),
-        token_program: ctx.accounts.token_program.to_account_info(),
-    };
+    let kivo_signer_seeds: &[&[u8]] = &[
+        "lending_account".as_bytes(),
+        &ctx.accounts.kivo_account.key().to_bytes(),
+        &[lender_bump],
+    ];
+    marginfi::cpi::lending_account_deposit(
+        CpiContext::new_with_signer(
+            ctx.accounts.marginfi_program.to_account_info(),
+            marginfi::cpi::accounts::LendingAccountDeposit {
+                marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
+                marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
+                signer: ctx.accounts.passive_lending_account.to_account_info(),
+                bank: ctx.accounts.marginfi_bank.to_account_info(),
+                signer_token_account: ctx.accounts.lender_temp_token_account.to_account_info(),
+                bank_liquidity_vault: ctx.accounts.bank_vault.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+            },
+            &[kivo_signer_seeds],
+        ),
+        amount,
+    )?;
 
-    let mfi_deposit_ctx = CpiContext::new_with_signer(
-        ctx.accounts.marginfi_program.to_account_info().clone(),
-        mfi_deposit_acc,
-        kivo_signer_seeds
-    );
+    msg!("Deposited into MFI account");
 
-    marginfi::cpi::lending_account_deposit(mfi_deposit_ctx, amount)?;
-
-    passive_lending_account.increment_deposits(amount);
-    passive_lending_account.exit(&crate::id())?;
+    ctx.accounts.passive_lending_account.increment_deposits(amount);
+    ctx.accounts.passive_lending_account.exit(&crate::id())?;
 
     Ok(())
 }
@@ -54,10 +60,13 @@ pub struct PassiveLendingAccountDeposit<'info> {
     #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]
     pub kivo_token_account: Account<'info, TokenAccount>,
 
+    #[account(mut, token::mint = mint, token::authority = passive_lending_account)]
+    pub lender_temp_token_account: Account<'info, TokenAccount>,
+
     #[account(
         mut,
         seeds = [
-            KIVO_MFI_ACCOUNT,
+            KIVO_MFI_ACCOUNT.as_bytes(),
             kivo_account.key().as_ref(),
         ],
         bump,
