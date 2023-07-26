@@ -12,37 +12,43 @@ use crate::{
     constants::KIVO_MFI_ACCOUNT,
 };
 
-pub fn process(ctx: Context<PassiveLendingAccountRepay>, amount: u64, bump: u8, repay_all: Option<bool>) -> Result<()> {
-  let signature_seeds = kivo::state::user::User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
-  let kivo_signer_seeds = &[&signature_seeds[..]];
+pub fn process(ctx: Context<PassiveLendingAccountRepay>, amount: u64, repay_all: Option<bool>) -> Result<()> {
+    msg!("Repaying borrow");
 
-  let mfi_repay_acc = marginfi::cpi::accounts::LendingAccountRepay {
-      marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
-      marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
-      signer: ctx.accounts.kivo_account.to_account_info(),
-      bank: ctx.accounts.marginfi_bank.to_account_info(),
-      signer_token_account: ctx.accounts.kivo_token_account.to_account_info(),
-      bank_liquidity_vault: ctx.accounts.bank_vault.to_account_info(),
-      token_program: ctx.accounts.token_program.to_account_info(),
-  };
+    let repay_all = repay_all;
 
-  let mfi_repay_ctx = CpiContext::new_with_signer(
-      ctx.accounts.marginfi_program.to_account_info().clone(),
-      mfi_repay_acc,
-      kivo_signer_seeds,
-  );
+    let amount = if repay_all == Some(true) {
+        0
+    } else {
+        amount
+    };
 
-  let repay_all = repay_all;
+    let lender_bump = PassiveLendingAccount::get_lender_address(ctx.accounts.kivo_account.key()).1;
 
-  let amount = if repay_all == Some(true) {
-    0
-  } else {
-    amount
-  };
+    marginfi::cpi::lending_account_repay(
+        CpiContext::new_with_signer(
+            ctx.accounts.marginfi_program.to_account_info(),
+            marginfi::cpi::accounts::LendingAccountRepay {
+                marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
+                marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
+                signer: ctx.accounts.passive_lending_account.to_account_info(),
+                bank: ctx.accounts.marginfi_bank.to_account_info(),
+                signer_token_account: ctx.accounts.lender_token_account.to_account_info(),
+                bank_liquidity_vault: ctx.accounts.bank_vault.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+            },
+            &[&[
+                KIVO_MFI_ACCOUNT.as_bytes(),
+                ctx.accounts.kivo_account.key().as_ref(),
+                &[lender_bump],
+            ]]
+        ), 
+        amount, 
+        repay_all
+    )?;
 
-  marginfi::cpi::lending_account_repay(mfi_repay_ctx, amount, repay_all)?;
-
-  Ok(())
+    msg!("Borrow repaid");
+    Ok(())
 }
 
 #[derive(Accounts)]
@@ -50,9 +56,6 @@ pub struct PassiveLendingAccountRepay<'info> {
     /// CHECK: validated by address derivation
     #[account(address = kivo::state::user::User::get_user_address(payer.key()).0)]
     pub kivo_account: UncheckedAccount<'info>,
-
-    #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]
-    pub kivo_token_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -75,6 +78,9 @@ pub struct PassiveLendingAccountRepay<'info> {
 
     #[account(mut, address = PassiveLendingAccount::get_lender_address(kivo_account.key()).0)]
     pub passive_lending_account: Account<'info, PassiveLendingAccount>,
+
+    #[account(mut, token::mint = mint, token::authority = passive_lending_account)]
+    pub lender_token_account: Account<'info, TokenAccount>,
 
     #[account(address = marginfi_bank.load()?.mint)]
     pub mint: Account<'info, Mint>,

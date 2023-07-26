@@ -34,7 +34,7 @@ pub fn process(ctx: Context<PassiveLendingAccountDeposit>, amount: u64) -> Resul
                 marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
                 signer: ctx.accounts.passive_lending_account.to_account_info(),
                 bank: ctx.accounts.marginfi_bank.to_account_info(),
-                signer_token_account: ctx.accounts.lender_temp_token_account.to_account_info(),
+                signer_token_account: ctx.accounts.lender_token_account.to_account_info(),
                 bank_liquidity_vault: ctx.accounts.bank_vault.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
             },
@@ -43,7 +43,7 @@ pub fn process(ctx: Context<PassiveLendingAccountDeposit>, amount: u64) -> Resul
         amount,
     )?;
 
-    msg!("Deposited into MFI account");
+    msg!("Deposited into mfi account");
 
     ctx.accounts.passive_lending_account.increment_deposits(amount);
     ctx.accounts.passive_lending_account.exit(&crate::id())?;
@@ -60,8 +60,11 @@ pub struct PassiveLendingAccountDeposit<'info> {
     #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]
     pub kivo_token_account: Account<'info, TokenAccount>,
 
-    #[account(mut, token::mint = mint, token::authority = passive_lending_account)]
-    pub lender_temp_token_account: Account<'info, TokenAccount>,
+    #[account(mut, address = PassiveLendingAccount::get_lender_address(kivo_account.key()).0)]
+    pub passive_lending_account: Account<'info, PassiveLendingAccount>,
+
+    #[account(mut, associated_token::authority = passive_lending_account, associated_token::mint = mint)]
+    pub lender_token_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -80,9 +83,6 @@ pub struct PassiveLendingAccountDeposit<'info> {
 
     /// CHECK: validated by mfi cpi call -> banks tied to specific mfi group -> bad vault fails cpi
     pub bank_vault: UncheckedAccount<'info>,
-
-    #[account(mut, address = PassiveLendingAccount::get_lender_address(kivo_account.key()).0)]
-    pub passive_lending_account: Account<'info, PassiveLendingAccount>,
 
     #[account(address = marginfi_bank.load()?.mint)]
     pub mint: Account<'info, Mint>,

@@ -3,7 +3,8 @@ use anchor_spl::token::*;
 use marginfi::program::Marginfi;
 use crate::state::lending_account::PassiveLendingAccount;
 
-pub fn process(_ctx: Context<PassiveLendingAccountClaim>, _amount: u64, _bump: u8) -> Result<()> {
+pub fn process(ctx: Context<PassiveLendingAccountClaim>, _amount: u64) -> Result<()> {
+    let _lender_bump = PassiveLendingAccount::get_lender_address(ctx.accounts.kivo_account.key()).1;
 
     Ok(())
 }

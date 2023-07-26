@@ -41,34 +41,30 @@ pub mod kivo_yield_program {
     pub fn handle_passive_lending_account_withdraw(
             ctx: Context<PassiveLendingAccountWithdraw>, 
             amount: u64, 
-            bump: u8, 
             withdraw_all:  Option<bool>
         ) -> Result<()> {
-        passive_withdraw::process(ctx, amount, bump, withdraw_all)
+        passive_withdraw::process(ctx, amount, withdraw_all)
     }
 
     pub fn handle_passive_lending_account_borrow(
             ctx: Context<PassiveLendingAccountBorrow>, 
             amount: u64, 
-            bump: u8
         ) -> Result<()> {
-        passive_borrow::process(ctx, amount, bump)
+        passive_borrow::process(ctx, amount)
     }
 
     pub fn handle_passive_lending_account_repay(
             ctx: Context<PassiveLendingAccountRepay>, 
             amount: u64, 
-            bump: u8,
             repay_all: Option<bool>, 
         ) -> Result<()> {
-        passive_repay::process(ctx, amount, bump, repay_all)
+        passive_repay::process(ctx, amount, repay_all)
     }
 
     pub fn handle_passive_lending_account_claim_interest(
             ctx: Context<PassiveLendingAccountClaim>,
             amount: u64, 
-            bump: u8
         ) -> Result<()> {
-        passive_claim::process(ctx, amount, bump)
+        passive_claim::process(ctx, amount)
     }
 }

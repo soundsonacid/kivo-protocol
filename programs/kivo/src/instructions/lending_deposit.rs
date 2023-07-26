@@ -4,7 +4,7 @@ use crate::state::user::User;
 
 pub fn process(ctx: Context<LendingDeposit>, amount: u64) -> Result<()> {
     msg!("Transferring to lender token account");
-    
+
     let user_bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &user_bump);
@@ -37,7 +37,7 @@ pub struct LendingDeposit<'info>{
     /// CHECK: validated by CPI
     pub lending_account: UncheckedAccount<'info>,
 
-    #[account(token::mint = mint, token::authority = lending_account)]
+    #[account(associated_token::mint = mint, associated_token::authority = lending_account)]
     pub lender_token_account: Account<'info, TokenAccount>,
 
     pub mint: Account<'info, Mint>,

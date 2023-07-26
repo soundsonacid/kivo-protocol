@@ -153,7 +153,7 @@ pub mod kivo {
     }
 
     // Lending endpoints
-    // 1. handle_lending_deposit
+    // 1. handle_lending_deposit (used for depositing & repaying borrows)
     pub fn handle_lending_deposit(
         ctx: Context<LendingDeposit>,
         amount: u64
