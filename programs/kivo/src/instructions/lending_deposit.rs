@@ -30,11 +30,13 @@ pub fn process(ctx: Context<LendingDeposit>, amount: u64) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct LendingDeposit<'info>{
+    #[account(address = User::get_user_address(payer.key()).0)]
     pub user_account: Account<'info, User>,
 
+    #[account(associated_token::mint = mint, associated_token::authority = user_account)]
     pub user_token_account: Account<'info, TokenAccount>,
 
-    /// CHECK: validated by CPI
+    /// CHECK: need to add validation 
     pub lending_account: UncheckedAccount<'info>,
 
     #[account(associated_token::mint = mint, associated_token::authority = lending_account)]

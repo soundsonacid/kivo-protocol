@@ -7,7 +7,10 @@ use anchor_lang::{
 };
 use anchor_spl::token::*;
 use crate::{
-    constants::TRANSACTION,
+    constants::{
+        INCOMING,
+        OUTGOING
+    },
     state::{
         user::User,
         transaction::Transaction,
@@ -63,7 +66,7 @@ pub struct CreateRequest<'info> {
         payer = payer,
         space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            TRANSACTION,
+            INCOMING,
             requester.to_account_info().key.as_ref(),
             requester.incoming_tx.to_le_bytes().as_ref()],
         bump
@@ -75,7 +78,7 @@ pub struct CreateRequest<'info> {
         payer = payer,
         space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            TRANSACTION,
+            OUTGOING,
             fulfiller.to_account_info().key.as_ref(),
             fulfiller.outgoing_tx.to_le_bytes().as_ref()],
         bump

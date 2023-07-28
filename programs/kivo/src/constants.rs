@@ -7,7 +7,9 @@ pub const USERNAME: &[u8] = b"username";
 #[constant]
 pub const FRIEND: &[u8] = b"friend";
 #[constant]
-pub const TRANSACTION: &[u8] = b"transaction";
+pub const OUTGOING: &[u8] = b"outgoing_tx";
+#[constant]
+pub const INCOMING: &[u8] = b"incoming_tx";
 #[constant]
 pub const CONTRACT: &[u8] = b"contract";
 #[constant]
