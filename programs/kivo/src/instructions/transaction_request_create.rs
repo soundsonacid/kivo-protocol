@@ -66,9 +66,9 @@ pub struct CreateRequest<'info> {
         payer = payer,
         space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            INCOMING,
+            OUTGOING,
             requester.to_account_info().key.as_ref(),
-            requester.incoming_tx.to_le_bytes().as_ref()],
+            requester.outgoing_tx.to_le_bytes().as_ref()],
         bump
     )]
     pub requester_transaction_account: Account<'info, Transaction>,
@@ -78,9 +78,9 @@ pub struct CreateRequest<'info> {
         payer = payer,
         space = 8 + std::mem::size_of::<Transaction>(),
         seeds = [
-            OUTGOING,
+            INCOMING,
             fulfiller.to_account_info().key.as_ref(),
-            fulfiller.outgoing_tx.to_le_bytes().as_ref()],
+            fulfiller.incoming_tx.to_le_bytes().as_ref()],
         bump
     )]
     pub fulfiller_transaction_account: Account<'info, Transaction>,
