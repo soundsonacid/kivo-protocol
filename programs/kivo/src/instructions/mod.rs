@@ -29,6 +29,7 @@ pub mod group_invite;
 pub mod group_join;
 pub mod group_leave;
 pub mod group_kick;
+pub mod group_transfer;
 
 // Exports
 pub use user_init::*;  
@@ -54,3 +55,4 @@ pub use group_invite::*;
 pub use group_join::*;
 pub use group_leave::*;
 pub use group_kick::*;
+pub use group_transfer::*;

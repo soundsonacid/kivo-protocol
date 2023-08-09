@@ -167,6 +167,7 @@ pub mod kivo {
     // 3. handle_group_join
     // 4. handle_group_leave
     // 5. handle_group_kick (Group Admins only)
+    // 6. handle_group_transfer (Group Admins only)
     pub fn handle_group_create(
             ctx: Context<CreateGroup>,
             group_id: u32,
@@ -197,5 +198,11 @@ pub mod kivo {
             ctx: Context<KickMemberFromGroup>
     ) -> Result<()> {
         group_kick::process(ctx)
+    }
+
+    pub fn handle_group_transfer(
+            ctx: Context<TransferGroupOwnership>
+    ) -> Result<()> {
+        group_transfer::process(ctx)
     }
 }
