@@ -23,6 +23,13 @@ pub mod contract_settle;
 
 pub mod lending_deposit;
 
+// Group instructions 
+pub mod group_create;
+pub mod group_invite;
+pub mod group_join;
+pub mod group_leave;
+pub mod group_kick;
+
 // Exports
 pub use user_init::*;  
 pub use user_vaults_init::*;
@@ -42,3 +49,8 @@ pub use contract_accept::*;
 pub use contract_reject::*; 
 pub use contract_settle::*;
 pub use lending_deposit::*;
+pub use group_create::*;
+pub use group_invite::*;
+pub use group_join::*;
+pub use group_leave::*;
+pub use group_kick::*;

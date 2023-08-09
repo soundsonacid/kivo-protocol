@@ -114,7 +114,7 @@ pub mod kivo {
     }
 
     pub fn handle_reject_request(
-        ctx: Context<RejectRequest>
+            ctx: Context<RejectRequest>
     ) -> Result<()> {
         transaction_request_reject::process(ctx)
     }
@@ -155,9 +155,47 @@ pub mod kivo {
     // Lending endpoints
     // 1. handle_lending_deposit (used for depositing & repaying borrows)
     pub fn handle_lending_deposit(
-        ctx: Context<LendingDeposit>,
-        amount: u64
+            ctx: Context<LendingDeposit>,
+            amount: u64
     ) -> Result<()> {
         lending_deposit::process(ctx, amount)
+    }
+
+    // Group endpoints
+    // 1. handle_group_create
+    // 2. handle_group_invite
+    // 3. handle_group_join
+    // 4. handle_group_leave
+    // 5. handle_group_kick (Group Admins only)
+    pub fn handle_group_create(
+            ctx: Context<CreateGroup>,
+            group_id: u32,
+            group_name: [u8; 32],
+    ) -> Result<()> {
+        group_create::process(ctx, group_id, group_name)
+    }
+
+    pub fn handle_group_invite(
+            ctx: Context<GroupInvite>
+    ) -> Result<()> {
+        group_invite::process(ctx)
+    }
+
+    pub fn handle_group_join(
+            ctx: Context<GroupJoin>
+    ) -> Result<()> { 
+        group_join::process(ctx)
+    }
+
+    pub fn handle_group_leave(
+            ctx: Context<LeaveGroup>
+    ) -> Result<()> {
+        group_leave::process(ctx)
+    }
+
+    pub fn handle_group_kick(
+            ctx: Context<KickMemberFromGroup>
+    ) -> Result<()> {
+        group_kick::process(ctx)
     }
 }

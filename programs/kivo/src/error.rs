@@ -12,4 +12,12 @@ pub enum KivoError {
     InvalidUsername,
     #[msg("Failed to reject request: Bad signer at handle_reject_request - signer key must match requester_transaction_account.fulfiller!")]
     BadSignerToRejectRequest,
+    #[msg("Failed to transfer Group ownership - current_admin must match group.admin!")]
+    FailedOwnershipTransfer,
+    #[msg("Failed to join Group - too many members! (Limit: 24)")]
+    TooManyGroupMembers,
+    #[msg("Failed to leave Group - User does not match Membership")]
+    BadMember,
+    #[msg("Failed to kick member - not admin")]
+    NotGroupAdmin,
 }

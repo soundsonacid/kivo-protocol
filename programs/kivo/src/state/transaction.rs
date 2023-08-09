@@ -48,7 +48,7 @@ impl Transaction {
     
         match mint.as_str() {
             "So11111111111111111111111111111111111111112" => Some(1),
-            "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" => Some(2),
+            "8kKGD6dQ6mhr9YBx3T4oRGoFCJfnpLyRBGdV1upWRYnq" => Some(2),
             "BhWwL5K6k98xvy2vndXLVvq6vRsnCq9RSM6sCHNPSGMe" => Some(3),
             "G3Cb13RiPcTtdKSfZEyhHCpXkgqyTr9BdVvdUbtERHUR" => Some(4),
             "J9JkoZFdi31nJAcSniPMemfneJ7AL2iMYZkrEC9yvTDK" => Some(5),
