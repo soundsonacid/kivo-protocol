@@ -29,7 +29,7 @@ pub fn process(ctx: Context<LeaveGroup>) -> Result<()> {
 pub struct LeaveGroup<'info> {
     pub member: Account<'info, User>,
 
-    #[account(mut)]
+    #[account(mut, address = membership.group)]
     pub group: Account<'info, Group>,
 
     #[account(mut)]

@@ -154,6 +154,7 @@ pub mod kivo {
 
     // Lending endpoints
     // 1. handle_lending_deposit (used for depositing & repaying borrows)
+
     pub fn handle_lending_deposit(
             ctx: Context<LendingDeposit>,
             amount: u64
@@ -168,6 +169,7 @@ pub mod kivo {
     // 4. handle_group_leave
     // 5. handle_group_kick (Group Admins only)
     // 6. handle_group_transfer (Group Admins only)
+
     pub fn handle_group_create(
             ctx: Context<CreateGroup>,
             group_id: u32,
@@ -204,5 +206,43 @@ pub mod kivo {
             ctx: Context<TransferGroupOwnership>
     ) -> Result<()> {
         group_transfer::process(ctx)
+    }
+
+    // Paid Group endpoints
+    // 1. handle_pgroup_create
+    // 2. handle_pgroup_invite
+    // 3. handle_pgroup_join
+    // 4. handle_pgroup_leave
+    // 5. handle_pgroup_kick (Group Admins only)
+    // 6. handle_pgroup_transfer (Group Admins only)
+    // 7. handle_pgroup_change_fee (Group Admins only)
+
+    pub fn handle_pgroup_create(
+            ctx: Context<CreatePaidGroup>,
+            group_id: u32,
+            group_name: [u8; 32],
+            fee: u64,
+            recurring: bool
+    ) -> Result<()> {
+        paidgroup_create::process(ctx, group_id, group_name, fee, recurring)
+    }
+
+    pub fn handle_pgroup_invite(
+            ctx: Context<PaidGroupInvite>
+    ) -> Result<()> {
+        paidgroup_invite::process(ctx)
+    }
+
+    pub fn handle_pgroup_join(
+            ctx: Context<PaidGroupJoin>,
+            schedule: Option<String>,
+    ) -> Result<()> {
+        paidgroup_join::process(ctx, schedule)
+    }
+
+    pub fn handle_pgroup_makepayment(
+        ctx: Context<PaidGroupMakePayment>
+    ) -> Result<clockwork_sdk::state::ThreadResponse> {
+        paidgroup_makepayment::process(ctx)
     }
 }

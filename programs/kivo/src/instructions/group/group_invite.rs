@@ -61,6 +61,7 @@ pub struct GroupInvite<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(address = membership.group)]
     pub group: Account<'info, Group>,
 
     #[account(address = system_program::ID)]

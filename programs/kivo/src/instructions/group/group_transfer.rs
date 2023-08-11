@@ -17,10 +17,10 @@ pub fn process(ctx: Context<TransferGroupOwnership>) -> Result<()> {
 
     require!(ctx.accounts.group.admin == ctx.accounts.current_admin.key(), KivoError::NotGroupAdmin);
 
-    ctx.accounts.group.transfer_ownership(ctx.accounts.new_admin.key());
+    ctx.accounts.group.transfer_ownership(ctx.accounts.new_admin.key())?;
 
     ctx.accounts.group.exit(&crate::id())?;
-    
+
     Ok(())
 }
 
@@ -52,7 +52,7 @@ pub struct TransferGroupOwnership<'info> {
     )]
     pub group: Account<'info, Group>,
 
-    #[account(mt)]
+    #[account(mut)]
     pub payer: Signer<'info>,
 
     #[account(address = system_program::ID)]

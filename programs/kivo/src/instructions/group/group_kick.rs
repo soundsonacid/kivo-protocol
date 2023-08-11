@@ -43,7 +43,7 @@ pub struct KickMemberFromGroup<'info> {
     )]
     pub kicked_membership: Account<'info, Membership>,
 
-    #[account(mut)]
+    #[account(mut, address = kicked_membership.group)]
     pub group: Account<'info, Group>,
 
     pub payer: Signer<'info>,

@@ -194,7 +194,6 @@ pub struct AcceptContract<'info> {
     #[account()]
     pub mint: Box<Account<'info, Mint>>,
 
-    // Add Thread Program ID
     pub thread_program: Program<'info, clockwork_sdk::ThreadProgram>,
 
     #[account(address = anchor_spl::token::ID)]

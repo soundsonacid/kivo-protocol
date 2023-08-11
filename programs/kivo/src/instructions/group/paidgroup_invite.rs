@@ -5,7 +5,7 @@ use anchor_lang::{
 use crate::{
     state::{
         user::User,
-        group::Group,
+        group::PaidGroup,
         group::Invite,
         group::Membership,
     },
@@ -13,46 +13,46 @@ use crate::{
     constants::{ INVITE, MEMBERSHIP },
 };
 
-pub fn process(ctx: Context<GroupJoin>) -> Result<()> {
+pub fn process(ctx: Context<PaidGroupInvite>) -> Result<()> {
+    msg!("Inviting user to Group");
 
     require!(ctx.accounts.group.num_members < 24, KivoError::TooManyGroupMembers);
 
-    ctx.accounts.membership.new(
-        ctx.accounts.new_member.key(),
+    ctx.accounts.invite.new(
+        ctx.accounts.invitee.key(),
         ctx.accounts.group.key(),
     )?;
 
-    ctx.accounts.group.increment_members();
-
+    ctx.accounts.invite.exit(&crate::id())?;
+    
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct GroupJoin<'info> {
+pub struct PaidGroupInvite<'info> {
+    pub invitee: Account<'info, User>,
+    
     #[account(address = User::get_user_address(payer.key()).0)]
-    pub new_member: Account<'info, User>,
+    pub invitor: Account<'info, User>,
 
     #[account(
+        init,
+        payer = payer,
+        space = std::mem::size_of::<Invite>() + 8,
         seeds = [
             INVITE,
-            new_member.key().as_ref(),
-            group.key().as_ref(),
+            invitee.key().as_ref(),
+            membership.group.as_ref(),
         ],
         bump
     )]
     pub invite: Account<'info, Invite>,
 
-    #[account(mut)]
-    pub group: Account<'info, Group>,
-
     #[account(
-        init,
-        payer = payer,
-        space = 8 + std::mem::size_of::<Membership>(),
         seeds = [
             MEMBERSHIP,
-            new_member.key().as_ref(),
-            invite.group.as_ref(),
+            invitor.key().as_ref(),
+            group.key().as_ref(),
         ],
         bump
     )]
@@ -60,6 +60,9 @@ pub struct GroupJoin<'info> {
 
     #[account(mut)]
     pub payer: Signer<'info>,
+
+    #[account(address = membership.group)]
+    pub group: Account<'info, PaidGroup>,
 
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>,

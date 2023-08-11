@@ -21,6 +21,8 @@ pub const UNWRAP: &[u8] = b"unwrap";
 #[constant]
 pub const GROUP: &[u8] = b"group";
 #[constant]
+pub const PAID: &[u8] = b"paid_group";
+#[constant]
 pub const MEMBERSHIP: &[u8] = b"membership";
 #[constant]
 pub const INVITE: &[u8] = b"invite";
