@@ -13,4 +13,4 @@ wallet = "/Users/frankfinnegan/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-push = "anchor deploy -p kivo --provider.cluster devnet && anchor idl upgrade --filepath ./target/idl/kivo.json 7bRUosmoUkYVgZJHj2UDWM6kgHoy748R6NGweiDEk2vZ --provider.cluster devnet"
+push = "anchor deploy -p kivo --provider.cluster devnet && anchor idl upgrade --filepath ./target/idl/kivo.json 5p53sbjVpoDizJ8CaaVrJ7ZirXAH6AZNUysd75rnn98p --provider.cluster devnet"

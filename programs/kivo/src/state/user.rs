@@ -15,6 +15,7 @@ pub struct User {
     pub num_friends: u32,
     pub num_contracts: u32,
     pub num_proposals: u32,
+    pub num_groups: u32,
     pub preferred_token: Option<Pubkey>,
 }
 
@@ -74,6 +75,10 @@ impl User {
 
     pub fn increment_proposals(&mut self) {
         self.num_proposals = self.num_proposals.saturating_add(1);
+    }
+
+    pub fn increment_groups(&mut self) {
+        self.num_groups = self.num_groups.saturating_add(1);
     }
 
     pub fn set_preferred_token(&mut self, token: Pubkey) {

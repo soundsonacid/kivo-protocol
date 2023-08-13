@@ -42,7 +42,7 @@ pub struct GroupJoin<'info> {
     )]
     pub invite: Account<'info, Invite>,
 
-    #[account(mut, address = membership.group)]
+    #[account(mut, address = invite.group)]
     pub group: Account<'info, Group>,
 
     #[account(

@@ -20,17 +20,26 @@ pub fn process(ctx: Context<CreatePaidGroup>, group_id: u32, group_name: [u8; 32
         recurring
     )?;
 
+    ctx.accounts.membership.new(
+        ctx.accounts.group_admin.key(),
+        ctx.accounts.group.key(),
+    )?;
+    
+
     ctx.accounts.group.increment_members();
 
+    ctx.accounts.group_admin.increment_groups();
+
     ctx.accounts.group.exit(&crate::id())?;
+    ctx.accounts.group_admin.exit(&crate::id())?;
+    ctx.accounts.membership.exit(&crate::id())?;
 
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(group_id: u32) ]
 pub struct CreatePaidGroup<'info> {
-    #[account(address = User::get_user_address(payer.key()).0)]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub group_admin: Account<'info, User>,
 
     #[account(
@@ -40,7 +49,7 @@ pub struct CreatePaidGroup<'info> {
         seeds = [
             PAID,
             group_admin.to_account_info().key.as_ref(),
-            &group_id.to_le_bytes(),
+            &group_admin.num_groups.to_le_bytes(),
         ],
         bump
     )]

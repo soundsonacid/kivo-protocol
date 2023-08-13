@@ -7,7 +7,7 @@ pub mod error;
 pub mod constants;
 mod instructions;
 
-declare_id!("7bRUosmoUkYVgZJHj2UDWM6kgHoy748R6NGweiDEk2vZ");
+declare_id!("5p53sbjVpoDizJ8CaaVrJ7ZirXAH6AZNUysd75rnn98p");
 
 #[program]
 pub mod kivo {
@@ -216,6 +216,7 @@ pub mod kivo {
     // 5. handle_pgroup_kick (Group Admins only)
     // 6. handle_pgroup_transfer (Group Admins only)
     // 7. handle_pgroup_change_fee (Group Admins only)
+    // 8. handle_pgroup_makepayment (Called internally by recurring payment Group threads only)
 
     pub fn handle_pgroup_create(
             ctx: Context<CreatePaidGroup>,

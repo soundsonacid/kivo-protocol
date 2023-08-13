@@ -18,9 +18,18 @@ pub fn process(ctx: Context<CreateGroup>, group_id: u32, group_name: [u8; 32]) -
         ctx.accounts.group_admin.key(),
     )?;
 
+    ctx.accounts.membership.new(
+        ctx.accounts.group_admin.key(),
+        ctx.accounts.group.key(),
+    )?;
+    
     ctx.accounts.group.increment_members();
 
+    ctx.accounts.group_admin.increment_groups();
+
     ctx.accounts.group.exit(&crate::id())?;
+    ctx.accounts.group_admin.exit(&crate::id())?;
+    ctx.accounts.membership.exit(&crate::id())?;
 
     Ok(())
 }
@@ -28,7 +37,7 @@ pub fn process(ctx: Context<CreateGroup>, group_id: u32, group_name: [u8; 32]) -
 #[derive(Accounts)]
 #[instruction(group_id: u32) ]
 pub struct CreateGroup<'info> {
-    #[account(address = User::get_user_address(payer.key()).0)]
+    #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub group_admin: Account<'info, User>,
 
     #[account(
@@ -38,7 +47,7 @@ pub struct CreateGroup<'info> {
         seeds = [
             GROUP,
             group_admin.to_account_info().key.as_ref(),
-            &group_id.to_le_bytes(),
+            &group_admin.num_groups.to_le_bytes(),
         ],
         bump
     )]
