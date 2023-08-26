@@ -93,17 +93,15 @@ pub mod kivo {
     pub fn handle_execute_transaction(
             ctx: Context<ExecuteTransaction>, 
             amount: u64, 
-            time_stamp: u64,
         ) -> Result<()> {
-        transaction_execute::process(ctx, amount, time_stamp)
+        transaction_execute::process(ctx, amount)
     }
 
     pub fn handle_create_request(
             ctx: Context<CreateRequest>, 
             amount: u64, 
-            time_stamp: u64,
         ) -> Result<()> {
-        transaction_request_create::process(ctx, amount, time_stamp)
+        transaction_request_create::process(ctx, amount)
     }
 
     pub fn handle_fulfill_request(

@@ -13,7 +13,6 @@ pub fn process(ctx: Context<FulfillRequest>, amount: u64) -> Result<()> {
 
     let fulfiller = &ctx.accounts.fulfiller;
     let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
-    let requester = &ctx.accounts.requester;
     let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
 
     let bump = User::get_user_address(ctx.accounts.payer.key()).1;
@@ -33,15 +32,8 @@ pub fn process(ctx: Context<FulfillRequest>, amount: u64) -> Result<()> {
 
     transfer(request_cpi_context, amount)?;
 
-    fulfiller_transaction_account.fulfill(
-        fulfiller.key(),
-        true
-    )?;
-
-    requester_transaction_account.fulfill(
-        requester.key(),
-        true
-    )?;
+    fulfiller_transaction_account.fulfill();
+    requester_transaction_account.fulfill();
 
     fulfiller_transaction_account.exit(&crate::id())?;
     requester_transaction_account.exit(&crate::id())?;

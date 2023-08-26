@@ -16,7 +16,7 @@ pub fn process(ctx: Context<RejectRequest>) -> Result<()> {
 
     let fulfiller_transaction_account = &mut ctx.accounts.fulfiller_transaction_account;
     let requester_transaction_account = &mut ctx.accounts.requester_transaction_account;
-    let authority = fulfiller_transaction_account.counterparty;
+    let authority = fulfiller_transaction_account.user_2;
     let user = &ctx.accounts.user_account;
 
     require!(authority == user.key(), KivoError::BadSignerToRejectRequest);

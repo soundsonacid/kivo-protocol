@@ -14,16 +14,13 @@ use crate::{
     }
 };
 
-pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64) -> Result<()> {
+pub fn process(ctx: Context<ExecuteTransaction>, amount: u64) -> Result<()> {
     msg!("Executing transaction");
 
     let sender_transaction_account = &mut ctx.accounts.sender_transaction_account;
     let receiver_transaction_account = &mut ctx.accounts.receiver_transaction_account;
     let sender = &mut ctx.accounts.sender_user_account;
     let receiver = &mut ctx.accounts.receiver_user_account;
-    let mint = &ctx.accounts.mint;
-
-    let mint_id = Transaction::get_mint_id(&mint.key());
 
     let bump = User::get_user_address(ctx.accounts.sender.key()).1;
 
@@ -44,20 +41,16 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64, time_stamp: u64) -
 
     sender_transaction_account.new(
         receiver.key(),
-        mint_id,
+        sender.key(),
         amount,
-        time_stamp,
         Some(true),
-        receiver.incoming_tx,
     )?;
 
     receiver_transaction_account.new(
+        receiver.key(),
         sender.key(),
-        mint_id,
         amount,
-        time_stamp,
-        Some(true),
-        sender.outgoing_tx,
+        Some(true)
     )?;
 
     receiver.increment_incoming_transactions();
