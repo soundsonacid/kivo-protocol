@@ -7,7 +7,7 @@ pub mod error;
 pub mod constants;
 mod instructions;
 
-declare_id!("5p53sbjVpoDizJ8CaaVrJ7ZirXAH6AZNUysd75rnn98p");
+declare_id!("AgcadSiiADx1LoR4fkwTJWQehg5esUpGSuEDLrKrhLT1");
 
 #[program]
 pub mod kivo {
