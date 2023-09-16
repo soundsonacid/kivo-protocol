@@ -43,8 +43,8 @@ pub fn process(ctx: Context<CreateRequest>, amount: u64 )-> Result<()> {
 
     fulfiller_transaction_account.exit(&crate::id())?;
 
-    requester.increment_incoming_transactions();
-    fulfiller.increment_outgoing_transactions();
+    requester.increment_outgoing_transactions();
+    fulfiller.increment_incoming_transactions();
 
     requester.exit(&crate::id())?;
     fulfiller.exit(&crate::id())?;

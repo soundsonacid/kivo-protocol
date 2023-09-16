@@ -20,5 +20,5 @@ anchor-lang = "0.26.0"
 anchor-spl = "0.26.0"
 bytemuck = { version = "1.4.0" }
 marginfi = { git = "https://github.com/mrgnlabs/marginfi-v2.git", features = ["cpi", "devnet"] }
-kivo = { git = "https://github.com/soundsonacid/kivo-protocol.git", features = ["cpi"]}
+# kivo = { git = "https://github.com/soundsonacid/kivo-protocol.git", features = ["cpi"]}
 half = "=2.2.0"

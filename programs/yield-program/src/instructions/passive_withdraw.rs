@@ -58,8 +58,7 @@ pub fn process(ctx: Context<PassiveLendingAccountWithdraw>, amount: u64, withdra
 
 #[derive(Accounts)]
 pub struct PassiveLendingAccountWithdraw<'info> {
-    /// CHECK: validated by address derivation
-    #[account(address = kivo::state::user::User::get_user_address(payer.key()).0)]
+    /// CHECK: validated by mfi account address derivation
     pub kivo_account: UncheckedAccount<'info>,
 
     #[account(mut, associated_token::authority = kivo_account, associated_token::mint = mint)]

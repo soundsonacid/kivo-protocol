@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::constants::GROUP;
+
 #[account]
 #[derive(Default)]
 pub struct Group {
@@ -7,17 +9,7 @@ pub struct Group {
     pub group_name: [u8; 32],
     pub admin: Pubkey,
     pub num_members: u8,
-}
-
-#[account]
-#[derive(Default)]
-pub struct PaidGroup {
-    pub group_id: u32,
-    pub group_name: [u8; 32],
-    pub admin: Pubkey,
-    pub num_members: u8,
-    pub fee: u64,
-    pub recurring: bool,
+    pub identifier: u8, 
 }
 
 impl Group {
@@ -26,10 +18,12 @@ impl Group {
         group_id: u32,
         group_name: [u8; 32],
         admin: Pubkey,
+        identifier: u8
     ) -> Result<()> {
         self.group_id = group_id;
         self.group_name = group_name;
         self.admin = admin;
+        self.identifier = identifier;
         Ok(())
     }
 
@@ -48,82 +42,59 @@ impl Group {
     pub fn decrement_members(&mut self) {
         self.num_members = self.num_members.saturating_sub(1);
     }
-}
 
-impl PaidGroup {
-    pub fn new(
-        &mut self,
-        group_id: u32,
-        group_name: [u8; 32],
-        admin: Pubkey,
-        fee: u64,
-        recurring: bool
-    ) -> Result<()> {
-        self.group_id = group_id;
-        self.group_name = group_name;
-        self.admin = admin;
-        self.fee = fee;
-        self.recurring = recurring;
-        Ok(())
+    pub fn get_group_address(pubkey: Pubkey, identifier: u8) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                GROUP,
+                pubkey.as_ref(),
+                &identifier.to_le_bytes()
+            ], 
+            &crate::ID)
     }
 
-    pub fn transfer_ownership(
-        &mut self,
-        new_admin: Pubkey,
-    ) -> Result<()> {
-        self.admin = new_admin;
-        Ok(())
-    }
-
-    pub fn change_fee(
-        &mut self, 
-        fee: u64
-    ) -> Result<()> {
-        self.fee = fee;
-        Ok(())
-        }
-
-    pub fn increment_members(&mut self) {
-        self.num_members = self.num_members.saturating_add(1);
-    }
-
-    pub fn decrement_members(&mut self) {
-        self.num_members = self.num_members.saturating_sub(1);
+    pub fn get_group_signer_seeds<'a>(
+        pubkey: &'a Pubkey, 
+        identifier: &'a [u8],
+        bump: &'a [u8]         
+    ) -> [&'a [u8]; 4] {
+        [GROUP.as_ref(), pubkey.as_ref(), identifier, bump]
     }
 }
+
+
 
 #[account]
-pub struct Membership {
+#[derive(Default)]
+pub struct Balance {
     pub member: Pubkey,
     pub group: Pubkey,
+    pub mint: Pubkey,
+    pub balance: u64,
+    pub initialized: bool,
 }
 
-impl Membership {
+
+impl Balance {
     pub fn new(
         &mut self,
         member: Pubkey,
-        group: Pubkey
+        group: Pubkey,
+        mint: Pubkey,
     ) -> Result<()> {
         self.member = member;
         self.group = group;
+        self.mint = mint;
+        self.balance = 0;
+        self.initialized = true;
         Ok(())
     }
-}
 
-#[account]
-pub struct Invite {
-    pub invitee: Pubkey,
-    pub group: Pubkey,
-}
+    pub fn increment_balance(&mut self, deposit: u64) {
+        self.balance = self.balance.saturating_add(deposit);
+    }
 
-impl Invite {
-    pub fn new(
-        &mut self,
-        invitee: Pubkey,
-        group: Pubkey,
-    ) -> Result<()> {
-        self.invitee = invitee;
-        self.group = group;
-        Ok(())
+    pub fn decrement_balance(&mut self, wd: u64) {
+        self.balance = self.balance.saturating_sub(wd);
     }
 }

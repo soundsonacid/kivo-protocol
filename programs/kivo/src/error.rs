@@ -20,4 +20,6 @@ pub enum KivoError {
     BadMember,
     #[msg("Failed to kick member - not admin")]
     NotGroupAdmin,
+    #[msg("Not enough balance for user in group wallet")]
+    BadWithdrawal,
 }

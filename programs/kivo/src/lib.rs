@@ -1,4 +1,4 @@
-// Created by Frank
+// Created by Frank for Kiwi Group
 use anchor_lang::prelude::*;
 use instructions::*;
 
@@ -11,18 +11,10 @@ declare_id!("AgcadSiiADx1LoR4fkwTJWQehg5esUpGSuEDLrKrhLT1");
 
 #[program]
 pub mod kivo {
+
     use super::*;
 
     // User endpoints
-    // 1. handle_initialize_user
-    // 2. handle_initialize_user_vaults
-    // 3. handle_deposit
-    // 4. handle_withdrawal
-    // 5. handle_unwrap_withdrawal
-    // 6. handle_edit_username
-    // 7. handle_add_friend
-    // 8. handle_set_preferred_token
-    // 9. handle_disable_preferred_token
     
     pub fn handle_initialize_user(
             ctx: Context<InitializeUser>, 
@@ -85,16 +77,20 @@ pub mod kivo {
     }
     
     // Transaction endpoints
-    // 1. handle_execute_transaction
-    // 2. handle_create_request
-    // 3. handle_fulfill_request
-    // 4. handle_reject_request
 
     pub fn handle_execute_transaction(
             ctx: Context<ExecuteTransaction>, 
             amount: u64, 
         ) -> Result<()> {
         transaction_execute::process(ctx, amount)
+    }
+
+    pub fn handle_swap_transaction(
+            ctx: Context<SwapTransaction>,
+            amount: u64,
+            data: Vec<u8>,
+    ) -> Result<()> {
+        transaction_swap_exec::process(ctx, amount, data)
     }
 
     pub fn handle_create_request(
@@ -111,47 +107,21 @@ pub mod kivo {
         transaction_request_fufill::process(ctx, amount)
     }
 
+    pub fn handle_fulfill_swap_request(
+            ctx: Context<FulfillSwap>,
+            output_amt_low_confidence: u64,
+            data: Vec<u8>
+    ) -> Result<()> {
+        transaction_swap_request_fulfill::process(ctx, output_amt_low_confidence, data)
+    }
+
     pub fn handle_reject_request(
             ctx: Context<RejectRequest>
     ) -> Result<()> {
         transaction_request_reject::process(ctx)
     }
 
-    // Contract endpoints
-    // 1. handle_propose_contract
-    // 2. handle_accept_contract
-    // 3. handle_reject_contract
-    // 4. handle_settle_contract_payment (only called by contract threads)
-
-    pub fn handle_propose_contract(
-            ctx: Context<ProposeContract>, 
-            amount: u64, 
-            num_payments_obligated: u32
-        ) -> Result<()> {
-        contract_propose::process(ctx, amount, num_payments_obligated)
-    }
-
-    pub fn handle_accept_contract(
-            ctx: Context<AcceptContract>, 
-            schedule: String
-        ) -> Result<()> {
-        contract_accept::process(ctx, schedule)
-    }
-
-    pub fn handle_reject_contract(
-            ctx: Context<RejectContract>
-        ) -> Result<()> {
-        contract_reject::process(ctx)
-    }
-
-    pub fn handle_settle_contract_payment(
-            ctx: Context<SettleContractPayment>
-        ) -> Result<clockwork_sdk::state::ThreadResponse> {
-        contract_settle::process(ctx)
-    }
-
     // Lending endpoints
-    // 1. handle_lending_deposit (used for depositing & repaying borrows)
 
     pub fn handle_lending_deposit(
             ctx: Context<LendingDeposit>,
@@ -161,12 +131,6 @@ pub mod kivo {
     }
 
     // Group endpoints
-    // 1. handle_group_create
-    // 2. handle_group_invite
-    // 3. handle_group_join
-    // 4. handle_group_leave
-    // 5. handle_group_kick (Group Admins only)
-    // 6. handle_group_transfer (Group Admins only)
 
     pub fn handle_group_create(
             ctx: Context<CreateGroup>,
@@ -176,72 +140,55 @@ pub mod kivo {
         group_create::process(ctx, group_id, group_name)
     }
 
-    pub fn handle_group_invite(
-            ctx: Context<GroupInvite>
+    pub fn handle_group_vaults_init(
+            ctx: Context<InitGroupVaults>
     ) -> Result<()> {
-        group_invite::process(ctx)
+        group_vaults_init::process(ctx)
     }
 
-    pub fn handle_group_join(
-            ctx: Context<GroupJoin>
-    ) -> Result<()> { 
-        group_join::process(ctx)
-    }
-
-    pub fn handle_group_leave(
-            ctx: Context<LeaveGroup>
+    pub fn handle_group_deposit(
+            ctx: Context<DepositToGroupWallet>,
+            amount: u64,
     ) -> Result<()> {
-        group_leave::process(ctx)
+        group_deposit::process(ctx, amount)
     }
 
-    pub fn handle_group_kick(
-            ctx: Context<KickMemberFromGroup>
+    pub fn handle_group_withdrawal(
+            ctx: Context<WithdrawFromGroupWallet>,
+            amount: u64,
     ) -> Result<()> {
-        group_kick::process(ctx)
+        group_withdrawal::process(ctx, amount)
     }
 
-    pub fn handle_group_transfer(
-            ctx: Context<TransferGroupOwnership>
+    pub fn handle_ape(
+            ctx: Context<Ape>,
+            amount: u64,
+            output_amt_low_confidence: u64,
+            data: Vec<u8>
     ) -> Result<()> {
-        group_transfer::process(ctx)
+        ape::process(ctx, amount, output_amt_low_confidence, data)
     }
 
-    // Paid Group endpoints
-    // 1. handle_pgroup_create
-    // 2. handle_pgroup_invite
-    // 3. handle_pgroup_join
-    // 4. handle_pgroup_leave
-    // 5. handle_pgroup_kick (Group Admins only)
-    // 6. handle_pgroup_transfer (Group Admins only)
-    // 7. handle_pgroup_change_fee (Group Admins only)
-    // 8. handle_pgroup_makepayment (Called internally by recurring payment Group threads only)
-
-    pub fn handle_pgroup_create(
-            ctx: Context<CreatePaidGroup>,
-            group_id: u32,
-            group_name: [u8; 32],
-            fee: u64,
-            recurring: bool
+    pub fn handle_freeze(
+        ctx: Context<Freeze>,
+        amount: u64,
     ) -> Result<()> {
-        paidgroup_create::process(ctx, group_id, group_name, fee, recurring)
+        freeze::process(ctx, amount)
     }
 
-    pub fn handle_pgroup_invite(
-            ctx: Context<PaidGroupInvite>
+    pub fn handle_split(
+            ctx: Context<Split>,
+            amount: u64,
     ) -> Result<()> {
-        paidgroup_invite::process(ctx)
+        split::process(ctx, amount)
     }
 
-    pub fn handle_pgroup_join(
-            ctx: Context<PaidGroupJoin>,
-            schedule: Option<String>,
+    pub fn handle_swap_split(
+            ctx: Context<SwapSplit>,
+            amount: u64,
+            output_amt_low_confidence: u64,
+            data: Vec<u8>,
     ) -> Result<()> {
-        paidgroup_join::process(ctx, schedule)
-    }
-
-    pub fn handle_pgroup_makepayment(
-        ctx: Context<PaidGroupMakePayment>
-    ) -> Result<clockwork_sdk::state::ThreadResponse> {
-        paidgroup_makepayment::process(ctx)
+        swap_split::process(ctx, amount, output_amt_low_confidence, data)
     }
 }

@@ -22,9 +22,9 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64) -> Result<()> {
     let sender = &mut ctx.accounts.sender_user_account;
     let receiver = &mut ctx.accounts.receiver_user_account;
 
-    let bump = User::get_user_address(ctx.accounts.sender.key()).1;
+    let bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
-    let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.sender.key, &bump);
+    let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];
 
     let transaction_accounts = Transfer {
@@ -64,9 +64,6 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct ExecuteTransaction<'info> {
-    /// CHECK: validated by cpi signer seeds
-    pub sender: UncheckedAccount<'info>,
-
     #[account(mut, address = User::get_user_address(payer.key()).0)]
     pub sender_user_account: Box<Account<'info, User>>,
 

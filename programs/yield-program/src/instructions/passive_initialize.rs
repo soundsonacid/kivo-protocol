@@ -51,8 +51,7 @@ pub fn process(ctx: Context<PassiveLendingAccountInitialize>) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct PassiveLendingAccountInitialize<'info> {
-    /// CHECK: validated by address derivation
-    #[account(address = kivo::state::user::User::get_user_address(payer.key()).0)]
+    /// CHECK: validated by mfi account address derivation
     pub kivo_account: UncheckedAccount<'info>,
 
     /// CHECK: validated by mfi cpi call
