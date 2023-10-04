@@ -7,17 +7,14 @@ use anchor_spl::{
     associated_token::*,
 };
 
-pub fn process(_ctx: Context<InitGroupVaults>) -> Result<()> {
-    msg!("Initializing vaults");
+pub fn process(ctx: Context<InitGroupVaults>) -> Result<()> {
+    msg!("Initializing vaults for group {}", ctx.accounts.group.key().to_string());
 
     Ok(())
 }
 
 #[derive(Accounts)]
 pub struct InitGroupVaults<'info> {
-    /// CHECK: 
-    pub group: UncheckedAccount<'info>,
-
     #[account(
         init, 
         payer = payer, 
@@ -67,6 +64,9 @@ pub struct InitGroupVaults<'info> {
     pub uxd_mint: Box<Account<'info, Mint>>,
 
     pub bonk_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    pub group: Signer<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

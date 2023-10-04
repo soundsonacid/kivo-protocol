@@ -20,4 +20,4 @@ anchor-lang = { version = "0.27.0", features = ["init-if-needed"] }
 anchor-spl = "0.27.0"
 static_assertions = "1.1.0"
 bytemuck = { version = "1.4.0" }
-spl-stake-pool = "0.6.4"
+spl-stake-pool = { git = "https://github.com/solana-labs/solana-program-library", rev = "3db53e278b543a040d3c970797b6be6f9ea5aef9", package = "spl-stake-pool", features = ["no-entrypoint"] }

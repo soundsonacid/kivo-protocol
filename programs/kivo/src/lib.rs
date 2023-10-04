@@ -134,10 +134,8 @@ pub mod kivo {
 
     pub fn handle_group_create(
             ctx: Context<CreateGroup>,
-            group_id: u32,
-            group_name: [u8; 32],
     ) -> Result<()> {
-        group_create::process(ctx, group_id, group_name)
+        group_create::process(ctx)
     }
 
     pub fn handle_group_vaults_init(
@@ -163,10 +161,9 @@ pub mod kivo {
     pub fn handle_ape(
             ctx: Context<Ape>,
             amount: u64,
-            output_amt_low_confidence: u64,
             data: Vec<u8>
     ) -> Result<()> {
-        ape::process(ctx, amount, output_amt_low_confidence, data)
+        ape::process(ctx, amount, data)
     }
 
     pub fn handle_freeze(
@@ -186,9 +183,8 @@ pub mod kivo {
     pub fn handle_swap_split(
             ctx: Context<SwapSplit>,
             amount: u64,
-            output_amt_low_confidence: u64,
             data: Vec<u8>,
     ) -> Result<()> {
-        swap_split::process(ctx, amount, output_amt_low_confidence, data)
+        swap_split::process(ctx, amount, data)
     }
 }

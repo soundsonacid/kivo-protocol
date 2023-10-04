@@ -2,34 +2,27 @@ use anchor_lang::{
     prelude::*,
     solana_program::{
         instruction::Instruction,
-        program::invoke_signed,
+        program::invoke,
     }
 };
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::*;
-
 use crate::state::{
-    group::Group,
     group::Balance,
     user::User
 };
 use crate::error::KivoError;
 use crate::jupiter::Jupiter;
 
-
 // Should work for both entering & exiting an ape mode
 // Executes a standard swap on jupiter between two arbitrary tokens
-pub fn process(ctx: Context<Ape>, amt: u64, output_amt_low_confidence: u64, data: Vec<u8>) -> Result<()> {
-
+pub fn process(ctx: Context<Ape>, amt: u64, data: Vec<u8>) -> Result<()> {
     require!(ctx.accounts.user_input_balance.balance > amt, KivoError::BadWithdrawal);
 
-    let bump = Group::get_group_address(ctx.accounts.group.admin.key(), ctx.accounts.group.identifier).1;
-    let bump_bytes = bytemuck::bytes_of(&bump);
-    let identifier_bytes = &ctx.accounts.group.identifier.to_le_bytes();
+    // Get the amount of whatever output token group has before the swap takes place
+    let bal_pre = ctx.accounts.group_output_vault.amount;
 
-    let sig_seeds = Group::get_group_signer_seeds(&ctx.accounts.group.admin, identifier_bytes, bump_bytes);
-    let signer_seeds = &[&sig_seeds[..]];    
-
+    // Compile remaining accounts into ais for instruction
     let accounts: Vec<AccountMeta> = ctx.remaining_accounts
         .iter()
         .map(|acc| AccountMeta {
@@ -39,19 +32,48 @@ pub fn process(ctx: Context<Ape>, amt: u64, output_amt_low_confidence: u64, data
         })
         .collect();
     
+    // Clone ais for instruction ais
     let account_infos: Vec<AccountInfo> = ctx.remaining_accounts
         .iter()
         .map(|acc| AccountInfo { ..acc.clone() })
         .collect();
 
-    invoke_signed(
+    // Swap
+    invoke(
         &Instruction {
             program_id: *ctx.accounts.jupiter_program.key,
             accounts,
             data,
         },
         &account_infos,
-        signer_seeds,
+    )?;
+
+    // Get the amount of whatever output token group has after the swap takes place
+    ctx.accounts.group_output_vault.reload()?;
+    let bal_post = ctx.accounts.group_output_vault.amount;
+
+    // Figure out fee-eligible amount
+    let bal_delta = bal_post - bal_pre;
+
+    require!(bal_delta > 0, KivoError::NegDelta);
+
+    // Figure out what our fee actually is based on the delta
+    let fee = bal_delta / 200;
+
+    // This is how much of whatever token is going to 
+    let final_amt = bal_delta - fee;
+
+    // Transfer our 0.5% fee to the Kivo Vault
+    transfer(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.group_output_vault.to_account_info(),
+                to: ctx.accounts.kivo_vault.to_account_info(),
+                authority: ctx.accounts.group.to_account_info(),
+            }
+        ),
+        fee
     )?;
 
     if !ctx.accounts.user_output_balance.initialized {
@@ -63,8 +85,22 @@ pub fn process(ctx: Context<Ape>, amt: u64, output_amt_low_confidence: u64, data
     };
 
     ctx.accounts.user_input_balance.decrement_balance(amt);
-    // This won't work right yet - need to use output amount instead of input.
-    ctx.accounts.user_output_balance.increment_balance(output_amt_low_confidence);
+    msg!("Balance {} for mint {} and group {} owned by {} decreased by {}", 
+        ctx.accounts.user_input_balance.key().to_string(), 
+        ctx.accounts.input_mint.key().to_string(),
+        ctx.accounts.group.key().to_string(),
+        ctx.accounts.user.key().to_string(),
+        amt
+    );
+
+    ctx.accounts.user_output_balance.increment_balance(final_amt);
+    msg!("Balance {} for mint {} and group {} owned by {} increased by {}",
+        ctx.accounts.user_output_balance.key().to_string(),
+        ctx.accounts.output_mint.key().to_string(),
+        ctx.accounts.group.key().to_string(),
+        ctx.accounts.user.key().to_string(),
+        final_amt
+    );
 
     ctx.accounts.user_input_balance.exit(&crate::id())?;
     ctx.accounts.user_output_balance.exit(&crate::id())?;
@@ -74,10 +110,11 @@ pub fn process(ctx: Context<Ape>, amt: u64, output_amt_low_confidence: u64, data
 
 #[derive(Accounts)]
 pub struct Ape<'info> {
-    pub group: Box<Account<'info, Group>>,
-
     #[account(mut, associated_token::mint = input_mint, associated_token::authority = group)]
     pub group_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account(mut)]
+    pub kivo_vault: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,
@@ -117,6 +154,9 @@ pub struct Ape<'info> {
     pub input_mint: Box<Account<'info, Mint>>,
 
     pub output_mint: Box<Account<'info, Mint>>,
+    
+    #[account(mut)]
+    pub group: Signer<'info>,
     
     #[account(mut)]
     pub payer: Signer<'info>,

@@ -1,35 +1,117 @@
-import * as anchor from "@coral-xyz/anchor"
-import { Program } from "@coral-xyz/anchor"
-import { Kivo } from "../target/types/kivo"
-import * as assert from "assert";
+import { BN } from "bn.js";
+import { AddressLookupTableAccount, Connection, PublicKey, TransactionInstruction, Transaction, VersionedTransaction, MessageCompiledInstruction } from "@solana/web3.js";
 
-anchor.setProvider(anchor.AnchorProvider.env());
+const API_ENDPOINT = "https://quote-api.jup.ag/v6";
 
-const program = anchor.workspace.Kivo as Program<Kivo>;
+export function u32ToLittleEndianBytes(value) {
+  if (value < 0 || value > 4294967295) {
+    throw new Error("Value out of range for u32");
+  }
 
-// Creates a User with the provided name as their username with the provided Keypair's public key as the account's "owner"
-// The actual account is controlled by a PDA derived from the user's name.
-// This enforces uniqueness because the PDA generation will fail if the user's name is the same as a previously created user as the PDA will have already been created.
-export async function initialize_user(name : string, client: anchor.web3.Keypair) {
-  const seeds = [Buffer.from("user"), client.publicKey.toBuffer()];
-  const [userPDA, bump] = anchor.web3.PublicKey.findProgramAddressSync(seeds, program.programId);
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
   
-    await program.methods
-          .handleInitializeUser(name)
-          .accounts({
-            owner: client.publicKey,
-            userAccount: userPDA,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          })
-          .signers([client])
-          .rpc();
-
-    const user = await program.account.user.fetch(userPDA);
-
-    assert.equal(user.pubkey.toBase58(), userPDA.toBase58());
-    console.log(`PDA: ${userPDA.toBase58()}`)
-    console.log(`Client: ${client.publicKey.toBase58()}`)
-
-    return { user, bump }
+  view.setUint32(0, value, true);  // The 'true' here sets it to little-endian
+  
+  return new Uint8Array(buffer);
 }
 
+export const ToDecimal = (value: number) => {
+  return new BN(value, 10);
+};
+
+export const UsernameToBytes = (username: string): number[] => {
+  let usernameBytes = new Array(16).fill(0);
+
+  for (let character = 0; character < username.length; character++) {
+      usernameBytes[character] = username.charCodeAt(character);
+}
+  return usernameBytes;
+};
+
+export const getSwapIx = async (
+  user: PublicKey,
+  outputAccount: PublicKey,
+  quote: any
+) => {
+  const data = {
+    quoteResponse: quote,
+    userPublicKey: user.toBase58(),
+    destinationTokenAccount: outputAccount.toBase58(),
+  };
+  return fetch(`${API_ENDPOINT}/swap-instructions`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  }).then((response) => response.json());
+};
+
+export const getQuote = async (
+  fromMint: PublicKey,
+  toMint: PublicKey,
+  amount: number
+) => {
+  return fetch(
+    `${API_ENDPOINT}/quote?outputMint=${toMint.toBase58()}&inputMint=${fromMint.toBase58()}&amount=${amount}&slippage=0.5&onlyDirectRoutes=true&maxAccounts=50`
+  ).then((response) => response.json());
+};
+
+export const instructionDataToTransactionInstruction = (
+  instructionPayload: any
+) => {
+  if (instructionPayload === null) {
+    return null;
+  }
+
+  return new TransactionInstruction({
+    programId: new PublicKey(instructionPayload.programId),
+    keys: instructionPayload.accounts.map((key) => ({
+      pubkey: new PublicKey(key.pubkey),
+      isSigner: key.isSigner,
+      isWritable: key.isWritable,
+    })),
+    data: Buffer.from(instructionPayload.data, "base64"),
+  });
+};
+
+export const getAddressLookupTableAccounts = async (
+  keys: string[],
+  connection: Connection
+): Promise<AddressLookupTableAccount[]> => {
+  const addressLookupTableAccountInfos =
+    await connection.getMultipleAccountsInfo(
+      keys.map((key) => new PublicKey(key))
+    );
+
+  return addressLookupTableAccountInfos.reduce((acc, accountInfo, index) => {
+    const addressLookupTableAddress = keys[index];
+    if (accountInfo) {
+      const addressLookupTableAccount = new AddressLookupTableAccount({
+        key: new PublicKey(addressLookupTableAddress),
+        state: AddressLookupTableAccount.deserialize(accountInfo.data),
+      });
+      acc.push(addressLookupTableAccount);
+    }
+
+    return acc;
+  }, new Array<AddressLookupTableAccount>());
+};
+
+export const getSignersFromTransaction = (transaction: VersionedTransaction): string[] => {
+  const signers: string[] = [];
+
+  // transaction.message.staticAccountKeys.forEach((key) => {
+  //   if ()
+  // })
+
+  for (let i = 0; i < transaction.message.staticAccountKeys.length; i++) {
+    if (transaction.message.isAccountSigner(i)) {
+      signers.push(transaction.message.staticAccountKeys[i].toBase58())
+    }
+  }
+
+  return signers;
+};

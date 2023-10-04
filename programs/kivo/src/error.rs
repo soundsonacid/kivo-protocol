@@ -22,4 +22,6 @@ pub enum KivoError {
     NotGroupAdmin,
     #[msg("Not enough balance for user in group wallet")]
     BadWithdrawal,
+    #[msg("Token account balance change is negative")]
+    NegDelta,
 }

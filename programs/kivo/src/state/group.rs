@@ -5,23 +5,16 @@ use crate::constants::GROUP;
 #[account]
 #[derive(Default)]
 pub struct Group {
-    pub group_id: u32,
-    pub group_name: [u8; 32],
     pub admin: Pubkey,
-    pub num_members: u8,
     pub identifier: u8, 
 }
 
 impl Group {
     pub fn new(
         &mut self,
-        group_id: u32,
-        group_name: [u8; 32],
         admin: Pubkey,
         identifier: u8
     ) -> Result<()> {
-        self.group_id = group_id;
-        self.group_name = group_name;
         self.admin = admin;
         self.identifier = identifier;
         Ok(())
@@ -33,14 +26,6 @@ impl Group {
     ) -> Result<()> {
         self.admin = new_admin;
         Ok(())
-    }
-
-    pub fn increment_members(&mut self) {
-        self.num_members = self.num_members.saturating_add(1);
-    }
-
-    pub fn decrement_members(&mut self) {
-        self.num_members = self.num_members.saturating_sub(1);
     }
 
     pub fn get_group_address(pubkey: Pubkey, identifier: u8) -> (Pubkey, u8) {

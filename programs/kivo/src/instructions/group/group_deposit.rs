@@ -30,6 +30,13 @@ pub fn process(ctx: Context<DepositToGroupWallet>, deposit: u64) -> Result<()> {
     }
 
     ctx.accounts.balance.increment_balance(deposit);
+    msg!("Balance {} for mint {} and group {} owned by {} increased by {}",
+        ctx.accounts.balance.key().to_string(),
+        ctx.accounts.mint.key().to_string(),
+        ctx.accounts.group.key().to_string(),
+        ctx.accounts.user.key().to_string(),
+        deposit
+    );
     ctx.accounts.balance.exit(&crate::id())?;
 
     Ok(())
@@ -37,7 +44,7 @@ pub fn process(ctx: Context<DepositToGroupWallet>, deposit: u64) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct DepositToGroupWallet<'info> {
-    /// CHECK: validated by vault ownership constraint
+    /// CHECK: validated by vault ownership constraint & CPI
     pub group: UncheckedAccount<'info>,
 
     #[account(address = User::get_user_address(payer.key()).0)]

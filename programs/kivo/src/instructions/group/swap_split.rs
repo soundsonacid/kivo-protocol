@@ -2,14 +2,13 @@ use anchor_lang::{
     prelude::*,
     solana_program::{
         instruction::Instruction,
-        program::invoke_signed,
+        program::invoke,
     }
 };
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::*;
 
 use crate::state::{
-    group::Group,
     group::Balance,
     user::User
 };
@@ -17,91 +16,112 @@ use crate::error::KivoError;
 use crate::jupiter::Jupiter;
 
 
-pub fn process(ctx: Context<SwapSplit>, amt: u64, output_amt_low_confidence: u64, data: Vec<u8>) -> Result<()> {
-    require!(ctx.accounts.sender_input_balance.balance > amt, KivoError::BadWithdrawal);
+pub fn process(ctx: Context<SwapSplit>, amt: u64, data: Vec<u8>) -> Result<()> {
+    require!(ctx.accounts.input_balance.balance > amt, KivoError::BadWithdrawal);
 
-    let bump = Group::get_group_address(ctx.accounts.group.admin.key(), ctx.accounts.group.identifier).1;
-    let bump_bytes = bytemuck::bytes_of(&bump);
-    let identifier_bytes = &ctx.accounts.group.identifier.to_le_bytes();
-
-    let sig_seeds = Group::get_group_signer_seeds(&ctx.accounts.group.admin, identifier_bytes, bump_bytes);
-    let signer_seeds = &[&sig_seeds[..]];    
-
-
+    // Get the amount of whatever output token group has before the swap takes place
+    let bal_pre = ctx.accounts.group_output_vault.amount;
+        
+    // Compile remaining accounts into ais for instruction
     let accounts: Vec<AccountMeta> = ctx.remaining_accounts
-        .iter()
-        .map(|acc| AccountMeta {
-            pubkey: *acc.key,
-            is_signer: acc.is_signer,
-            is_writable: acc.is_writable,
-        })
-        .collect();
+    .iter()
+    .map(|acc| AccountMeta {
+        pubkey: *acc.key,
+        is_signer: acc.is_signer,
+        is_writable: acc.is_writable,
+    })
+    .collect();
     
+    // Clone ais for instruction ais
     let account_infos: Vec<AccountInfo> = ctx.remaining_accounts
         .iter()
         .map(|acc| AccountInfo { ..acc.clone() })
         .collect();
 
-    invoke_signed(
+    // Swap to group output vault
+    invoke(
         &Instruction {
             program_id: *ctx.accounts.jupiter_program.key,
             accounts,
             data,
         },
         &account_infos,
-        signer_seeds,
     )?;
 
+    // Get the amount of whatever output token group has after the swap takes place
     ctx.accounts.group_output_vault.reload()?;
+    let bal_post = ctx.accounts.group_output_vault.amount;
 
+    // Figure out fee-eligible amount
+    let fee_eligible = bal_post - bal_pre;
+
+    require!(fee_eligible > 0, KivoError::NegDelta);
+
+    // Figure out what our fee actually is based on the delta
+    let fee = fee_eligible / 200;
+
+    // This is how much of whatever token is going to 
+    let bal_delta = fee_eligible - fee;
+
+    // Transfer our 0.5% fee to the Kivo Vault
     transfer(
-        CpiContext::new_with_signer(
+        CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             Transfer {
-                to: ctx.accounts.receiver_vault.to_account_info(),
                 from: ctx.accounts.group_output_vault.to_account_info(),
-                authority: ctx.accounts.group.to_account_info(),
-            },
-            signer_seeds
-        ),
-        (0.995 * output_amt_low_confidence as f64) as u64
-    )?;
-
-    transfer(
-        CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            Transfer {
                 to: ctx.accounts.kivo_vault.to_account_info(),
-                from: ctx.accounts.group_output_vault.to_account_info(),
                 authority: ctx.accounts.group.to_account_info(),
-            },
-            signer_seeds
+            }
         ),
-        (0.0045 * output_amt_low_confidence as f64) as u64
+        fee as u64
     )?;
 
-    ctx.accounts.sender_input_balance.decrement_balance(amt);
-    ctx.accounts.sender_input_balance.exit(&crate::id())?;
+    // Transfer the rest to the receiver's output vault
+    transfer(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.group_output_vault.to_account_info(),
+                to: ctx.accounts.output_vault.to_account_info(),
+                authority: ctx.accounts.group.to_account_info(),
+            }
+        ),
+        bal_delta as u64
+    )?;
+
+    ctx.accounts.input_balance.decrement_balance(amt);
+    msg!("Balance {} for mint {} and group {} owned by {} decreased by {}", 
+        ctx.accounts.input_balance.key().to_string(), 
+        ctx.accounts.input_mint.key().to_string(),
+        ctx.accounts.group.key().to_string(),
+        ctx.accounts.sender.key().to_string(),
+        amt
+    );
+
+    msg!("{} of mint {} sent to {}",
+        bal_delta,
+        ctx.accounts.output_mint.key().to_string(),
+        ctx.accounts.receiver.key.to_string(),
+    );
+
+    ctx.accounts.input_balance.exit(&crate::id())?;
+
     Ok(())
 }
 
 #[derive(Accounts)]
 pub struct SwapSplit<'info> {
-    pub group: Box<Account<'info, Group>>,
-
     #[account(mut, associated_token::mint = input_mint, associated_token::authority = group)]
-    pub group_vault: Box<Account<'info, TokenAccount>>,
+    pub group_input_vault: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        init_if_needed,
-        associated_token::mint = output_mint,
-        associated_token::authority = group,
-        payer = payer,
-    )]
+    #[account(mut)]
+    pub kivo_vault: Box<Account<'info, TokenAccount>>,
+
+    #[account(mut, associated_token::mint = output_mint, associated_token::authority = group)]
     pub group_output_vault: Box<Account<'info, TokenAccount>>,
 
-    #[account(address = User::get_user_address(payer.key()).0)]
-    pub sender: Box<Account<'info, User>>,
+    #[account(mut, associated_token::mint = output_mint, associated_token::authority = receiver)]
+    pub output_vault: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -112,15 +132,19 @@ pub struct SwapSplit<'info> {
         ],
         bump
     )]
-    pub sender_input_balance: Box<Account<'info, Balance>>,
+    pub input_balance: Box<Account<'info, Balance>>,
 
-    pub receiver_vault: Box<Account<'info, TokenAccount>>,
+    pub sender: Box<Account<'info, User>>,
 
-    pub kivo_vault: Box<Account<'info, TokenAccount>>,
+    /// CHECK: validated in output vault constraints
+    pub receiver: UncheckedAccount<'info>,
 
     pub input_mint: Box<Account<'info, Mint>>,
 
     pub output_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    pub group: Signer<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
