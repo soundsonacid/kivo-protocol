@@ -166,13 +166,6 @@ pub mod kivo {
         ape::process(ctx, amount, data)
     }
 
-    pub fn handle_freeze(
-        ctx: Context<Freeze>,
-        amount: u64,
-    ) -> Result<()> {
-        freeze::process(ctx, amount)
-    }
-
     pub fn handle_split(
             ctx: Context<Split>,
             amount: u64,

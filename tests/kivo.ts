@@ -89,13 +89,14 @@ describe("kivo", async () => {
 
   const KIVO_USDC_VAULT = new PublicKey("3VtZGaCBUges4R54DuWNM795wAfg6ChChvk4TFq34asj");
   const KIVO_WSOL_VAULT = new PublicKey("GrE2qLGwfbE9fnVfLjJiBKT8WN3fSrCF29hhcTPArmij");
+  const KIVO_LST_VAULT = new PublicKey('3yhUfYWZmoKoCMQQ2LMjbuz232zxP3tne8U1JCiRkp7v');
 
-  const LST_POOL = new PublicKey("DqhH94PjkZsjAqEze2BEkWhFQJ6EyU6MdtMphMgnXqeK");
   const LST_MINT = new PublicKey("LSTxxxnJzKDFSLr4dUkPcmCf5VyryEqzPLz5j4bpxFp");
-  const STAKE_POOL = new PublicKey("SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy");
 
   const USER1_LST_GROUP_KP2_BALANCE =  PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), LST_MINT.toBuffer()], program.programId)[0];
   
+  const GROUP_KP2_LST_VAULT = await getAssociatedTokenAddress(LST_MINT, GROUP2_KEYPAIR.publicKey, false);
+
   it.skip("Initializes USER1 & USER2", async () => {
     await program.methods.handleInitializeUser(UsernameToBytes("userone"), 0)
         .accounts({
@@ -170,8 +171,8 @@ describe("kivo", async () => {
         .catch((err) => console.error(`Failed to initialize USER2 vaults: ${err} \n`));
   })
 
-  it.skip("Deposits 1 SOL to USER1_WSOL_VAULT", async () => {
-    const lamports = LAMPORTS_PER_SOL;
+  it.skip("Deposits 0.5 SOL to USER1_WSOL_VAULT & USER2_WSOL_VAULT", async () => {
+    const lamports = LAMPORTS_PER_SOL * 0.5;
 
     const user1TransferInstruction = SystemProgram.transfer({
         fromPubkey: KEYPAIR1.publicKey,
@@ -192,30 +193,30 @@ describe("kivo", async () => {
     user1Transaction.feePayer = KEYPAIR1.publicKey;
 
     await sendAndConfirmTransaction(program.provider.connection, user1Transaction, [KEYPAIR1])
-        .then((sig) => console.log(`Successfully funded USER1 with 0.3 SOL: ${sig}`))
-        .catch((err) => console.error(`Failed to fund USER1 with 0.3 SOL: ${err}`))
+        .then((sig) => console.log(`Successfully funded USER1 with 0.5 SOL: ${sig}`))
+        .catch((err) => console.error(`Failed to fund USER1 with 0.5 SOL: ${err}`))
 
-    // const user2TransferInstruction = SystemProgram.transfer({
-    //     fromPubkey: KEYPAIR2.publicKey,
-    //     toPubkey: USER2_WSOL_VAULT,
-    //     lamports: lamports,
-    // });
+    const user2TransferInstruction = SystemProgram.transfer({
+        fromPubkey: KEYPAIR2.publicKey,
+        toPubkey: USER2_WSOL_VAULT,
+        lamports: lamports,
+    });
 
-    // const user2SyncNative = createSyncNativeInstruction(USER2_WSOL_VAULT);
+    const user2SyncNative = createSyncNativeInstruction(USER2_WSOL_VAULT);
 
-    // const user2Transaction = new Transaction();
+    const user2Transaction = new Transaction();
 
-    // user2Transaction.add(user2TransferInstruction);
-    // user2Transaction.add(user2SyncNative);
+    user2Transaction.add(user2TransferInstruction);
+    user2Transaction.add(user2SyncNative);
 
-    // const { blockhash: blockhash2 } = await program.provider.connection.getLatestBlockhash();
+    const { blockhash: blockhash2 } = await program.provider.connection.getLatestBlockhash();
 
-    // user2Transaction.recentBlockhash = blockhash2;
-    // user2Transaction.feePayer = KEYPAIR2.publicKey;
+    user2Transaction.recentBlockhash = blockhash2;
+    user2Transaction.feePayer = KEYPAIR2.publicKey;
 
-    // await sendAndConfirmTransaction(program.provider.connection, user2Transaction, [KEYPAIR2])
-    // .then((sig) => console.log(`Successfully funded USER2 with 0.3 SOL: ${sig}`))
-    // .catch((err) => console.error(`Failed to fund USER2 with 0.3 SOL: ${err}`))
+    await sendAndConfirmTransaction(program.provider.connection, user2Transaction, [KEYPAIR2])
+    .then((sig) => console.log(`Successfully funded USER2 with 0.5 SOL: ${sig}`))
+    .catch((err) => console.error(`Failed to fund USER2 with 0.5 SOL: ${err}`))
 
   })
 
@@ -257,8 +258,8 @@ describe("kivo", async () => {
         .catch((err) => console.error(`Failed to initialized vaults for GROUP2 signed by USER1: ${err}`))
   })
 
-  it.skip("Deposits 1 SOL to GROUP_KP2_WSOL_VAULT from USER1", async () => {
-    const deposit = ToDecimal(LAMPORTS_PER_SOL)
+  it.skip("Deposits 0.5 SOL to GROUP_KP2_WSOL_VAULT from USER1 & USER2", async () => {
+    const deposit = ToDecimal(LAMPORTS_PER_SOL * 0.5)
 
     await program.methods.handleGroupDeposit(deposit)
         .accounts({
@@ -277,26 +278,26 @@ describe("kivo", async () => {
         .then((sig) => console.log(`USER1 successfully deposited 0.5 SOL to GROUP: ${sig}`))
         .catch((err) => console.error(`USER1 failed to deposit 0.5 SOL to GROUP: ${err}`))
 
-    // await program.methods.handleGroupDeposit(deposit)
-    //     .accounts({
-    //         group: GROUP2_KEYPAIR.publicKey,
-    //         user: USER2,
-    //         groupVault: GROUP_KP2_WSOL_VAULT,
-    //         userVault: USER2_WSOL_VAULT,
-    //         balance: USER2_WSOL_GROUP_KP2_BALANCE,
-    //         mint: WSOL_MINT,
-    //         payer: KEYPAIR2.publicKey,
-    //         systemProgram: SystemProgram.programId,
-    //         tokenProgram: TOKEN_PROGRAM_ID
-    //     })
-    //     .signers([KEYPAIR2])
-    //     .rpc()
-    //     .then((sig) => console.log`USER2 successfully deposited 0.25 SOL to GROUP: ${sig}`)
-    //     .catch((err) => console.error(`USER2 failed to deposit 0.25 SOL to GROUP: ${err}`))
+    await program.methods.handleGroupDeposit(deposit)
+        .accounts({
+            group: GROUP2_KEYPAIR.publicKey,
+            user: USER2,
+            groupVault: GROUP_KP2_WSOL_VAULT,
+            userVault: USER2_WSOL_VAULT,
+            balance: USER2_WSOL_GROUP_KP2_BALANCE,
+            mint: WSOL_MINT,
+            payer: KEYPAIR2.publicKey,
+            systemProgram: SystemProgram.programId,
+            tokenProgram: TOKEN_PROGRAM_ID
+        })
+        .signers([KEYPAIR2])
+        .rpc()
+        .then((sig) => console.log`USER2 successfully deposited 0.5 SOL to GROUP: ${sig}`)
+        .catch((err) => console.error(`USER2 failed to deposit 0.5 SOL to GROUP: ${err}`))
   })
 
-  it.skip("Swaps 0.3 SOL for USDC from USER1 to GROUP_KP2_USDC_VAULT", async () => {
-    const quote = await getQuote(WSOL_MINT, USDC_MINT, LAMPORTS_PER_SOL * 0.3);
+  it.skip("Swaps 0.5 SOL for USDC from USER1 to GROUP_KP2_USDC_VAULT", async () => {
+    const quote = await getQuote(WSOL_MINT, USDC_MINT, LAMPORTS_PER_SOL * 0.5);
 
     const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_USDC_VAULT, quote);
 
@@ -311,7 +312,7 @@ describe("kivo", async () => {
 
     const instructions = [
         ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
-        await program.methods.handleApe(ToDecimal(LAMPORTS_PER_SOL * 0.3), swapIx.data)
+        await program.methods.handleApe(ToDecimal(LAMPORTS_PER_SOL * 0.5), swapIx.data)
             .accounts({
                 groupVault: GROUP_KP2_WSOL_VAULT,
                 kivoVault: KIVO_USDC_VAULT,
@@ -349,14 +350,14 @@ describe("kivo", async () => {
     transaction.sign([GROUP2_KEYPAIR, KEYPAIR1]);
 
     await program.provider.connection.sendTransaction(transaction)
-        .then((sig) => console.log(`Successfully swapped 0.3 SOL for USDC from USER2: ${sig}`))
-        .catch((err) => console.error(`Failed to swap 0.3 SOL for USDC from USER2: ${err}`))
+        .then((sig) => console.log(`Successfully swapped 0.5 SOL to USDC from USER1: ${sig}`))
+        .catch((err) => console.error(`Failed to swap 0.5 SOL to USDC from USER1: ${err}`))
   });
 
-  it.skip("Splits 2 USDC swapped to WSOL from USER1 to USER2", async () => {
-    const quote = await getQuote(USDC_MINT, WSOL_MINT, 2000000);
+  it.skip("Splits 0.4 SOL swapped to USDC from USER2 to USER1", async () => {
+    const quote = await getQuote(WSOL_MINT, USDC_MINT, (LAMPORTS_PER_SOL * 0.4));
 
-    const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_WSOL_VAULT, quote);
+    const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_USDC_VAULT, quote);
 
     if ('error' in res) {
         console.log({ res })
@@ -369,23 +370,82 @@ describe("kivo", async () => {
 
     const instructions = [
         ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
-        await program.methods.handleSwapSplit(ToDecimal(2000000), swapIx.data)
+        await program.methods.handleSwapSplit(ToDecimal(LAMPORTS_PER_SOL * 0.4), swapIx.data)
             .accounts({
-                groupInputVault: GROUP_KP2_USDC_VAULT,
-                kivoVault: KIVO_WSOL_VAULT,
-                groupOutputVault: GROUP_KP2_WSOL_VAULT,
-                outputVault: USER2_WSOL_VAULT,
-                inputBalance: USER1_USDC_GROUP_KP2_BALANCE,
-                sender: USER1,
-                receiver: USER2,
-                inputMint: USDC_MINT,
-                outputMint: WSOL_MINT,
+                groupInputVault: GROUP_KP2_WSOL_VAULT,
+                kivoVault: KIVO_USDC_VAULT,
+                groupOutputVault: GROUP_KP2_USDC_VAULT,
+                outputVault: USER1_USDC_VAULT,
+                inputBalance: USER2_WSOL_GROUP_KP2_BALANCE,
+                sender: USER2,
+                receiver: USER1,
+                inputMint: WSOL_MINT,
+                outputMint: USDC_MINT,
+                group: GROUP2_KEYPAIR.publicKey,
+                payer: KEYPAIR2.publicKey,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                jupiterProgram: JUPITER,
+                systemProgram: SystemProgram.programId
+            })
+            .signers([GROUP2_KEYPAIR, KEYPAIR2])
+            .remainingAccounts(swapIx.keys)
+            .instruction(),
+    ];
+
+    const { blockhash } = await program.provider.connection.getLatestBlockhash();
+
+    const addressLookupTableAccounts = await getAddressLookupTableAccounts(
+        addressLookupTableAddresses, program.provider.connection
+    )
+
+    const messageV0 = new TransactionMessage({
+        payerKey: KEYPAIR2.publicKey,
+        recentBlockhash: blockhash,
+        instructions
+    }).compileToV0Message(addressLookupTableAccounts);
+
+    const transaction = new VersionedTransaction(messageV0);
+
+    transaction.sign([GROUP2_KEYPAIR, KEYPAIR2]);
+
+    await program.provider.connection.sendTransaction(transaction)
+        .then((sig) => console.log(`Successfully split 0.4 SOL to USDC from USER2 to USER1: ${sig}`))
+        .catch((err) => console.error(`Failed to split 0.4 SOL to USDC from USER2 to USER1: ${err}`))
+  })
+
+  it.skip("Freezes 0.2 SOL for LST from USER1 & GROUP_KP2_LST_VAULT", async () => {
+    const quote = await getQuote(WSOL_MINT, LST_MINT, (LAMPORTS_PER_SOL * 0.2));
+
+    const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_LST_VAULT, quote);
+
+    if ('error' in res) {
+        console.log({ res })
+        return res;
+    }
+
+    const { computeBudgetInstructions, swapInstruction, addressLookupTableAddresses } = res;
+
+    let swapIx = instructionDataToTransactionInstruction(swapInstruction);
+
+    const instructions = [
+        ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
+        await program.methods.handleApe(ToDecimal(LAMPORTS_PER_SOL * 0.2), swapIx.data)
+            .accounts({
+                groupVault: GROUP_KP2_WSOL_VAULT,
+                kivoVault: KIVO_LST_VAULT,
+                groupOutputVault: GROUP_KP2_LST_VAULT,
+                user: USER1,
+                userInputBalance: USER1_WSOL_GROUP_KP2_BALANCE,
+                userOutputBalance: USER1_LST_GROUP_KP2_BALANCE,
+                inputMint: WSOL_MINT,
+                outputMint: LST_MINT,
                 group: GROUP2_KEYPAIR.publicKey,
                 payer: KEYPAIR1.publicKey,
                 associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                 tokenProgram: TOKEN_PROGRAM_ID,
                 jupiterProgram: JUPITER,
-                systemProgram: SystemProgram.programId
+                systemProgram: SystemProgram.programId,
             })
             .signers([GROUP2_KEYPAIR, KEYPAIR1])
             .remainingAccounts(swapIx.keys)
@@ -409,8 +469,8 @@ describe("kivo", async () => {
     transaction.sign([GROUP2_KEYPAIR, KEYPAIR1]);
 
     await program.provider.connection.sendTransaction(transaction)
-        .then((sig) => console.log(`Successfully split 2 USDC to WSOL from USER1 to USER2: ${sig}`))
-        .catch((err) => console.error(`Failed to split 2 USDC to WSOL from USER1 to USER2: ${err}`))
+        .then((sig) => console.log(`Successfully froze 0.2 SOL to LST from USER1: ${sig}`))
+        .catch((err) => console.error(`Failed to freeze 0.2 SOL to LST from USER1: ${err}`))
   })
 
   it.skip("Splits 2 USDC from USER1 to USER2", async () => {
@@ -431,20 +491,5 @@ describe("kivo", async () => {
         .rpc()
         .then((sig) => console.log(`Successfully split 2 USDC from USER1 to USER2: ${sig}`))
         .catch((err) => console.error(`Failed to split 2 USDC from USER1 to USER2: ${err}`))
-  })
-
-  it.skip("Freezes 0.5 SOL for LST from USER1 & GROUP_KP2_WSOL_VAULT", async () => {
-    await program.methods.handleFreeze(ToDecimal(LAMPORTS_PER_SOL / 2))
-        .accounts({
-            group: GROUP2_KEYPAIR.publicKey,
-            payer: KEYPAIR1.publicKey,
-            stakePoolProgram: STAKE_POOL,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId
-        })
-        .signers([GROUP2_KEYPAIR, KEYPAIR1])
-        .rpc()
-        .then((sig) => console.log(`Successfully froze 0.5 SOL to LST from USER1: ${sig}`))
-        .catch((err) => console.error(`Failed to freeze 0.5 SOL to LST from USER1: ${err}`))
   })
 });
