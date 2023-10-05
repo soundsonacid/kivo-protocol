@@ -7,6 +7,7 @@ use crate::state::{
         user::User,
         transaction::Transaction,
 };
+use crate::error::KivoError;
 
 pub fn process(ctx: Context<FulfillRequest>, amount: u64) -> Result<()> {
     msg!("Fulfilling transaction!");
@@ -20,20 +21,40 @@ pub fn process(ctx: Context<FulfillRequest>, amount: u64) -> Result<()> {
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];
 
-    let request_accounts = Transfer {
-        from: ctx.accounts.fulfiller_token_account.to_account_info(),
-        to: ctx.accounts.requester_token_account.to_account_info(),
-        authority: fulfiller.to_account_info()
-    };
+    let fee = amount / 400;
 
-    let token_program = ctx.accounts.token_program.to_account_info();
+    let amt_final = amount - fee;
 
-    let request_cpi_context = CpiContext::new_with_signer(token_program, request_accounts, signer_seeds);
+    require!(amt_final > 0, KivoError::NegDelta);
 
-    transfer(request_cpi_context, amount)?;
+    transfer(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.fulfiller_token_account.to_account_info(),
+                to: ctx.accounts.kivo_vault.to_account_info(),
+                authority: fulfiller.to_account_info(),
+            },
+            signer_seeds
+        ),
+        fee
+    )?;
 
-    fulfiller_transaction_account.fulfill();
-    requester_transaction_account.fulfill();
+    transfer(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.fulfiller_token_account.to_account_info(),
+                to: ctx.accounts.requester_token_account.to_account_info(),
+                authority: fulfiller.to_account_info(),
+            },
+            signer_seeds
+        ),
+        amt_final
+    )?;
+
+    fulfiller_transaction_account.fulfill(amt_final);
+    requester_transaction_account.fulfill(amt_final);
 
     fulfiller_transaction_account.exit(&crate::id())?;
     requester_transaction_account.exit(&crate::id())?;
@@ -60,6 +81,8 @@ pub struct FulfillRequest<'info> {
 
     #[account(mut, associated_token::authority = requester, associated_token::mint = mint)]
     pub requester_token_account: Box<Account<'info, TokenAccount>>,
+
+    pub kivo_vault: Box<Account<'info, TokenAccount>>,
 
     #[account()]
     pub mint: Box<Account<'info, Mint>>,

@@ -11,7 +11,8 @@ use crate::{
     state::{
         user::User,
         transaction::Transaction,
-    }
+    },
+    error::KivoError,
 };
 
 pub fn process(ctx: Context<ExecuteTransaction>, amount: u64) -> Result<()> {
@@ -27,17 +28,37 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64) -> Result<()> {
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];
 
-    let transaction_accounts = Transfer {
-    from: ctx.accounts.sender_token_account.to_account_info(),
-    to: ctx.accounts.receiver_token_account.to_account_info(),
-    authority: sender.to_account_info().clone(),
-    };
+    let fee = amount / 400;
 
-    let token_program = ctx.accounts.token_program.to_account_info().clone();
+    let amt_final = amount - fee;
 
-    let transaction_cpi_context = CpiContext::new_with_signer(token_program, transaction_accounts, signer_seeds);
+    require!(amt_final > 0, KivoError::NegDelta);
+    
+    transfer(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.sender_token_account.to_account_info(),
+                to: ctx.accounts.kivo_vault.to_account_info(),
+                authority: sender.to_account_info().clone(),
+            },
+            signer_seeds,
+        ),
+        fee
+    )?;
 
-    transfer(transaction_cpi_context, amount)?;
+    transfer(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.sender_token_account.to_account_info(),
+                to: ctx.accounts.kivo_vault.to_account_info(),
+                authority: sender.to_account_info().clone(),
+            },
+            signer_seeds,
+        ),
+        amt_final
+    )?;
 
     sender_transaction_account.new(
         receiver.key(),
@@ -101,6 +122,8 @@ pub struct ExecuteTransaction<'info> {
 
     #[account(mut, associated_token::authority = receiver_user_account, associated_token::mint = mint)]
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
+
+    pub kivo_vault: Box<Account<'info, TokenAccount>>,
 
     #[account()]
     pub mint: Box<Account<'info, Mint>>,

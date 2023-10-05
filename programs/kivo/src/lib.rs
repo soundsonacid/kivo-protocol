@@ -84,6 +84,22 @@ pub mod kivo {
         transaction_request_reject::process(ctx)
     }
 
+    pub fn handle_preferred_tx_exec(
+            ctx: Context<PreferredSwapExec>,
+            amt: u64,
+            data: Vec<u8>,
+    ) -> Result<()> {
+        preferred_tx_exec::process(ctx, amt, data)
+    }
+
+    pub fn handle_preferred_tx_fulfill(
+            ctx: Context<PreferredSwapFulfill>,
+            amt: u64,
+            data: Vec<u8>,
+    ) -> Result<()> {
+        preferred_tx_fulfill::process(ctx, amt, data)
+    }
+
     // Lending endpoints
     pub fn handle_lending_deposit(
             ctx: Context<LendingDeposit>,

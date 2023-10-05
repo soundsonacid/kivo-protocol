@@ -23,24 +23,12 @@ impl Transaction {
         Ok(())
     }
 
-    pub fn fulfill(&mut self) {
+    pub fn fulfill(&mut self, amt_final: u64) {
         self.status = Some(true);
+        self.amt = amt_final;
     }
 
     pub fn reject(&mut self) {
         self.status = Some(false);
-    }
-
-    pub fn get_mint_id(mint: &Pubkey) -> Option<u8> {
-        let mint = mint.to_string();
-    
-        match mint.as_str() {
-            "So11111111111111111111111111111111111111112" => Some(1),
-            "8kKGD6dQ6mhr9YBx3T4oRGoFCJfnpLyRBGdV1upWRYnq" => Some(2),
-            "BhWwL5K6k98xvy2vndXLVvq6vRsnCq9RSM6sCHNPSGMe" => Some(3),
-            "G3Cb13RiPcTtdKSfZEyhHCpXkgqyTr9BdVvdUbtERHUR" => Some(4),
-            "J9JkoZFdi31nJAcSniPMemfneJ7AL2iMYZkrEC9yvTDK" => Some(5),
-            _ => None,
-        }
     }
 }

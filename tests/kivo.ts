@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Kivo } from "../target/types/kivo";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createSyncNativeInstruction } from "@solana/spl-token";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionMessage, VersionedTransaction, sendAndConfirmTransaction } from "@solana/web3.js";
-import { u64ToLEBytes, getAddressLookupTableAccounts, ToDecimal, UsernameToBytes, getQuote, getSwapIx, instructionDataToTransactionInstruction } from "./test-helpers";
+import { u64ToLEBytes, u32ToLittleEndianBytes, getAddressLookupTableAccounts, ToDecimal, UsernameToBytes, getQuote, getSwapIx, instructionDataToTransactionInstruction } from "./test-helpers";
 
 describe("kivo", async () => {
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -16,6 +16,7 @@ describe("kivo", async () => {
   const UXD_MINT = new PublicKey("7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT");
   const BONK_MINT = new PublicKey("DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263");
   const LST_MINT = new PublicKey("LSTxxxnJzKDFSLr4dUkPcmCf5VyryEqzPLz5j4bpxFp");
+  const OPOS_MINT = new PublicKey("BqVHWpwUDgMik5gbTciFfozadpE2oZth5bxCDrgbDt52");
 
   const secret1 = new Uint8Array([254,155,255,45,248,92,179,39,148,200,207,243,81,75,194,89,240,63,239,3,62,168,147,119,234,21,7,0,166,42,180,49,249,255,33,255,71,10,137,238,240,90,142,143,198,50,220,221,99,40,12,96,140,68,77,192,61,117,136,34,62,157,192,83]);
   const KEYPAIR1 = Keypair.fromSecretKey(secret1);
@@ -48,10 +49,12 @@ describe("kivo", async () => {
   const GROUP_KP2_UXD_VAULT = await getAssociatedTokenAddress(UXD_MINT, GROUP2_KEYPAIR.publicKey, false);
   const GROUP_KP2_BONK_VAULT = await getAssociatedTokenAddress(BONK_MINT, GROUP2_KEYPAIR.publicKey, false);
   const GROUP_KP2_LST_VAULT = await getAssociatedTokenAddress(LST_MINT, GROUP2_KEYPAIR.publicKey, false);
+  const GROUP_KP2_OPOS_VAULT = await getAssociatedTokenAddress(OPOS_MINT, GROUP2_KEYPAIR.publicKey, false);
 
   const USER1_WSOL_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
   const USER1_USDC_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
   const USER1_LST_GROUP_KP2_BALANCE =  PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), LST_MINT.toBuffer()], program.programId)[0];
+  const USER1_OPOS_GROUP_KP2_BALANCE =  PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), OPOS_MINT.toBuffer()], program.programId)[0];
 
   const USER2_WSOL_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
   const USER2_USDC_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
@@ -60,6 +63,7 @@ describe("kivo", async () => {
   const KIVO_USDC_VAULT = new PublicKey("3VtZGaCBUges4R54DuWNM795wAfg6ChChvk4TFq34asj");
   const KIVO_WSOL_VAULT = new PublicKey("GrE2qLGwfbE9fnVfLjJiBKT8WN3fSrCF29hhcTPArmij");
   const KIVO_LST_VAULT = new PublicKey('3yhUfYWZmoKoCMQQ2LMjbuz232zxP3tne8U1JCiRkp7v');
+  const KIVO_OPOS_VAULT = new PublicKey('GWnUtew1TFP6jxmsX4BuETQ41n1AVqQ6e9YwYdYpjCYG');
 
   const JUPITER = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
 
@@ -164,27 +168,27 @@ describe("kivo", async () => {
         .then((sig) => console.log(`Successfully funded USER1 with 0.5 SOL: ${sig}`))
         .catch((err) => console.error(`Failed to fund USER1 with 0.5 SOL: ${err}`))
 
-    const user2TransferInstruction = SystemProgram.transfer({
-        fromPubkey: KEYPAIR2.publicKey,
-        toPubkey: USER2_WSOL_VAULT,
-        lamports: lamports,
-    });
+    // const user2TransferInstruction = SystemProgram.transfer({
+    //     fromPubkey: KEYPAIR2.publicKey,
+    //     toPubkey: USER2_WSOL_VAULT,
+    //     lamports: lamports,
+    // });
 
-    const user2SyncNative = createSyncNativeInstruction(USER2_WSOL_VAULT);
+    // const user2SyncNative = createSyncNativeInstruction(USER2_WSOL_VAULT);
 
-    const user2Transaction = new Transaction();
+    // const user2Transaction = new Transaction();
 
-    user2Transaction.add(user2TransferInstruction);
-    user2Transaction.add(user2SyncNative);
+    // user2Transaction.add(user2TransferInstruction);
+    // user2Transaction.add(user2SyncNative);
 
-    const { blockhash: blockhash2 } = await program.provider.connection.getLatestBlockhash();
+    // const { blockhash: blockhash2 } = await program.provider.connection.getLatestBlockhash();
 
-    user2Transaction.recentBlockhash = blockhash2;
-    user2Transaction.feePayer = KEYPAIR2.publicKey;
+    // user2Transaction.recentBlockhash = blockhash2;
+    // user2Transaction.feePayer = KEYPAIR2.publicKey;
 
-    await sendAndConfirmTransaction(program.provider.connection, user2Transaction, [KEYPAIR2])
-    .then((sig) => console.log(`Successfully funded USER2 with 0.5 SOL: ${sig}`))
-    .catch((err) => console.error(`Failed to fund USER2 with 0.5 SOL: ${err}`))
+    // await sendAndConfirmTransaction(program.provider.connection, user2Transaction, [KEYPAIR2])
+    // .then((sig) => console.log(`Successfully funded USER2 with 0.5 SOL: ${sig}`))
+    // .catch((err) => console.error(`Failed to fund USER2 with 0.5 SOL: ${err}`))
 
   })
 
@@ -267,9 +271,9 @@ describe("kivo", async () => {
   })
 
   it.skip("Swaps 0.5 SOL for USDC from USER1 to GROUP_KP2_USDC_VAULT", async () => {
-    const quote = await getQuote(WSOL_MINT, USDC_MINT, LAMPORTS_PER_SOL * 0.5);
+    const quote = await getQuote(USDC_MINT, OPOS_MINT, 500000);
 
-    const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_USDC_VAULT, quote);
+    const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_OPOS_VAULT, quote);
 
     if ("error" in res) {
         console.log({ res });
@@ -282,16 +286,16 @@ describe("kivo", async () => {
 
     const instructions = [
         ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
-        await program.methods.handleApe(ToDecimal(LAMPORTS_PER_SOL * 0.5), swapIx.data)
+        await program.methods.handleApe(ToDecimal(500000), swapIx.data)
             .accounts({
-                groupVault: GROUP_KP2_WSOL_VAULT,
-                kivoVault: KIVO_USDC_VAULT,
-                groupOutputVault: GROUP_KP2_USDC_VAULT,
+                groupVault: GROUP_KP2_USDC_VAULT,
+                kivoVault: KIVO_OPOS_VAULT,
+                groupOutputVault: GROUP_KP2_OPOS_VAULT,
                 user: USER1,
-                userInputBalance: USER1_WSOL_GROUP_KP2_BALANCE,
-                userOutputBalance: USER1_USDC_GROUP_KP2_BALANCE,
-                inputMint: WSOL_MINT,
-                outputMint: USDC_MINT,
+                userInputBalance: USER1_USDC_GROUP_KP2_BALANCE,
+                userOutputBalance: USER1_OPOS_GROUP_KP2_BALANCE,
+                inputMint: USDC_MINT,
+                outputMint: OPOS_MINT,
                 group: GROUP2_KEYPAIR.publicKey,
                 payer: KEYPAIR1.publicKey,
                 associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -323,6 +327,74 @@ describe("kivo", async () => {
         .then((sig) => console.log(`Successfully swapped 0.5 SOL to USDC from USER1: ${sig}`))
         .catch((err) => console.error(`Failed to swap 0.5 SOL to USDC from USER1: ${err}`))
   });
+
+  it("Preferred TX 0.3 SOL USER1 -> USDC USER2", async () => {
+    const quote = await getQuote(WSOL_MINT, USDC_MINT, (LAMPORTS_PER_SOL * 0.3))
+
+    const res = await getSwapIx(KEYPAIR1.publicKey, USER1_USDC_VAULT, quote);
+
+    if ('error' in res) {
+        console.log({ res })
+        return res;
+    }
+
+    const { computeBudgetInstructions, swapInstruction, addressLookupTableAddresses } = res;
+
+    let swapIx = instructionDataToTransactionInstruction(swapInstruction);
+
+    const USER1_ACC = program.account.user.fetch(USER1);
+    const USER2_ACC = program.account.user.fetch(USER2);
+  
+    const USER1_TX_ACCOUNT = PublicKey.findProgramAddressSync([Buffer.from('outgoing_tx'), USER1.toBuffer(), u32ToLittleEndianBytes((await USER1_ACC).incomingTx)], program.programId)[0];
+    const USER2_TX_ACCOUNT = PublicKey.findProgramAddressSync([Buffer.from('incoming_tx'), USER2.toBuffer(), u32ToLittleEndianBytes((await USER2_ACC).incomingTx)], program.programId)[0];
+
+    const KEYPAIR1_WSOL_VAULT = await getAssociatedTokenAddress(WSOL_MINT, KEYPAIR1.publicKey, false);
+
+    const instructions = [
+        ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
+        await program.methods.handlePreferredTxNoUnwrap(ToDecimal(LAMPORTS_PER_SOL * 0.3), swapIx.data, null)
+            .accounts({
+                user: USER1,
+                sourceVault: USER1_WSOL_VAULT,
+                inputVault: KEYPAIR1_WSOL_VAULT,
+                outputVault: USER1_USDC_VAULT,
+                destinationOwner: USER2,
+                destinationVault: USER2_USDC_VAULT,
+                kivoVault: KIVO_USDC_VAULT,
+                payerTxAccount: USER1_TX_ACCOUNT,
+                receiverTxAccount: USER2_TX_ACCOUNT,
+                inputMint: WSOL_MINT,
+                payer: KEYPAIR1.publicKey,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                jupiterProgram: JUPITER,
+                systemProgram: SystemProgram.programId,
+            })
+            .signers([KEYPAIR1])
+            .remainingAccounts(swapIx.keys)
+            .instruction(),
+    ];
+
+    const { blockhash } = await program.provider.connection.getLatestBlockhash();
+
+    const addressLookupTableAccounts = await getAddressLookupTableAccounts(
+        addressLookupTableAddresses, program.provider.connection
+    );
+
+    const messageV0 = new TransactionMessage({
+        payerKey: KEYPAIR1.publicKey,
+        recentBlockhash: blockhash,
+        instructions,
+    }).compileToV0Message(addressLookupTableAccounts);
+
+    const transaction = new VersionedTransaction(messageV0);
+
+    transaction.sign([KEYPAIR1])
+
+    await program.provider.connection.sendTransaction(transaction)
+        .then((sig) => console.log(`Successfully sent preferred TX 0.3 SOL USER1 -> USDC USER2: ${sig}`))
+        .catch((err) => console.error(`Failed to send preferred TX 0.3 SOL USER1 -> USDC USER2: ${err}`))
+  })
 
   it.skip("Splits 0.4 SOL swapped to USDC from USER2 to USER1", async () => {
     const quote = await getQuote(WSOL_MINT, USDC_MINT, (LAMPORTS_PER_SOL * 0.4));
@@ -384,8 +456,8 @@ describe("kivo", async () => {
         .catch((err) => console.error(`Failed to split 0.4 SOL to USDC from USER2 to USER1: ${err}`))
   })
 
-  it.skip("Freezes 0.2 SOL for LST from USER1 & GROUP_KP2_LST_VAULT", async () => {
-    const quote = await getQuote(WSOL_MINT, LST_MINT, (LAMPORTS_PER_SOL * 0.2));
+  it.skip("Freezes 3 USDC for LST from USER1 & GROUP_KP2_LST_VAULT", async () => {
+    const quote = await getQuote(USDC_MINT, LST_MINT, 3000000);
 
     const res = await getSwapIx(GROUP2_KEYPAIR.publicKey, GROUP_KP2_LST_VAULT, quote);
 
@@ -400,15 +472,15 @@ describe("kivo", async () => {
 
     const instructions = [
         ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
-        await program.methods.handleApe(ToDecimal(LAMPORTS_PER_SOL * 0.2), swapIx.data)
+        await program.methods.handleApe(ToDecimal(3000000), swapIx.data)
             .accounts({
-                groupVault: GROUP_KP2_WSOL_VAULT,
+                groupVault: GROUP_KP2_USDC_VAULT,
                 kivoVault: KIVO_LST_VAULT,
                 groupOutputVault: GROUP_KP2_LST_VAULT,
                 user: USER1,
-                userInputBalance: USER1_WSOL_GROUP_KP2_BALANCE,
+                userInputBalance: USER1_USDC_GROUP_KP2_BALANCE,
                 userOutputBalance: USER1_LST_GROUP_KP2_BALANCE,
-                inputMint: WSOL_MINT,
+                inputMint: USDC_MINT,
                 outputMint: LST_MINT,
                 group: GROUP2_KEYPAIR.publicKey,
                 payer: KEYPAIR1.publicKey,
@@ -439,8 +511,8 @@ describe("kivo", async () => {
     transaction.sign([GROUP2_KEYPAIR, KEYPAIR1]);
 
     await program.provider.connection.sendTransaction(transaction)
-        .then((sig) => console.log(`Successfully froze 0.2 SOL to LST from USER1: ${sig}`))
-        .catch((err) => console.error(`Failed to freeze 0.2 SOL to LST from USER1: ${err}`))
+        .then((sig) => console.log(`Successfully froze 3 USDC to LST from USER1: ${sig}`))
+        .catch((err) => console.error(`Failed to freeze 3 USDC to LST from USER1: ${err}`))
   })
 
   it.skip("Splits 2 USDC from USER1 to USER2", async () => {
