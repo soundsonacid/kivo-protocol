@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::GROUP;
-
 #[account]
 #[derive(Default)]
 pub struct Group {
@@ -19,35 +17,7 @@ impl Group {
         self.identifier = identifier;
         Ok(())
     }
-
-    pub fn transfer_ownership(
-        &mut self,
-        new_admin: Pubkey,
-    ) -> Result<()> {
-        self.admin = new_admin;
-        Ok(())
-    }
-
-    pub fn get_group_address(pubkey: Pubkey, identifier: u8) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                GROUP,
-                pubkey.as_ref(),
-                &identifier.to_le_bytes()
-            ], 
-            &crate::ID)
-    }
-
-    pub fn get_group_signer_seeds<'a>(
-        pubkey: &'a Pubkey, 
-        identifier: &'a [u8],
-        bump: &'a [u8]         
-    ) -> [&'a [u8]; 4] {
-        [GROUP.as_ref(), pubkey.as_ref(), identifier, bump]
-    }
 }
-
-
 
 #[account]
 #[derive(Default)]
@@ -58,7 +28,6 @@ pub struct Balance {
     pub balance: u64,
     pub initialized: bool,
 }
-
 
 impl Balance {
     pub fn new(

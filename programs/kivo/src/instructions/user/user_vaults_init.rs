@@ -70,6 +70,16 @@ pub struct InitializeUserVaults<'info> {
             )]
   pub bonk_vault: Box<Account<'info, TokenAccount>>,
 
+  #[account()]
+  pub lst_mint: Box<Account<'info, Mint>>,
+
+  #[account(init,
+            payer = payer,
+            associated_token::mint = lst_mint,
+            associated_token::authority = user_account
+            )]
+  pub lst_vault: Box<Account<'info, TokenAccount>>,
+  
   #[account(mut)]
   pub payer: Signer<'info>,
 

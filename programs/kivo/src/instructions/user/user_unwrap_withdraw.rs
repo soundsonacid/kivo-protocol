@@ -1,6 +1,6 @@
 use anchor_lang::{
     prelude::*,
-    solana_program::system_program
+    solana_program::{system_program, native_token::LAMPORTS_PER_SOL}
 };
 use anchor_spl::token::*;
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     constants::UNWRAP,
 };
 
-pub fn process(ctx: Context<UnwrapWithdrawal>, amount: u64) -> Result<()> {
+pub fn process(ctx: Context<UnwrapWithdrawal>, amount: u64, withdraw_all: Option<bool>) -> Result<()> {
     msg!("Unwrapping & withdrawing");
 
     let bump = User::get_user_address(ctx.accounts.payer.key()).1;
@@ -16,35 +16,57 @@ pub fn process(ctx: Context<UnwrapWithdrawal>, amount: u64) -> Result<()> {
     let signature_seeds = User::get_user_signer_seeds(&ctx.accounts.payer.key, &bump);
     let signer_seeds = &[&signature_seeds[..]];   
 
-    let token_program = ctx.accounts.token_program.to_account_info().clone();
+    if withdraw_all.is_some() {
+        // Leave 0.05 SOL left over to pay other tx fees
+        let wd_all = ctx.accounts.user_token_account.amount - (LAMPORTS_PER_SOL / 20);
 
-    let transfer_accounts = Transfer {
-        from: ctx.accounts.user_token_account.to_account_info(),
-        to: ctx.accounts.temporary_token_account.to_account_info(),
-        authority: ctx.accounts.user_account.to_account_info().clone(),
-    };
+        transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.user_token_account.to_account_info(),
+                    to: ctx.accounts.temporary_token_account.to_account_info(),
+                    authority: ctx.accounts.user_account.to_account_info(),
+                },
+                signer_seeds
+            ),
+            wd_all
+        )?;
+    } else {
+        let actual_wd: u64;
 
-    let cpi_ctx_transfer = CpiContext::new_with_signer(
-        token_program.to_account_info().clone(),
-        transfer_accounts,
-        signer_seeds,
-    );
+        // Ensure that 0.05 SOL is left over to pay other tx fees
+        if (ctx.accounts.user_token_account.amount - amount) < (LAMPORTS_PER_SOL / 20) {
+            actual_wd = amount + (ctx.accounts.user_token_account.amount - amount);
+        } else {
+            actual_wd = amount;
+        }
 
-    transfer(cpi_ctx_transfer, amount)?;
+        transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.user_token_account.to_account_info(),
+                    to: ctx.accounts.temporary_token_account.to_account_info(),
+                    authority: ctx.accounts.user_account.to_account_info(),
+                },
+                signer_seeds
+            ),
+            actual_wd
+        )?;
+    }
 
-    let close_accounts = CloseAccount {
-        account: ctx.accounts.temporary_token_account.to_account_info().clone(),
-        destination: ctx.accounts.withdrawer.to_account_info().clone(),
-        authority: ctx.accounts.user_account.to_account_info().clone(),
-    };
-
-    let cpi_ctx_close = CpiContext::new_with_signer(
-        token_program.to_account_info().clone(),
-        close_accounts,
-        signer_seeds,
-    );
-
-    close_account(cpi_ctx_close)?;
+    close_account(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            CloseAccount {
+                account: ctx.accounts.temporary_token_account.to_account_info(),
+                destination: ctx.accounts.withdrawer.to_account_info(),
+                authority: ctx.accounts.user_account.to_account_info(),
+            },
+            signer_seeds
+        )
+    )?;
 
     ctx.accounts.user_account.increment_withdrawals();
 

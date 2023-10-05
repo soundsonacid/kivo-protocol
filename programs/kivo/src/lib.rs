@@ -15,13 +15,11 @@ pub mod kivo {
     use super::*;
 
     // User endpoints
-    
     pub fn handle_initialize_user(
             ctx: Context<InitializeUser>, 
             name: [u8; 16], 
-            account_type: u8
         ) -> Result<()> {
-        user_init::process(ctx, name, account_type)
+        user_init::process(ctx, name)
     }
 
     pub fn handle_initialize_user_vaults(
@@ -30,38 +28,20 @@ pub mod kivo {
         user_vaults_init::process(ctx)
     }
 
-    pub fn handle_deposit(
-            ctx: Context<Deposit>, 
-            amount: u64
-        ) -> Result<()> {
-        user_deposit::process(ctx, amount)
-    }
-
     pub fn handle_withdrawal(
             ctx: Context<Withdrawal>, 
             amount: u64, 
+            withdraw_all: Option<bool>,
         ) -> Result<()> {
-        user_withdraw::process(ctx, amount)
+        user_withdraw::process(ctx, amount, withdraw_all)
     }
     
     pub fn handle_unwrap_withdrawal(
             ctx: Context<UnwrapWithdrawal>, 
             amount: u64, 
+            withdraw_all: Option<bool>,
         ) -> Result<()> {
-        user_unwrap_withdraw::process(ctx, amount)
-    }
-
-    pub fn handle_edit_username(
-        ctx: Context<EditUsername>, 
-        name: [u8; 16]
-    ) -> Result<()> {
-        username_edit::process(ctx, name)
-    }
-
-    pub fn handle_add_friend(
-        ctx: Context<AddFriend>
-    ) -> Result<()> {
-        user_add_friend::process(ctx)
+        user_unwrap_withdraw::process(ctx, amount, withdraw_all)
     }
 
     pub fn handle_set_preferred_token(
@@ -77,22 +57,13 @@ pub mod kivo {
     }
     
     // Transaction endpoints
-
     pub fn handle_execute_transaction(
             ctx: Context<ExecuteTransaction>, 
             amount: u64, 
         ) -> Result<()> {
         transaction_execute::process(ctx, amount)
     }
-
-    pub fn handle_swap_transaction(
-            ctx: Context<SwapTransaction>,
-            amount: u64,
-            data: Vec<u8>,
-    ) -> Result<()> {
-        transaction_swap_exec::process(ctx, amount, data)
-    }
-
+    
     pub fn handle_create_request(
             ctx: Context<CreateRequest>, 
             amount: u64, 
@@ -107,14 +78,6 @@ pub mod kivo {
         transaction_request_fufill::process(ctx, amount)
     }
 
-    pub fn handle_fulfill_swap_request(
-            ctx: Context<FulfillSwap>,
-            output_amt_low_confidence: u64,
-            data: Vec<u8>
-    ) -> Result<()> {
-        transaction_swap_request_fulfill::process(ctx, output_amt_low_confidence, data)
-    }
-
     pub fn handle_reject_request(
             ctx: Context<RejectRequest>
     ) -> Result<()> {
@@ -122,7 +85,6 @@ pub mod kivo {
     }
 
     // Lending endpoints
-
     pub fn handle_lending_deposit(
             ctx: Context<LendingDeposit>,
             amount: u64
@@ -131,7 +93,6 @@ pub mod kivo {
     }
 
     // Group endpoints
-
     pub fn handle_group_create(
             ctx: Context<CreateGroup>,
     ) -> Result<()> {
@@ -154,8 +115,9 @@ pub mod kivo {
     pub fn handle_group_withdrawal(
             ctx: Context<WithdrawFromGroupWallet>,
             amount: u64,
+            withdraw_all: Option<bool>
     ) -> Result<()> {
-        group_withdrawal::process(ctx, amount)
+        group_withdraw::process(ctx, amount, withdraw_all)
     }
 
     pub fn handle_ape(

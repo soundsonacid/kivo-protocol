@@ -116,26 +116,13 @@ export const getSignersFromTransaction = (transaction: VersionedTransaction): st
   return signers;
 };
 
-    // await program.methods.handleFreeze(ToDecimal(LAMPORTS_PER_SOL / 2))
-    //     .accounts({
-    //         groupSolVault: GROUP_KP2_WSOL_VAULT,
-    //         solBalance: USER1_WSOL_GROUP_KP2_BALANCE,
-    //         lstBalance: USER1_LST_GROUP_KP2_BALANCE,
-    //         lstMint: LST_MINT,
-    //         stakePool: LST_POOL,
-    //         stakePoolWithdrawAuthority: ,
-    //         reserveStakeAccount: ,
-    //         poolTokensTo: GROUP_KP2_LST_VAULT,
-    //         managerFeeAccount: ,
-    //         referrerPoolTokensAccount: ,
-    //         group: GROUP2_KEYPAIR.publicKey,
-    //         payer: KEYPAIR1.publicKey,
-    //         stakePoolProgram: STAKE_POOL,
-    //         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    //         tokenProgram: TOKEN_PROGRAM_ID,
-    //         systemProgram: SystemProgram.programId
-    //     })
-    //     .signers([GROUP2_KEYPAIR, KEYPAIR1])
-    //     .rpc()
-    //     .then((sig) => console.log(`Successfully froze 0.5 SOL to LST from USER1: ${sig}`))
-    //     .catch((err) => console.error(`Failed to freeze 0.5 SOL to LST from USER1: ${err}`))
+export function u64ToLEBytes(value: bigint): Uint8Array {
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+  const lo = Number(value & BigInt(0xFFFFFFFF));
+  const hi = Number((value >> BigInt(32)) & BigInt(0xFFFFFFFF));
+  view.setUint32(0, lo, true);
+  view.setUint32(4, hi, true);
+  return new Uint8Array(buffer);
+}
+

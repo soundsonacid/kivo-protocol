@@ -1,106 +1,71 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Kivo } from "../target/types/kivo";
-import * as assert from "assert";
-import { getOrCreateAssociatedTokenAccount, ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createSyncNativeInstruction } from "@solana/spl-token";
-import { BN } from "bn.js";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionMessage, VersionedTransaction, ComputeBudgetProgram, sendAndConfirmTransaction } from "@solana/web3.js";
-import { getSignersFromTransaction, getAddressLookupTableAccounts, u32ToLittleEndianBytes, ToDecimal, UsernameToBytes, getQuote, getSwapIx, instructionDataToTransactionInstruction } from "./test-helpers";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createSyncNativeInstruction } from "@solana/spl-token";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionMessage, VersionedTransaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { u64ToLEBytes, getAddressLookupTableAccounts, ToDecimal, UsernameToBytes, getQuote, getSwapIx, instructionDataToTransactionInstruction } from "./test-helpers";
 
 describe("kivo", async () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.Kivo as Program<Kivo>;
 
-  const secret1 = new Uint8Array([254,155,255,45,248,92,179,39,148,200,207,243,81,75,194,89,240,63,239,3,62,168,147,119,234,21,7,0,166,42,180,49,249,255,33,255,71,10,137,238,240,90,142,143,198,50,220,221,99,40,12,96,140,68,77,192,61,117,136,34,62,157,192,83]);
-  const KEYPAIR1 = Keypair.fromSecretKey(secret1);
-  const USER1 = PublicKey.findProgramAddressSync([Buffer.from("user"), KEYPAIR1.publicKey.toBuffer()], program.programId)[0];
-  const USERNAME1 = PublicKey.findProgramAddressSync([Buffer.from("username"), Buffer.from(UsernameToBytes("userone"))], program.programId)[0];
-
-  const secret2 = new Uint8Array([92,38,5,51,107,45,43,74,235,80,128,156,138,166,3,32,237,199,117,15,0,16,165,135,168,17,145,33,225,72,220,211,212,121,255,19,101,207,234,186,28,72,199,15,59,119,233,18,114,177,146,138,14,167,1,153,72,180,164,209,67,221,72,234]);
-  const KEYPAIR2 = Keypair.fromSecretKey(secret2);
-  const USER2 = PublicKey.findProgramAddressSync([Buffer.from("user"), KEYPAIR2.publicKey.toBuffer()], program.programId)[0];
-  const USERNAME2 = PublicKey.findProgramAddressSync([Buffer.from("username"), Buffer.from(UsernameToBytes("usertwo"))], program.programId)[0];
-
-  const GROUP = PublicKey.findProgramAddressSync([Buffer.from("group"), USER1.toBuffer(), u32ToLittleEndianBytes(0)], program.programId)[0];
   const WSOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
   const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
   const USDT_MINT = new PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB");
   const UXD_MINT = new PublicKey("7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT");
   const BONK_MINT = new PublicKey("DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263");
+  const LST_MINT = new PublicKey("LSTxxxnJzKDFSLr4dUkPcmCf5VyryEqzPLz5j4bpxFp");
+
+  const secret1 = new Uint8Array([254,155,255,45,248,92,179,39,148,200,207,243,81,75,194,89,240,63,239,3,62,168,147,119,234,21,7,0,166,42,180,49,249,255,33,255,71,10,137,238,240,90,142,143,198,50,220,221,99,40,12,96,140,68,77,192,61,117,136,34,62,157,192,83]);
+  const KEYPAIR1 = Keypair.fromSecretKey(secret1);
+  const USER1 = PublicKey.findProgramAddressSync([Buffer.from("user"), KEYPAIR1.publicKey.toBuffer()], program.programId)[0];
+
+  const secret2 = new Uint8Array([92,38,5,51,107,45,43,74,235,80,128,156,138,166,3,32,237,199,117,15,0,16,165,135,168,17,145,33,225,72,220,211,212,121,255,19,101,207,234,186,28,72,199,15,59,119,233,18,114,177,146,138,14,167,1,153,72,180,164,209,67,221,72,234]);
+  const KEYPAIR2 = Keypair.fromSecretKey(secret2);
+  const USER2 = PublicKey.findProgramAddressSync([Buffer.from("user"), KEYPAIR2.publicKey.toBuffer()], program.programId)[0];
 
   const USER1_WSOL_VAULT = await getAssociatedTokenAddress(WSOL_MINT, USER1, true);
   const USER1_USDC_VAULT = await getAssociatedTokenAddress(USDC_MINT, USER1, true);
   const USER1_USDT_VAULT = await getAssociatedTokenAddress(USDT_MINT, USER1, true);
   const USER1_UXD_VAULT = await getAssociatedTokenAddress(UXD_MINT, USER1, true);
   const USER1_BONK_VAULT = await getAssociatedTokenAddress(BONK_MINT, USER1, true);
+  const USER1_LST_VAULT = await getAssociatedTokenAddress(LST_MINT, USER1, true);
 
   const USER2_WSOL_VAULT = await getAssociatedTokenAddress(WSOL_MINT, USER2, true);
   const USER2_USDC_VAULT = await getAssociatedTokenAddress(USDC_MINT, USER2, true);
   const USER2_USDT_VAULT = await getAssociatedTokenAddress(USDT_MINT, USER2, true);
   const USER2_UXD_VAULT = await getAssociatedTokenAddress(UXD_MINT, USER2, true);
   const USER2_BONK_VAULT = await getAssociatedTokenAddress(BONK_MINT, USER2, true);
+  const USER2_LST_VAULT = await getAssociatedTokenAddress(LST_MINT, USER2, true);
 
-  const GROUP_WSOL_VAULT = await getAssociatedTokenAddress(WSOL_MINT, GROUP, true);
-  const GROUP_USDC_VAULT = await getAssociatedTokenAddress(USDC_MINT, GROUP, true);
-  const GROUP_USDT_VAULT = await getAssociatedTokenAddress(USDT_MINT, GROUP, true);
-  const GROUP_UXD_VAULT = await getAssociatedTokenAddress(UXD_MINT, GROUP, true);
-  const GROUP_BONK_VAULT = await getAssociatedTokenAddress(BONK_MINT, GROUP, true);
-
-  const USER1_WSOL_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
-  const USER2_WSOL_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
-
-  const USER1_USDC_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
-  const USER2_USDC_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
-
-  const JUPITER = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
-
-  const TEMP_USDC_ACCOUNT = PublicKey.findProgramAddressSync([Buffer.from("temp"), GROUP.toBuffer(), USER1.toBuffer()], program.programId)[0];
-  
-  const secret3 = new Uint8Array([241,255,75,187,63,206,222,62,54,179,255,163,68,167,111,67,181,31,183,11,56,251,187,203,27,169,47,211,138,186,28,89,34,95,142,175,33,148,77,126,49,196,17,207,139,55,212,254,126,8,253,91,141,233,139,169,178,118,159,99,79,60,83,7]);
-  const GROUP_KEYPAIR = Keypair.fromSecretKey(secret3);
-
-  const secret4 = new Uint8Array([219,183,179,120,94,178,96,177,69,181,243,107,222,83,42,166,46,231,244,28,132,254,17,91,126,75,3,46,19,231,169,23,245,23,163,83,60,103,20,163,59,174,205,187,156,70,243,140,10,128,171,216,41,86,172,33,200,73,71,229,78,111,205,146]);
-  const GROUP2_KEYPAIR = Keypair.fromSecretKey(secret4);
-
-  const GROUP_KP_WSOL_VAULT = await getAssociatedTokenAddress(WSOL_MINT, GROUP_KEYPAIR.publicKey, false);
-  const GROUP_KP_USDC_VAULT = await getAssociatedTokenAddress(USDC_MINT, GROUP_KEYPAIR.publicKey, false);
-  const GROUP_KP_USDT_VAULT = await getAssociatedTokenAddress(USDT_MINT, GROUP_KEYPAIR.publicKey, false);
-  const GROUP_KP_UXD_VAULT = await getAssociatedTokenAddress(UXD_MINT, GROUP_KEYPAIR.publicKey, false);
-  const GROUP_KP_BONK_VAULT = await getAssociatedTokenAddress(BONK_MINT, GROUP_KEYPAIR.publicKey, false);
+  const secret3 = new Uint8Array([219,183,179,120,94,178,96,177,69,181,243,107,222,83,42,166,46,231,244,28,132,254,17,91,126,75,3,46,19,231,169,23,245,23,163,83,60,103,20,163,59,174,205,187,156,70,243,140,10,128,171,216,41,86,172,33,200,73,71,229,78,111,205,146]);
+  const GROUP2_KEYPAIR = Keypair.fromSecretKey(secret3);
 
   const GROUP_KP2_WSOL_VAULT = await getAssociatedTokenAddress(WSOL_MINT, GROUP2_KEYPAIR.publicKey, false);
   const GROUP_KP2_USDC_VAULT = await getAssociatedTokenAddress(USDC_MINT, GROUP2_KEYPAIR.publicKey, false);
   const GROUP_KP2_USDT_VAULT = await getAssociatedTokenAddress(USDT_MINT, GROUP2_KEYPAIR.publicKey, false);
   const GROUP_KP2_UXD_VAULT = await getAssociatedTokenAddress(UXD_MINT, GROUP2_KEYPAIR.publicKey, false);
   const GROUP_KP2_BONK_VAULT = await getAssociatedTokenAddress(BONK_MINT, GROUP2_KEYPAIR.publicKey, false);
-
-  const USER1_WSOL_GROUP_KP_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP_KEYPAIR.publicKey.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
-  const USER1_USDC_GROUP_KP_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP_KEYPAIR.publicKey.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
-
-  const USER2_WSOL_GROUP_KP_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP_KEYPAIR.publicKey.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
-  const USER2_USDC_GROUP_KP_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP_KEYPAIR.publicKey.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
+  const GROUP_KP2_LST_VAULT = await getAssociatedTokenAddress(LST_MINT, GROUP2_KEYPAIR.publicKey, false);
 
   const USER1_WSOL_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
   const USER1_USDC_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
+  const USER1_LST_GROUP_KP2_BALANCE =  PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), LST_MINT.toBuffer()], program.programId)[0];
 
   const USER2_WSOL_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), WSOL_MINT.toBuffer()], program.programId)[0];
   const USER2_USDC_GROUP_KP2_BALANCE = PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), USDC_MINT.toBuffer()], program.programId)[0];
+  const USER2_LST_GROUP_KP2_BALANCE =  PublicKey.findProgramAddressSync([USER2.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), LST_MINT.toBuffer()], program.programId)[0];
 
   const KIVO_USDC_VAULT = new PublicKey("3VtZGaCBUges4R54DuWNM795wAfg6ChChvk4TFq34asj");
   const KIVO_WSOL_VAULT = new PublicKey("GrE2qLGwfbE9fnVfLjJiBKT8WN3fSrCF29hhcTPArmij");
   const KIVO_LST_VAULT = new PublicKey('3yhUfYWZmoKoCMQQ2LMjbuz232zxP3tne8U1JCiRkp7v');
 
-  const LST_MINT = new PublicKey("LSTxxxnJzKDFSLr4dUkPcmCf5VyryEqzPLz5j4bpxFp");
-
-  const USER1_LST_GROUP_KP2_BALANCE =  PublicKey.findProgramAddressSync([USER1.toBuffer(), GROUP2_KEYPAIR.publicKey.toBuffer(), LST_MINT.toBuffer()], program.programId)[0];
-  
-  const GROUP_KP2_LST_VAULT = await getAssociatedTokenAddress(LST_MINT, GROUP2_KEYPAIR.publicKey, false);
+  const JUPITER = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
 
   it.skip("Initializes USER1 & USER2", async () => {
-    await program.methods.handleInitializeUser(UsernameToBytes("userone"), 0)
+    await program.methods.handleInitializeUser(UsernameToBytes("userone"))
         .accounts({
-            usernameAccount: USERNAME1,
             userAccount: USER1,
             payer: KEYPAIR1.publicKey,
             owner: KEYPAIR1.publicKey,
@@ -124,6 +89,8 @@ describe("kivo", async () => {
             uxdVault: USER1_UXD_VAULT,
             bonkMint: BONK_MINT,
             bonkVault: USER1_BONK_VAULT,
+            lstMint: LST_MINT,
+            lstVault: USER1_LST_VAULT,
             payer: KEYPAIR1.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -134,9 +101,8 @@ describe("kivo", async () => {
         .then(() => console.log("USER1 vaults initialized successfully \n"))
         .catch((err) => console.error(`Failed to initialize USER1 vaults: ${err} \n`));
 
-    await program.methods.handleInitializeUser(UsernameToBytes("usertwo"), 0)
+    await program.methods.handleInitializeUser(UsernameToBytes("usertwo"))
         .accounts({
-            usernameAccount: USERNAME2,
             userAccount: USER2,
             payer: KEYPAIR2.publicKey,
             owner: KEYPAIR2.publicKey,
@@ -160,6 +126,8 @@ describe("kivo", async () => {
             uxdVault: USER2_UXD_VAULT,
             bonkMint: BONK_MINT,
             bonkVault: USER2_BONK_VAULT,
+            lstMint: LST_MINT,
+            lstVault: USER2_LST_VAULT,
             payer: KEYPAIR2.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -241,11 +209,13 @@ describe("kivo", async () => {
             usdtVault: GROUP_KP2_USDT_VAULT,
             uxdVault: GROUP_KP2_UXD_VAULT,
             bonkVault: GROUP_KP2_BONK_VAULT,
+            lstVault: GROUP_KP2_LST_VAULT,
             wsolMint: WSOL_MINT,
             usdcMint: USDC_MINT,
             usdtMint: USDT_MINT,
             uxdMint: UXD_MINT,
             bonkMint: BONK_MINT,
+            lstMint: LST_MINT,
             group: GROUP2_KEYPAIR.publicKey,
             payer: KEYPAIR1.publicKey,
             systemProgram: SystemProgram.programId,
@@ -491,5 +461,108 @@ describe("kivo", async () => {
         .rpc()
         .then((sig) => console.log(`Successfully split 2 USDC from USER1 to USER2: ${sig}`))
         .catch((err) => console.error(`Failed to split 2 USDC from USER1 to USER2: ${err}`))
+  })
+
+  it.skip("Withdraws all tokens from USER1 & USER2", async () => {
+        const user1Vaults = [  
+            USER2_USDC_VAULT, 
+            USER2_USDT_VAULT, 
+            USER2_UXD_VAULT, 
+            USER2_BONK_VAULT,
+            USER1_LST_VAULT
+        ]
+
+        const user2Vaults = [ 
+            USER2_USDC_VAULT, 
+            USER2_USDT_VAULT, 
+            USER2_UXD_VAULT, 
+            USER2_BONK_VAULT, 
+            USER2_LST_VAULT
+        ]
+
+        const mints = [
+            USDC_MINT,
+            USDT_MINT,
+            UXD_MINT,
+            BONK_MINT,
+            LST_MINT
+        ]
+
+        for (let i = 0; i < user1Vaults.length; i++) {
+            await program.methods.handleWithdrawal(ToDecimal(1), true)
+                .accounts({
+                    withdrawer: KEYPAIR1.publicKey,
+                    withdrawerTokenAccount: await getAssociatedTokenAddress(mints[i], KEYPAIR1.publicKey, false),
+                    userAccount: USER1,
+                    pdaTokenAccount: user1Vaults[i],
+                    mint: mints[i],
+                    payer: KEYPAIR1.publicKey,
+                    systemProgram: SystemProgram.programId,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID
+                })
+                .signers([KEYPAIR1])
+                .rpc()
+                .then((sig) => console.log(`Successfully withdrew all ${mints[i]} from USER1: ${sig}`))
+                .catch((err) => console.error(`Failed to withdraw all ${mints[i]} from USER1: ${err} `));
+        }
+
+        for (let i = 0; i < user2Vaults.length; i++) {
+            await program.methods.handleWithdrawal(ToDecimal(1), true)
+                .accounts({
+                    withdrawer: KEYPAIR2.publicKey,
+                    withdrawerTokenAccount: await getAssociatedTokenAddress(mints[i], KEYPAIR2.publicKey, false),
+                    userAccount: USER2,
+                    pdaTokenAccount: user2Vaults[i],
+                    mint: mints[i],
+                    payer: KEYPAIR2.publicKey,
+                    systemProgram: SystemProgram.programId,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID
+                })
+                .signers([KEYPAIR2])
+                .rpc()
+                .then((sig) => console.log(`Successfully withdrew all ${mints[i]} from USER1: ${sig}`))
+                .catch((err) => console.error(`Failed to withdraw all ${mints[i]} from USER1: ${err} `));
+        }
+
+        const USER1_ACC = program.account.user.fetch(USER1);
+        const USER2_ACC = program.account.user.fetch(USER2);
+      
+        const USER1_TEMP_TOKEN_ACCOUNT = PublicKey.findProgramAddressSync([Buffer.from("unwrap"), USER1.toBuffer(), u64ToLEBytes(BigInt((await USER1_ACC).totalWithdraws))], program.programId)[0];
+        const USER2_TEMP_TOKEN_ACCOUNT = PublicKey.findProgramAddressSync([Buffer.from("unwrap"), USER2.toBuffer(), u64ToLEBytes(BigInt((await USER2_ACC).totalWithdraws))], program.programId)[0];
+
+        
+        await program.methods.handleUnwrapWithdrawal(ToDecimal(1), true)
+            .accounts({
+                withdrawer: KEYPAIR1.publicKey,
+                userAccount: USER1,
+                userTokenAccount: USER1_WSOL_VAULT,
+                temporaryTokenAccount: USER1_TEMP_TOKEN_ACCOUNT,
+                mint: WSOL_MINT,
+                payer: KEYPAIR1.publicKey,
+                systemProgram: SystemProgram.programId,
+                tokenProgram: TOKEN_PROGRAM_ID
+            })
+            .signers([KEYPAIR1])
+            .rpc()
+            .then((sig) => console.log(`Successfully withdrew all WSOL from USER1: ${sig}`))
+            .catch((err) => console.error(`Failed to withdraw all WSOL from USER1: ${err} `));
+
+        await program.methods.handleUnwrapWithdrawal(ToDecimal(1), true)
+            .accounts({
+                withdrawer: KEYPAIR2.publicKey,
+                userAccount: USER2,
+                userTokenAccount: USER2_WSOL_VAULT,
+                temporaryTokenAccount: USER2_TEMP_TOKEN_ACCOUNT,
+                mint: WSOL_MINT,
+                payer: KEYPAIR2.publicKey,
+                systemProgram: SystemProgram.programId,
+                tokenProgram: TOKEN_PROGRAM_ID
+            })
+            .signers([KEYPAIR2])
+            .rpc()
+            .then((sig) => console.log(`Successfully withdrew all WSOL from USER2: ${sig}`))
+            .catch((err) => console.error(`Failed to withdraw all WSOL from USER2: ${err} `));
   })
 });

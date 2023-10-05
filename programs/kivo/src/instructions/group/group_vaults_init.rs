@@ -55,6 +55,14 @@ pub struct InitGroupVaults<'info> {
     )]
     pub bonk_vault: Box<Account<'info, TokenAccount>>,
 
+    #[account(
+        init,
+        payer = payer, 
+        associated_token::mint = lst_mint, 
+        associated_token::authority = group
+    )]
+    pub lst_vault: Box<Account<'info, TokenAccount>>,
+
     pub wsol_mint: Box<Account<'info, Mint>>,
 
     pub usdc_mint: Box<Account<'info, Mint>>,
@@ -64,6 +72,8 @@ pub struct InitGroupVaults<'info> {
     pub uxd_mint: Box<Account<'info, Mint>>,
 
     pub bonk_mint: Box<Account<'info, Mint>>,
+
+    pub lst_mint: Box<Account<'info, Mint>>,
 
     #[account(mut)]
     pub group: Signer<'info>,
