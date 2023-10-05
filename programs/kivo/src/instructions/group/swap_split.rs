@@ -12,16 +12,24 @@ use crate::state::{
     group::Balance,
     user::User
 };
+use crate::constants::ZERO;
 use crate::error::KivoError;
 use crate::jupiter::Jupiter;
 
 
 pub fn process(ctx: Context<SwapSplit>, amt: u64, data: Vec<u8>) -> Result<()> {
-    require!(ctx.accounts.input_balance.balance > amt, KivoError::BadWithdrawal);
+
+    if ctx.accounts.input_balance.balance.lt(&amt) {
+        msg!("Overuse of token {}", ctx.accounts.input_mint.key().to_string());
+        msg!("User balance: {}", ctx.accounts.input_balance.balance);
+        msg!("Attemped usage: {}", amt);
+        return Err(error!(KivoError::ModeUsageExceedsBalance));
+    }
 
     // Get the amount of whatever output token group has before the swap takes place
     let bal_pre = ctx.accounts.group_output_vault.amount;
-        
+    msg!("Initial balance: {}", bal_pre);
+
     // Compile remaining accounts into ais for instruction
     let accounts: Vec<AccountMeta> = ctx.remaining_accounts
     .iter()
@@ -51,17 +59,28 @@ pub fn process(ctx: Context<SwapSplit>, amt: u64, data: Vec<u8>) -> Result<()> {
     // Get the amount of whatever output token group has after the swap takes place
     ctx.accounts.group_output_vault.reload()?;
     let bal_post = ctx.accounts.group_output_vault.amount;
+    msg!("Final balance: {}", bal_post);
 
     // Figure out fee-eligible amount
-    let fee_eligible = bal_post - bal_pre;
+    let bal_delta = bal_post - bal_pre;
+    msg!("Balance delta: {}", bal_delta);
 
-    require!(fee_eligible > 0, KivoError::NegDelta);
+    if bal_delta.le(&ZERO) {
+        msg!("Balance change for token {} in vault {} is LTE zero", 
+            ctx.accounts.output_mint.key().to_string(), 
+            ctx.accounts.group_output_vault.key().to_string()
+        );
+        msg!("Initial balance: {}", bal_pre);
+        msg!("Final balance: {}", bal_post);
+        msg!("Balance delta: {}", bal_delta);
+        return Err(error!(KivoError::NegDelta));
+    }
 
     // Figure out what our fee actually is based on the delta
-    let fee = fee_eligible / 200;
+    let fee = bal_delta / 200;  
 
     // This is how much of whatever token is going to 
-    let bal_delta = fee_eligible - fee;
+    let final_amt = bal_delta - fee;
 
     // Transfer our 0.5% fee to the Kivo Vault
     transfer(
@@ -73,8 +92,14 @@ pub fn process(ctx: Context<SwapSplit>, amt: u64, data: Vec<u8>) -> Result<()> {
                 authority: ctx.accounts.group.to_account_info(),
             }
         ),
-        fee as u64
+        fee
     )?;
+
+    msg!("{} of mint {} sent to {}",
+        fee,
+        ctx.accounts.output_mint.key().to_string(),
+        ctx.accounts.kivo_vault.key().to_string(),
+    );
 
     // Transfer the rest to the receiver's output vault
     transfer(
@@ -86,9 +111,17 @@ pub fn process(ctx: Context<SwapSplit>, amt: u64, data: Vec<u8>) -> Result<()> {
                 authority: ctx.accounts.group.to_account_info(),
             }
         ),
-        bal_delta as u64
+        final_amt
     )?;
 
+
+    msg!("{} of mint {} sent to {}",
+        final_amt,
+        ctx.accounts.output_mint.key().to_string(),
+        ctx.accounts.output_vault.key().to_string(),
+    );
+
+    // Adjust sender's balance
     ctx.accounts.input_balance.decrement_balance(amt);
     msg!("Balance {} for mint {} and group {} owned by {} decreased by {}", 
         ctx.accounts.input_balance.key().to_string(), 
@@ -98,13 +131,16 @@ pub fn process(ctx: Context<SwapSplit>, amt: u64, data: Vec<u8>) -> Result<()> {
         amt
     );
 
-    msg!("{} of mint {} sent to {}",
-        bal_delta,
+    ctx.accounts.input_balance.exit(&crate::id())?;
+    ctx.accounts.input_balance.reload()?;
+
+    msg!("New balance: {}", ctx.accounts.input_balance.balance);
+
+    msg!("Sent {} of mint {} to {}",
+        final_amt,
         ctx.accounts.output_mint.key().to_string(),
         ctx.accounts.receiver.key.to_string(),
     );
-
-    ctx.accounts.input_balance.exit(&crate::id())?;
 
     Ok(())
 }

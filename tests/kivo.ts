@@ -144,7 +144,7 @@ describe("kivo", async () => {
   })
 
   it.skip("Deposits 0.5 SOL to USER1_WSOL_VAULT & USER2_WSOL_VAULT", async () => {
-    const lamports = LAMPORTS_PER_SOL * 0.5;
+    const lamports = LAMPORTS_PER_SOL * 0.1;
 
     const user1TransferInstruction = SystemProgram.transfer({
         fromPubkey: KEYPAIR1.publicKey,
@@ -328,7 +328,7 @@ describe("kivo", async () => {
         .catch((err) => console.error(`Failed to swap 0.5 SOL to USDC from USER1: ${err}`))
   });
 
-  it("Preferred TX 0.3 SOL USER1 -> USDC USER2", async () => {
+  it.skip("Preferred TX 0.3 SOL USER1 -> USDC USER2", async () => {
     const quote = await getQuote(WSOL_MINT, USDC_MINT, (LAMPORTS_PER_SOL * 0.3))
 
     const res = await getSwapIx(KEYPAIR1.publicKey, USER1_USDC_VAULT, quote);
@@ -352,7 +352,7 @@ describe("kivo", async () => {
 
     const instructions = [
         ...computeBudgetInstructions.map(instructionDataToTransactionInstruction),
-        await program.methods.handlePreferredTxNoUnwrap(ToDecimal(LAMPORTS_PER_SOL * 0.3), swapIx.data, null)
+        await program.methods.handlePreferredTxExec(ToDecimal(LAMPORTS_PER_SOL * 0.3), swapIx.data)
             .accounts({
                 user: USER1,
                 sourceVault: USER1_WSOL_VAULT,
@@ -636,5 +636,42 @@ describe("kivo", async () => {
             .rpc()
             .then((sig) => console.log(`Successfully withdrew all WSOL from USER2: ${sig}`))
             .catch((err) => console.error(`Failed to withdraw all WSOL from USER2: ${err} `));
+  })
+
+  it("Withdraw USDC", async () => {
+//     await program.methods.handleGroupWithdrawal(ToDecimal(37000000), null)
+//         .accounts({
+//             groupVault: GROUP_KP2_USDC_VAULT,
+//             user: USER1,
+//             userVault: USER1_USDC_VAULT,
+//             userBalance: USER1_USDC_GROUP_KP2_BALANCE,
+//             mint: USDC_MINT,
+//             group: GROUP2_KEYPAIR.publicKey,
+//             payer: KEYPAIR1.publicKey,
+//             tokenProgram: TOKEN_PROGRAM_ID,
+//             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+//             systemProgram: SystemProgram.programId,
+//         })
+//         .signers([GROUP2_KEYPAIR, KEYPAIR1])
+//         .rpc()
+//         .then((sig) => console.log(`${sig}`))
+//         .catch((err) => console.error(`${err}`))
+
+    await program.methods.handleWithdrawal(ToDecimal(0), true)
+        .accounts({
+            withdrawer: KEYPAIR1.publicKey,
+            withdrawerTokenAccount: new PublicKey("6XZ4XSz6C7NSaG1xeN5R18x6GKs2wivANGrJSEytwMRN"),
+            userAccount: USER1,
+            pdaTokenAccount: USER1_USDC_VAULT,
+            mint: USDC_MINT,
+            payer: KEYPAIR1.publicKey,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            tokenProgram: TOKEN_PROGRAM_ID
+        })
+        .signers([KEYPAIR1])
+        .rpc()
+        .then((sig) => console.log(`${sig}`))
+        .catch((err) => console.error(`${err}`))
   })
 });

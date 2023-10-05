@@ -6,15 +6,17 @@ use anchor_lang::{
     }
 };
 use anchor_spl::{token::*, associated_token::AssociatedToken};
-use crate::{state::{
+use crate::state::{
     user::User, 
-    transaction::Transaction
-}, constants::{OUTGOING, INCOMING}};
+    transaction::Transaction,
+};
+use crate::constants::ZERO;
 use crate::error::KivoError;
 use crate::jupiter::Jupiter;
 
 pub fn process(ctx: Context<PreferredSwapFulfill>, amt: u64, data: Vec<u8>) -> Result<()> {
     let bal_pre = ctx.accounts.output_vault.amount;
+    msg!("Initial output vault balance: {}", bal_pre);
 
     let bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
@@ -34,6 +36,12 @@ pub fn process(ctx: Context<PreferredSwapFulfill>, amt: u64, data: Vec<u8>) -> R
         ),
         amt
     )?;
+
+    msg!("Transferred {} of mint {} to {}",
+        amt,
+        ctx.accounts.input_mint.key().to_string(),
+        ctx.accounts.input_vault.key().to_string(),
+    );
 
     // Compile remaining accounts into ais for instruction
     let accounts: Vec<AccountMeta> = ctx.remaining_accounts
@@ -63,14 +71,25 @@ pub fn process(ctx: Context<PreferredSwapFulfill>, amt: u64, data: Vec<u8>) -> R
 
     ctx.accounts.output_vault.reload()?;
     let bal_post = ctx.accounts.output_vault.amount;
+    msg!("Final output vault balance: {}", bal_post);
 
     let bal_delta = bal_post - bal_pre;
+    msg!("Balance delta: {}", bal_delta);
+
+    if bal_delta.le(&ZERO) {
+        msg!("Balance change for token {} in vault {} is LTE zero", 
+            ctx.accounts.output_vault.mint.to_string(),
+            ctx.accounts.output_vault.key().to_string()
+        );
+        msg!("Initial output vault balance: {}", bal_pre);
+        msg!("Final output vault balance: {}", bal_post);
+        msg!("Balance delta: {}", bal_delta);
+        return Err(error!(KivoError::NegDelta));
+    }
 
     let fee = bal_delta / 200;
 
     let amt_final = bal_delta - fee;
-
-    require!(amt_final > 0, KivoError::NegDelta);
 
     transfer(
         CpiContext::new_with_signer(

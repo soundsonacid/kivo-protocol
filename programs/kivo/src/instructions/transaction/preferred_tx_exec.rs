@@ -9,12 +9,13 @@ use anchor_spl::{token::*, associated_token::AssociatedToken};
 use crate::{state::{
     user::User, 
     transaction::Transaction
-}, constants::{OUTGOING, INCOMING}};
+}, constants::{OUTGOING, INCOMING, ZERO}};
 use crate::error::KivoError;
 use crate::jupiter::Jupiter;
 
 pub fn process(ctx: Context<PreferredSwapExec>, amt: u64, data: Vec<u8>) -> Result<()> {
     let bal_pre = ctx.accounts.output_vault.amount;
+    msg!("Initial output vault balance: {}", bal_pre);
 
     let bump = User::get_user_address(ctx.accounts.payer.key()).1;
 
@@ -35,6 +36,12 @@ pub fn process(ctx: Context<PreferredSwapExec>, amt: u64, data: Vec<u8>) -> Resu
         amt
     )?;
 
+    msg!("Transferred {} of mint {} to {}",
+        amt,
+        ctx.accounts.input_mint.key().to_string(),
+        ctx.accounts.input_vault.key().to_string(),
+    );
+
     // Compile remaining accounts into ais for instruction
     let accounts: Vec<AccountMeta> = ctx.remaining_accounts
         .iter()
@@ -51,7 +58,9 @@ pub fn process(ctx: Context<PreferredSwapExec>, amt: u64, data: Vec<u8>) -> Resu
         .map(|acc| AccountInfo { ..acc.clone() })
         .collect();
 
-    // Swap to their intermediary vault
+    // Swap
+    // source is the sender's wallet input mint vault
+    // destination is the sender's user account output vault
     invoke(
         &Instruction {
             program_id: *ctx.accounts.jupiter_program.key,
@@ -63,14 +72,25 @@ pub fn process(ctx: Context<PreferredSwapExec>, amt: u64, data: Vec<u8>) -> Resu
 
     ctx.accounts.output_vault.reload()?;
     let bal_post = ctx.accounts.output_vault.amount;
+    msg!("Final output vault balance: {}", bal_post);
 
     let bal_delta = bal_post - bal_pre;
+    msg!("Balance delta: {}", bal_delta);
+
+    if bal_delta.le(&ZERO) {
+        msg!("Balance change for token {} in vault {} is LTE zero", 
+            ctx.accounts.output_vault.mint.to_string(),
+            ctx.accounts.output_vault.key().to_string()
+        );
+        msg!("Initial balance: {}", bal_pre);
+        msg!("Final balance: {}", bal_post);
+        msg!("Balance delta: {}", bal_delta);
+        return Err(error!(KivoError::NegDelta));
+    }
 
     let fee = bal_delta / 200;
 
     let amt_final = bal_delta - fee;
-
-    require!(amt_final > 0, KivoError::NegDelta);
 
     transfer(
         CpiContext::new_with_signer(
@@ -85,6 +105,12 @@ pub fn process(ctx: Context<PreferredSwapExec>, amt: u64, data: Vec<u8>) -> Resu
         fee
     )?;
 
+    msg!("{} of mint {} sent to {}",
+        fee,
+        ctx.accounts.output_vault.mint.to_string(),
+        ctx.accounts.kivo_vault.key().to_string(),
+    );
+
     transfer(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
@@ -97,6 +123,12 @@ pub fn process(ctx: Context<PreferredSwapExec>, amt: u64, data: Vec<u8>) -> Resu
         ),
         amt_final,
     )?;
+
+    msg!("{} of mint {} sent to {}",
+        amt_final,
+        ctx.accounts.output_vault.mint.to_string(),
+        ctx.accounts.output_vault.key().to_string(),
+    );
 
     ctx.accounts.payer_tx_account.new(
         ctx.accounts.destination_owner.key(),

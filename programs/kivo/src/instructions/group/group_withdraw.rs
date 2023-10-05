@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::*;
+use crate::constants::EMPTY_THRESHOLD;
 use crate::state::{
     group::Balance,
     user::User
@@ -8,7 +9,13 @@ use crate::state::{
 use crate::error::KivoError;
 
 pub fn process(ctx: Context<WithdrawFromGroupWallet>, wd: u64, withdraw_all: Option<bool>) -> Result<()> {
-    require!(ctx.accounts.user_balance.balance > wd, KivoError::BadWithdrawal); 
+    
+    if ctx.accounts.user_balance.balance < wd {
+        msg!("Overdraw of token {}", ctx.accounts.mint.key().to_string());
+        msg!("User balance: {}", ctx.accounts.user_balance.balance);
+        msg!("Attemped withdrawal: {}", wd);
+        return Err(error!(KivoError::GroupWithdrawalExceedsBalance));
+    }
 
     if withdraw_all.is_some() {
         let wd_all = ctx.accounts.user_balance.balance;
@@ -25,9 +32,23 @@ pub fn process(ctx: Context<WithdrawFromGroupWallet>, wd: u64, withdraw_all: Opt
             wd_all
         )?;
 
-        ctx.accounts.user_balance.decrement_balance(wd_all);
-        ctx.accounts.user_balance.exit(&crate::id())?;
+        msg!("Withdrew {} of mint {}", wd_all, ctx.accounts.mint.key().to_string());
+        msg!("Group: {}", ctx.accounts.group.key().to_string());
+        msg!("Group vault: {}", ctx.accounts.group_vault.key().to_string());
+        msg!("Destination vault: {}", ctx.accounts.user_vault.key().to_string());
 
+        // Adjust user balance accordingly 
+        ctx.accounts.user_balance.decrement_balance(wd_all);
+        ctx.accounts.user_balance.reload()?;
+
+        if ctx.accounts.user_balance.balance.gt(&EMPTY_THRESHOLD) {
+            msg!("withdraw_all left {} of {} remaining in Balance.", 
+            ctx.accounts.user_balance.balance,
+            ctx.accounts.mint.key().to_string(),
+        );
+        }
+
+        ctx.accounts.user_balance.exit(&crate::id())?;
     } else {
         transfer(
             CpiContext::new(
@@ -41,6 +62,12 @@ pub fn process(ctx: Context<WithdrawFromGroupWallet>, wd: u64, withdraw_all: Opt
             wd
         )?;
 
+        msg!("Withdrew {} of mint {}", wd, ctx.accounts.mint.key().to_string());
+        msg!("Group: {}", ctx.accounts.group.key().to_string());
+        msg!("Group vault: {}", ctx.accounts.group_vault.key().to_string());
+        msg!("Destination vault: {}", ctx.accounts.user_vault.key().to_string());
+
+        // Adjust user balance accordingly 
         ctx.accounts.user_balance.decrement_balance(wd);
         ctx.accounts.user_balance.exit(&crate::id())?;
     }
@@ -65,6 +92,7 @@ pub struct WithdrawFromGroupWallet<'info> {
     pub user_vault: Account<'info, TokenAccount>,
 
     #[account(
+        mut,
         seeds = [
             user.key().as_ref(),
             group.key().as_ref(),

@@ -11,16 +11,24 @@ use crate::state::{
     group::Balance,
     user::User
 };
+use crate::constants::ZERO;
 use crate::error::KivoError;
 use crate::jupiter::Jupiter;
 
 // Should work for both entering & exiting an ape mode
 // Executes a standard swap on jupiter between two arbitrary tokens
 pub fn process(ctx: Context<Ape>, amt: u64, data: Vec<u8>) -> Result<()> {
-    require!(ctx.accounts.user_input_balance.balance > amt, KivoError::BadWithdrawal);
+
+    if ctx.accounts.user_input_balance.balance.lt(&amt) {
+        msg!("Overuse of token {}", ctx.accounts.input_mint.key().to_string());
+        msg!("User balance: {}", ctx.accounts.user_input_balance.balance);
+        msg!("Attemped usage: {}", amt);
+        return Err(error!(KivoError::ModeUsageExceedsBalance));
+    }
 
     // Get the amount of whatever output token group has before the swap takes place
     let bal_pre = ctx.accounts.group_output_vault.amount;
+    msg!("Initial output vault balance: {}", bal_pre);
 
     // Compile remaining accounts into ais for instruction
     let accounts: Vec<AccountMeta> = ctx.remaining_accounts
@@ -38,7 +46,7 @@ pub fn process(ctx: Context<Ape>, amt: u64, data: Vec<u8>) -> Result<()> {
         .map(|acc| AccountInfo { ..acc.clone() })
         .collect();
 
-    // Swap
+    // Swap - destination is the group_output_vault
     invoke(
         &Instruction {
             program_id: *ctx.accounts.jupiter_program.key,
@@ -51,11 +59,22 @@ pub fn process(ctx: Context<Ape>, amt: u64, data: Vec<u8>) -> Result<()> {
     // Get the amount of whatever output token group has after the swap takes place
     ctx.accounts.group_output_vault.reload()?;
     let bal_post = ctx.accounts.group_output_vault.amount;
+    msg!("Final output vault balance: {}", bal_post);
 
     // Figure out fee-eligible amount
     let bal_delta = bal_post - bal_pre;
+    msg!("Balance delta: {}", bal_delta);
 
-    require!(bal_delta > 0, KivoError::NegDelta);
+    if bal_delta.le(&ZERO) {
+        msg!("Balance change for token {} in vault {} is LTE zero", 
+            ctx.accounts.output_mint.key().to_string(), 
+            ctx.accounts.group_output_vault.key().to_string()
+        );
+        msg!("Initial output vault balance: {}", bal_pre);
+        msg!("Final output vault balance: {}", bal_post);
+        msg!("Balance delta: {}", bal_delta);
+        return Err(error!(KivoError::NegDelta));
+    }
 
     // Figure out what our fee actually is based on the delta
     let fee = bal_delta / 200;
@@ -76,7 +95,19 @@ pub fn process(ctx: Context<Ape>, amt: u64, data: Vec<u8>) -> Result<()> {
         fee
     )?;
 
+    msg!("{} of mint {} sent to {}",
+        fee,
+        ctx.accounts.output_mint.key().to_string(),
+        ctx.accounts.kivo_vault.key().to_string(),
+    );
+
     if !ctx.accounts.user_output_balance.initialized {
+
+        msg!("Initializing Balance for mint {} and user {}", 
+            ctx.accounts.output_mint.key().to_string(), 
+            ctx.accounts.user.key().to_string(),
+        );
+
         ctx.accounts.user_output_balance.new(
             ctx.accounts.user.key(),
             ctx.accounts.group.key(),
