@@ -17,7 +17,15 @@ pub fn process(_ctx: Context<InitializeUserVaults>) -> Result<()> {
 #[derive(Accounts)]
 pub struct InitializeUserVaults<'info> {
 
-  #[account(mut)]
+  #[account(init_if_needed,
+            payer = payer, 
+            space = 8 + std::mem::size_of::<User>(), 
+            seeds = [
+                b"user", 
+                payer.key.as_ref()
+                ], 
+            bump            
+            )]
   pub user_account: Account<'info, User>,
 
   #[account()]

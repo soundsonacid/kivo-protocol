@@ -128,6 +128,13 @@ pub mod kivo {
         group_deposit::process(ctx, amount)
     }
 
+    pub fn handle_group_deposit_signed(
+            ctx: Context<GroupDepositSigned>,
+            amount: u64
+    ) -> Result<()> {
+        group_deposit_signed::process(ctx, amount)
+    }
+
     pub fn handle_group_withdrawal(
             ctx: Context<WithdrawFromGroupWallet>,
             amount: u64,

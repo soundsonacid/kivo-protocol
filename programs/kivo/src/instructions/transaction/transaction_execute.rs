@@ -52,7 +52,7 @@ pub fn process(ctx: Context<ExecuteTransaction>, amount: u64) -> Result<()> {
             ctx.accounts.token_program.to_account_info(),
             Transfer {
                 from: ctx.accounts.sender_token_account.to_account_info(),
-                to: ctx.accounts.kivo_vault.to_account_info(),
+                to: ctx.accounts.receiver_token_account.to_account_info(),
                 authority: sender.to_account_info().clone(),
             },
             signer_seeds,
@@ -123,6 +123,7 @@ pub struct ExecuteTransaction<'info> {
     #[account(mut, associated_token::authority = receiver_user_account, associated_token::mint = mint)]
     pub receiver_token_account: Box<Account<'info, TokenAccount>>,
 
+    #[account(mut)]
     pub kivo_vault: Box<Account<'info, TokenAccount>>,
 
     #[account()]

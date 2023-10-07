@@ -82,6 +82,7 @@ pub struct FulfillRequest<'info> {
     #[account(mut, associated_token::authority = requester, associated_token::mint = mint)]
     pub requester_token_account: Box<Account<'info, TokenAccount>>,
 
+    #[account(mut)]
     pub kivo_vault: Box<Account<'info, TokenAccount>>,
 
     #[account()]

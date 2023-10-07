@@ -207,7 +207,7 @@ pub struct PreferredSwapExec<'info> {
         seeds = [
             INCOMING,
             destination_owner.to_account_info().key.as_ref(),
-            destination_owner.outgoing_tx.to_le_bytes().as_ref(),
+            destination_owner.incoming_tx.to_le_bytes().as_ref(),
         ],
         bump
     )]
