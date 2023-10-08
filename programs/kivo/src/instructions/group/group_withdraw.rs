@@ -80,7 +80,6 @@ pub struct WithdrawFromGroupWallet<'info> {
     #[account(mut, associated_token::mint = mint, associated_token::authority = group)]
     pub group_vault: Account<'info, TokenAccount>,
 
-    #[account(address = User::get_user_address(payer.key()).0)]
     pub user: Account<'info, User>,
 
     #[account(

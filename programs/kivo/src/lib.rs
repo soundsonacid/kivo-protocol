@@ -143,6 +143,14 @@ pub mod kivo {
         group_withdraw::process(ctx, amount, withdraw_all)
     }
 
+    pub fn handle_group_withdrawal_wallet(
+            ctx: Context<WithdrawToWallet>,
+            amount: u64,
+            withdraw_all: Option<bool>,
+    ) -> Result<()> {
+        group_withdraw_wallet::process(ctx, amount, withdraw_all)
+    }
+
     pub fn handle_ape(
             ctx: Context<Ape>,
             amount: u64,
